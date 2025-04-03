@@ -2,17 +2,9 @@
   <div>
     <dashboard-stats />
     <div class="container">
-      <driver-list :style="{ width: driverListWidth }" />
-      <button class="toggle-button" :class="buttonPosition" @click="toggleView">
-        <svg
-          class="arrow-icon"
-          viewBox="0 0 24 24"
-          :style="{ transform: viewState === 0 ? 'rotate(180deg)' : 'none' }"
-        >
-          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-        </svg>
-      </button>
-      <map-view :style="{ width: mapViewWidth }" />
+      <driver-list :style="{ width: driverListWidth + 'px' }" />
+      <div class="resize-handle" @mousedown="startResize"></div>
+      <map-view :style="{ width: mapViewWidth + 'px' }" />
     </div>
   </div>
 </template>
@@ -31,59 +23,55 @@ export default {
   },
   data() {
     return {
-      viewState: 1,
+      driverListWidth: 400,
+      isResizing: false,
+      startX: 0,
+      startWidth: 0,
     };
   },
   computed: {
-    buttonPosition() {
-      return {
-        left: this.viewState === 0,
-        center: this.viewState === 1,
-        right: this.viewState === 2,
-      };
-    },
-    driverListWidth() {
-      switch (this.viewState) {
-        case 0:
-          return "0%";
-        case 1:
-          return "40%";
-        case 2:
-          return "100%";
-        default:
-          return "40%";
-      }
-    },
     mapViewWidth() {
-      switch (this.viewState) {
-        case 0:
-          return "100%";
-        case 1:
-          return "60%";
-        case 2:
-          return "0%";
-        default:
-          return "60%";
-      }
+      return window.innerWidth - this.driverListWidth - 8;
     },
   },
   methods: {
-    toggleView() {
-      switch (this.viewState) {
-        case 0:
-          this.viewState = 2;
-          break;
-        case 1:
-          this.viewState = 0;
-          break;
-        case 2:
-          this.viewState = 1;
-          break;
-      }
-      this.$nextTick(() => {
-        this.$emit("map-resize");
-      });
+    startResize(e) {
+      this.isResizing = true;
+      this.startX = e.clientX;
+      this.startWidth = this.driverListWidth;
+      document.body.style.cursor = "ew-resize";
+
+      // 전역 이벤트 리스너 추가
+      document.addEventListener("mousemove", this.onResize);
+      document.addEventListener("mouseup", this.stopResize);
     },
+    onResize(e) {
+      if (!this.isResizing) return;
+
+      const delta = e.clientX - this.startX;
+      const newWidth = this.startWidth + delta;
+
+      // 최소 너비 제한
+      if (newWidth >= 200 && newWidth <= window.innerWidth - 200) {
+        this.driverListWidth = newWidth;
+        this.$nextTick(() => {
+          this.$emit("map-resize");
+        });
+      }
+    },
+    stopResize() {
+      this.isResizing = false;
+      document.body.style.cursor = "default";
+
+      // 전역 이벤트 리스너 제거
+      document.removeEventListener("mousemove", this.onResize);
+      document.removeEventListener("mouseup", this.stopResize);
+    },
+  },
+  beforeDestroy() {
+    // 컴포넌트가 제거될 때 이벤트 리스너 정리
+    document.removeEventListener("mousemove", this.onResize);
+    document.removeEventListener("mouseup", this.stopResize);
   },
 };
 </script>
@@ -105,44 +93,19 @@ html {
   width: 100%;
 }
 
-.arrow-icon {
-  width: 20px;
-  height: 20px;
-  fill: #666;
-  transition: transform 0.3s ease;
+.resize-handle {
+  width: 8px;
+  background-color: #ddd;
+  cursor: ew-resize;
+  transition: background-color 0.2s;
+  user-select: none;
 }
 
-.toggle-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000;
-  width: 24px;
-  height: 60px;
-  cursor: pointer;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.resize-handle:hover {
+  background-color: #999;
 }
 
-.toggle-button.left {
-  left: 0;
-}
-
-.toggle-button.center {
-  left: 40%;
-  transform: translateX(-50%) translateY(-50%);
-}
-
-.toggle-button.right {
-  right: 0;
-}
-
-.toggle-button:hover .arrow-icon {
-  fill: #333;
+.resize-handle:active {
+  background-color: #666;
 }
 </style>
