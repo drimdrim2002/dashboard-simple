@@ -4,7 +4,7 @@
       <h1>Map</h1>
     </div>
     <div class="content">
-      <div id="map" ref="mapContainer"></div>
+      <div id="map" ref="mapContainer" @wheel="handleWheel"></div>
     </div>
   </div>
 </template>
@@ -41,6 +41,23 @@ export default {
           zoom: 13,
         }),
       });
+
+      // 기본 마우스 휠 동작 비활성화
+      this.map.getViewport().style.pointerEvents = "none";
+      this.map.getViewport().style.cursor = "default";
+    },
+    handleWheel(event) {
+      // Ctrl 키가 눌린 상태에서만 줌 동작 실행
+      if (event.ctrlKey) {
+        event.preventDefault();
+        const view = this.map.getView();
+        const delta = event.deltaY;
+        const zoom = view.getZoom();
+        view.animate({
+          zoom: zoom + (delta > 0 ? -0.5 : 0.5),
+          duration: 100,
+        });
+      }
     },
   },
   beforeDestroy() {
