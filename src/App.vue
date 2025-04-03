@@ -106,7 +106,7 @@ html {
 .container {
   position: relative;
   display: flex;
-  height: 700px;
+  height: calc(100vh - 300px); /* dashboard-stats의 높이를 뺀 나머지 높이 */
   width: 100%;
 }
 
@@ -115,13 +115,13 @@ html {
   position: relative;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .driver-list-container > *,
 .map-view-container > * {
-  position: absolute;
-  top: 0;
-  left: 0;
+  flex: 1;
   width: 100%;
   height: 100%;
 }
