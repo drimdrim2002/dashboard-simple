@@ -2,9 +2,21 @@
   <div>
     <dashboard-stats />
     <div class="container">
-      <driver-list :style="{ width: driverListWidth + 'px' }" />
+      <div
+        class="driver-list-container"
+        ref="driverList"
+        :style="{ width: driverListWidth + 'px' }"
+      >
+        <driver-list />
+      </div>
       <div class="resize-handle" @mousedown="startResize"></div>
-      <map-view :style="{ width: mapViewWidth + 'px' }" />
+      <div
+        class="map-view-container"
+        ref="mapView"
+        :style="{ width: mapViewWidth + 'px' }"
+      >
+        <map-view />
+      </div>
     </div>
   </div>
 </template>
@@ -41,7 +53,6 @@ export default {
       this.startWidth = this.driverListWidth;
       document.body.style.cursor = "ew-resize";
 
-      // 전역 이벤트 리스너 추가
       document.addEventListener("mousemove", this.onResize);
       document.addEventListener("mouseup", this.stopResize);
     },
@@ -51,9 +62,17 @@ export default {
       const delta = e.clientX - this.startX;
       const newWidth = this.startWidth + delta;
 
-      // 최소 너비 제한
       if (newWidth >= 200 && newWidth <= window.innerWidth - 200) {
+        // 직접 DOM 요소의 스타일을 변경하여 즉각적인 반응 구현
+        this.$refs.driverList.style.width = `${newWidth}px`;
+        this.$refs.mapView.style.width = `${
+          window.innerWidth - newWidth - 8
+        }px`;
+
+        // Vue의 반응성 시스템 업데이트
         this.driverListWidth = newWidth;
+
+        // 맵 리사이즈 이벤트 발생
         this.$nextTick(() => {
           this.$emit("map-resize");
         });
@@ -63,13 +82,11 @@ export default {
       this.isResizing = false;
       document.body.style.cursor = "default";
 
-      // 전역 이벤트 리스너 제거
       document.removeEventListener("mousemove", this.onResize);
       document.removeEventListener("mouseup", this.stopResize);
     },
   },
   beforeDestroy() {
-    // 컴포넌트가 제거될 때 이벤트 리스너 정리
     document.removeEventListener("mousemove", this.onResize);
     document.removeEventListener("mouseup", this.stopResize);
   },
@@ -93,12 +110,29 @@ html {
   width: 100%;
 }
 
+.driver-list-container,
+.map-view-container {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.driver-list-container > *,
+.map-view-container > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .resize-handle {
   width: 8px;
   background-color: #ddd;
   cursor: ew-resize;
   transition: background-color 0.2s;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .resize-handle:hover {
