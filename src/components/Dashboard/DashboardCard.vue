@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card-content">
-      <div class="metric">
+      <div class="metric-row">
         <span class="label">{{ cardTitle }}</span>
         <span class="value" :style="{ color: cardColor }">
           <template v-if="type === 'cost'"
@@ -17,30 +17,34 @@
         <!-- 주문 & 차량 카드 공통 UI -->
         <template v-if="type === 'order' || type === 'vehicle'">
           <div class="stat-item">
-            <div class="stat-label">{{ firstItemLabel }}</div>
-            <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
-            <div class="progress-bar">
-              <div
-                class="progress"
-                :style="{
-                  width: percentage + '%',
-                  backgroundColor: progressColor,
-                }"
-              ></div>
+            <div class="stat-row">
+              <div class="stat-label">{{ firstItemLabel }}</div>
+              <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
+              <div class="progress-bar">
+                <div
+                  class="progress"
+                  :style="{
+                    width: percentage + '%',
+                    backgroundColor: progressColor,
+                  }"
+                ></div>
+              </div>
             </div>
           </div>
 
           <div class="stat-item">
-            <div class="stat-label">{{ secondItemLabel }}</div>
-            <div class="stat-value">{{ formatNumber(secondItemValue) }}</div>
-            <div class="progress-bar">
-              <div
-                class="progress-inverse"
-                :style="{
-                  width: 100 - percentage + '%',
-                  backgroundColor: secondaryColor,
-                }"
-              ></div>
+            <div class="stat-row">
+              <div class="stat-label">{{ secondItemLabel }}</div>
+              <div class="stat-value">{{ formatNumber(secondItemValue) }}</div>
+              <div class="progress-bar">
+                <div
+                  class="progress-inverse"
+                  :style="{
+                    width: 100 - percentage + '%',
+                    backgroundColor: secondaryColor,
+                  }"
+                ></div>
+              </div>
             </div>
           </div>
         </template>
@@ -48,13 +52,19 @@
         <!-- 비용 카드용 UI -->
         <template v-else-if="type === 'cost'">
           <div class="stat-item">
-            <div class="stat-label">{{ firstItemLabel }}</div>
-            <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
+            <div class="stat-row">
+              <div class="stat-label">{{ firstItemLabel }}</div>
+              <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
+            </div>
           </div>
 
           <div class="stat-item">
-            <div class="stat-label">{{ secondItemLabel }}</div>
-            <div class="stat-value">₩{{ formatCurrency(secondItemValue) }}</div>
+            <div class="stat-row">
+              <div class="stat-label">{{ secondItemLabel }}</div>
+              <div class="stat-value">
+                ₩{{ formatCurrency(secondItemValue) }}
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -171,6 +181,7 @@ export default {
   transition: all 0.2s ease;
   overflow: hidden;
   min-width: 250px;
+  height: 130px;
 }
 
 .card:hover {
@@ -179,77 +190,96 @@ export default {
 }
 
 .card-content {
-  padding: 24px;
-}
-
-.metric {
+  padding: 16px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
-.label {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #888;
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 4px;
 }
 
+.label {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+}
+
 .value {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 600;
   color: #333;
+  line-height: 1.1;
 }
 
 .divider {
   height: 1px;
   background-color: #eee;
-  margin: 16px 0;
+  margin: 6px 0;
 }
 
 .details {
-  margin-top: 16px;
+  margin-top: 4px;
+  height: 46px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .stat-item {
-  margin-bottom: 16px;
+  margin-bottom: 5px;
 }
 
 .stat-item:last-child {
   margin-bottom: 0;
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
+.stat-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  height: 18px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #666;
+  width: 25%;
+  white-space: nowrap;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 8px;
+  width: 25%;
+  text-align: right;
+  margin-right: 10px;
 }
 
 .progress-bar {
-  height: 4px;
-  width: 100%;
+  height: 2px;
+  flex-grow: 1;
+  width: 40%;
   background-color: #f5f5f5;
-  border-radius: 2px;
+  border-radius: 1px;
   overflow: hidden;
 }
 
 .progress {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 .progress-inverse {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 </style>
