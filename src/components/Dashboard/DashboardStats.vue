@@ -1,22 +1,33 @@
 <template>
   <div class="dashboard">
-    <order-card :total-orders="189" :assigned-orders="189"></order-card>
-    <vehicle-card :used-vehicles="28" :total-vehicles="1145"></vehicle-card>
-    <cost-card :total-cost="1232134343" :routes="13"></cost-card>
+    <dashboard-card
+      type="order"
+      :primary-value="189"
+      :secondary-value="189"
+    ></dashboard-card>
+
+    <dashboard-card
+      type="vehicle"
+      :primary-value="1145"
+      :secondary-value="28"
+    ></dashboard-card>
+
+    <dashboard-card
+      type="cost"
+      :primary-value="1232134343"
+      :secondary-value="0"
+      :routes="13"
+    ></dashboard-card>
   </div>
 </template>
 
 <script>
-import OrderCard from "./OrderCard.vue";
-import VehicleCard from "./VehicleCard.vue";
-import CostCard from "./CostCard.vue";
+import DashboardCard from "./DashboardCard.vue";
 
 export default {
   name: "DashboardStats",
   components: {
-    OrderCard,
-    VehicleCard,
-    CostCard,
+    DashboardCard,
   },
 };
 </script>
@@ -24,7 +35,16 @@ export default {
 <style scoped>
 .dashboard {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 24px;
+  padding: 24px;
+  background-color: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
 }
 </style>

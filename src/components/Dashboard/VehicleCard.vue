@@ -1,22 +1,35 @@
 <template>
   <div class="card">
-    <div class="card-header vehicles-header">Vehicles</div>
-    <div class="card-body">
-      <div class="percentage-container">
-        <span class="percentage">{{ usedPercentage }}%</span>
-        <span class="status">used</span>
+    <div class="card-content">
+      <div class="metric">
+        <span class="label">차량</span>
+        <span class="value">{{ formatNumber(totalVehicles) }}</span>
       </div>
-      <div class="stat-row">
-        <span>Used</span>
-        <span class="number-link" @click="$emit('show-popup', usedVehicles)">
-          {{ formatNumber(usedVehicles) }}
-        </span>
-      </div>
-      <div class="stat-row">
-        <span>Not Used</span>
-        <span class="number-link" @click="$emit('show-popup', notUsedVehicles)">
-          {{ formatNumber(notUsedVehicles) }}
-        </span>
+
+      <div class="divider"></div>
+
+      <div class="details">
+        <div class="stat-item">
+          <div class="stat-label">사용중</div>
+          <div class="stat-value">{{ formatNumber(usedVehicles) }}</div>
+          <div class="progress-bar">
+            <div
+              class="progress"
+              :style="{ width: usedPercentage + '%' }"
+            ></div>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-label">미사용</div>
+          <div class="stat-value">{{ formatNumber(notUsedVehicles) }}</div>
+          <div class="progress-bar">
+            <div
+              class="progress-inverse"
+              :style="{ width: 100 - usedPercentage + '%' }"
+            ></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -55,63 +68,94 @@ export default {
 
 <style scoped>
 .card {
-  width: 300px;
-  height: 160px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  overflow: hidden;
+  flex: 1;
   background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  min-width: 250px;
 }
 
-.card-header {
-  height: 40px;
-  color: white;
-  font-size: 24px;
+.card:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.card-content {
+  padding: 24px;
+}
+
+.metric {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 20px;
+  flex-direction: column;
+  margin-bottom: 8px;
 }
 
-.vehicles-header {
-  background-color: #00a0d1;
+.label {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+  margin-bottom: 4px;
 }
 
-.card-body {
-  height: 120px;
-  padding: 15px 20px;
-  box-sizing: border-box;
+.value {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
 }
 
-.percentage-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  width: 100%;
+.divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 16px 0;
 }
 
-.percentage {
-  font-size: 24px;
-  font-weight: bold;
+.details {
+  margin-top: 16px;
 }
 
-.status {
-  font-size: 18px;
+.stat-item {
+  margin-bottom: 16px;
+}
+
+.stat-item:last-child {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  font-size: 14px;
   color: #666;
-  margin-left: auto;
-}
-
-.stat-row {
+  margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
-  font-size: 16px;
 }
 
-.number-link {
-  text-decoration: underline;
-  cursor: pointer;
-  color: #000;
+.stat-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 4px;
+  width: 100%;
+  background-color: #f5f5f5;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  background-color: #4cb8b8;
+  border-radius: 2px;
+}
+
+.progress-inverse {
+  height: 100%;
+  background-color: #a0a0a0;
+  border-radius: 2px;
 }
 </style>
