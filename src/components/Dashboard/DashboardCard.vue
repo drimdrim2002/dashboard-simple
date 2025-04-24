@@ -7,6 +7,7 @@
           <template v-if="type === 'cost'"
             >₩{{ formatCurrency(primaryValue) }}</template
           >
+          <template v-else-if="type === 'plan'">{{ primaryValue }}</template>
           <template v-else>{{ formatNumber(primaryValue) }}</template>
         </span>
       </div>
@@ -49,6 +50,28 @@
           </div>
         </template>
 
+        <!-- 계획 카드용 UI -->
+        <template v-else-if="type === 'plan'">
+          <div class="stat-item">
+            <div class="stat-row">
+              <div class="stat-label">{{ firstItemLabel }}</div>
+              <div class="stat-value">{{ firstItemValue }}</div>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-row plan-status-row">
+              <div class="stat-label">{{ secondItemLabel }}</div>
+              <div
+                class="stat-value plan-status"
+                :style="{ color: progressColor }"
+              >
+                {{ secondItemValue }}
+              </div>
+            </div>
+          </div>
+        </template>
+
         <!-- 비용 카드용 UI -->
         <template v-else-if="type === 'cost'">
           <div class="stat-item">
@@ -79,14 +102,15 @@ export default {
     type: {
       type: String,
       required: true,
-      validator: (value) => ["order", "vehicle", "cost"].includes(value),
+      validator: (value) =>
+        ["order", "vehicle", "cost", "plan"].includes(value),
     },
     primaryValue: {
-      type: Number,
+      type: [Number, String],
       required: true,
     },
     secondaryValue: {
-      type: Number,
+      type: [Number, String],
       required: true,
     },
     routes: {
@@ -100,6 +124,7 @@ export default {
         order: "주문",
         vehicle: "차량",
         cost: "비용",
+        plan: "계획",
       };
       return titles[this.type];
     },
@@ -108,6 +133,7 @@ export default {
         order: "#333",
         vehicle: "#333",
         cost: "#333",
+        plan: "#333",
       };
       return colors[this.type];
     },
@@ -116,6 +142,7 @@ export default {
         order: "#4876f8",
         vehicle: "#4cb8b8",
         cost: "#4caf50",
+        plan: "#8e44ad",
       };
       return colors[this.type];
     },
@@ -124,6 +151,7 @@ export default {
         order: "#f87048",
         vehicle: "#a0a0a0",
         cost: "#f5f5f5",
+        plan: "#c39bd3",
       };
       return colors[this.type];
     },
@@ -131,23 +159,31 @@ export default {
       if (this.type === "order") return "배정됨";
       if (this.type === "vehicle") return "사용중";
       if (this.type === "cost") return "경로";
+      if (this.type === "plan") return "ID";
       return "";
     },
     secondItemLabel() {
       if (this.type === "order") return "미배정";
       if (this.type === "vehicle") return "미사용";
       if (this.type === "cost") return "경로당 비용";
+      if (this.type === "plan") return "상태";
       return "";
     },
     firstItemValue() {
       if (this.type === "order" || this.type === "vehicle") {
         return this.secondaryValue;
       }
+      if (this.type === "plan") {
+        return this.primaryValue;
+      }
       return this.routes;
     },
     secondItemValue() {
       if (this.type === "order" || this.type === "vehicle") {
         return this.primaryValue - this.secondaryValue;
+      }
+      if (this.type === "plan") {
+        return this.secondaryValue;
       }
       // 경로당 비용 계산
       return this.routes > 0 ? Math.round(this.primaryValue / this.routes) : 0;
@@ -158,14 +194,19 @@ export default {
           ? 0
           : Math.round((this.secondaryValue / this.primaryValue) * 100);
       }
+      if (this.type === "plan") {
+        return 100; // 계획 카드는 항상 100% 채워진 상태바 표시
+      }
       return 0;
     },
   },
   methods: {
     formatNumber(num) {
+      if (typeof num === "string") return num;
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     },
     formatCurrency(num) {
+      if (typeof num === "string") return num;
       return this.formatNumber(num);
     },
   },
@@ -180,8 +221,8 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   overflow: hidden;
-  min-width: 250px;
-  height: 130px;
+  min-width: 200px;
+  min-height: 130px;
 }
 
 .card:hover {
@@ -202,6 +243,7 @@ export default {
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
 .label {
@@ -226,11 +268,11 @@ export default {
 
 .details {
   margin-top: 4px;
-  height: 46px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  flex: 1;
 }
 
 .stat-item {
@@ -245,7 +287,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 18px;
+  min-height: 18px;
+  flex-wrap: wrap;
 }
 
 .stat-label {
@@ -281,5 +324,47 @@ export default {
 .progress-inverse {
   height: 100%;
   border-radius: 1px;
+}
+
+.plan-status-row {
+  justify-content: space-between;
+}
+
+.plan-status {
+  text-align: right;
+  font-weight: 600;
+  margin-right: 0;
+  width: auto;
+}
+
+@media (max-width: 1200px) {
+  .card {
+    min-width: 180px;
+  }
+
+  .value {
+    font-size: 20px;
+  }
+
+  .stat-label,
+  .stat-value {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .card-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+  }
+
+  .stat-row {
+    flex-wrap: nowrap;
+  }
 }
 </style>

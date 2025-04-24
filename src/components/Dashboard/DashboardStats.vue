@@ -3,6 +3,12 @@
     <h2 class="dashboard-title">Dispatch Summary</h2>
     <div class="dashboard">
       <dashboard-card
+        type="plan"
+        primary-value="P123232"
+        secondary-value="Executed"
+      ></dashboard-card>
+
+      <dashboard-card
         type="order"
         :primary-value="189"
         :secondary-value="189"
@@ -58,6 +64,24 @@ export default {
   padding: 0 24px 24px 24px;
   width: 100%;
   box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1200px) {
+  .dashboard {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard {
+    gap: 16px;
+    padding: 0 16px 16px 16px;
+  }
+
+  .dashboard-title {
+    padding: 16px 16px 12px 16px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -68,6 +92,7 @@ export default {
 
   .dashboard-title {
     padding: 12px 16px 8px 16px;
+    font-size: 18px;
   }
 }
 </style>
