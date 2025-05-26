@@ -39,15 +39,34 @@ export default {
   },
   computed: {
     filteredDrivers() {
-      if (!this.searchTerm) return this.drivers;
+      let filtered = this.drivers;
 
-      const term = this.searchTerm.toLowerCase();
-      return this.drivers.filter((driver) => {
-        if (this.searchType === "driver") {
-          return driver.name.toLowerCase().includes(term);
-        } else {
-          return driver.type.toLowerCase().includes(term);
+      if (this.searchTerm) {
+        const term = this.searchTerm.toLowerCase();
+        filtered = this.drivers.filter((driver) => {
+          if (this.searchType === "driver") {
+            return driver.name.toLowerCase().includes(term);
+          } else {
+            return driver.type.toLowerCase().includes(term);
+          }
+        });
+      }
+
+      // driver 이름 기준으로 먼저 정렬하고, 이름이 같으면 driver type으로 정렬
+      return filtered.sort((a, b) => {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        const typeA = (a.type || "").toLowerCase();
+        const typeB = (b.type || "").toLowerCase();
+
+        // 먼저 이름으로 비교
+        const nameComparison = nameA.localeCompare(nameB);
+        if (nameComparison !== 0) {
+          return nameComparison;
         }
+
+        // 이름이 같으면 타입으로 비교
+        return typeA.localeCompare(typeB);
       });
     },
   },
