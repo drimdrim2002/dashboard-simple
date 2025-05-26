@@ -4,6 +4,7 @@
       <table class="table table-hover">
         <thead>
           <tr class="bg-light">
+            <th class="seq-column">Seq</th>
             <th class="checkbox-column">
               <div class="form-check">
                 <input
@@ -47,11 +48,12 @@
         </thead>
         <tbody>
           <tr
-            v-for="driver in sortedDrivers"
+            v-for="(driver, index) in sortedDrivers"
             :key="driver.id"
             :data-driver-id="driver.id"
             class="align-middle"
           >
+            <td class="seq-column">{{ index + 1 }}</td>
             <td class="checkbox-column">
               <div class="form-check">
                 <input
@@ -326,6 +328,13 @@ export default {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   border-top: none;
+}
+
+.seq-column {
+  width: 50px;
+  text-align: center;
+  font-weight: 500;
+  color: #6c757d;
 }
 
 .checkbox-column {
