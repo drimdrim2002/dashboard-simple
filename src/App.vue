@@ -95,15 +95,15 @@ export default {
   },
   computed: {
     mapViewWidth() {
-      return this.windowWidth - this.driverListWidth - 8;
+      return this.windowWidth - this.driverListWidth - 16;
     },
     mainContainerHeight() {
-      return this.windowHeight - this.dashboardHeight - 8;
+      return this.windowHeight - this.dashboardHeight - 16;
     },
     bottomSectionHeight() {
       return (
-        this.windowHeight - this.dashboardHeight - this.topSectionHeight - 16
-      ); // 두 리사이즈 핸들의 높이(8px) 각각 고려
+        this.windowHeight - this.dashboardHeight - this.topSectionHeight - 32
+      );
     },
   },
   methods: {
@@ -261,19 +261,30 @@ html {
 
 .horizontal-resize-handle {
   width: 100%;
-  height: 8px;
-  background-color: #ddd;
+  height: 16px;
+  background-color: #e0e0e0;
   cursor: ns-resize;
   transition: background-color 0.2s;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.horizontal-resize-handle::after {
+  content: "";
+  width: 40px;
+  height: 4px;
+  background-color: #bdbdbd;
+  border-radius: 2px;
 }
 
 .horizontal-resize-handle:hover {
-  background-color: #999;
+  background-color: #d0d0d0;
 }
 
-.horizontal-resize-handle:active {
-  background-color: #666;
+.horizontal-resize-handle:hover::after {
+  background-color: #9e9e9e;
 }
 
 .driver-list-container,
@@ -293,19 +304,30 @@ html {
 }
 
 .resize-handle {
-  width: 8px;
-  background-color: #ddd;
+  width: 16px;
+  background-color: #e0e0e0;
   cursor: ew-resize;
   transition: background-color 0.2s;
   user-select: none;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resize-handle::after {
+  content: "";
+  width: 4px;
+  height: 40px;
+  background-color: #bdbdbd;
+  border-radius: 2px;
 }
 
 .resize-handle:hover {
-  background-color: #999;
+  background-color: #d0d0d0;
 }
 
-.resize-handle:active {
-  background-color: #666;
+.resize-handle:hover::after {
+  background-color: #9e9e9e;
 }
 </style>
