@@ -9,6 +9,7 @@
       <div class="content">
         <driver-table
           :drivers="filteredDrivers"
+          :route-list="routeList"
           :search-term="searchTerm"
           :search-type="searchType"
         ></driver-table>
@@ -27,14 +28,37 @@ export default {
     SearchBar,
     DriverTable,
   },
+  props: {
+    routeList: {
+      type: Array,
+      default: () => [],
+    },
+  },
   data() {
     return {
-      drivers: [],
       searchTerm: "",
       searchType: "driver",
     };
   },
   computed: {
+    drivers() {
+      // routeList 데이터를 driver 형태로 변환
+      return this.routeList.map((route, index) => ({
+        id: index + 1,
+        name: `Vehicle ${route.vhclId}`,
+        type: route.vhclTcd || "Unknown",
+        zone: route.zoneId || "",
+        stopCount: route.stopRcnt || 0,
+        cost: route.totCostAmt || 0,
+        loadWeight: route.totLoadWt || 0,
+        loadWeightRatio: route.totLoadWtRatio || 0,
+        loadVolume: route.totLoadCbm || 0,
+        loadVolumeRatio: route.totLoadCbmRatio || 0,
+        distance: route.totDistcVal || 0,
+        travelTime: route.totTrvlPeridVal || 0,
+        ...route, // 원본 데이터도 포함
+      }));
+    },
     filteredDrivers() {
       let filtered = this.drivers;
 
@@ -80,17 +104,6 @@ export default {
       console.log("Unlock action triggered");
       // Implement unlock logic
     },
-    loadDriverData() {
-      fetch("driver_data.json")
-        .then((response) => response.json())
-        .then((data) => {
-          this.drivers = data.drivers;
-        })
-        .catch((error) => console.error("Error loading driver data:", error));
-    },
-  },
-  created() {
-    this.loadDriverData();
   },
 };
 </script>

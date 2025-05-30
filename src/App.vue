@@ -22,7 +22,7 @@
           ref="driverList"
           :style="{ width: driverListWidth + 'px' }"
         >
-          <driver-list />
+          <driver-list :route-list="totalRouteList" />
         </div>
         <div class="resize-handle" @mousedown="startHorizontalResize"></div>
         <div
@@ -163,6 +163,25 @@ export default {
         totVhclCnt: planVo.totVhclCnt || 0,
         alocVhclCnt: planVo.alocVhclCnt || 0,
       };
+    },
+    totalRouteList() {
+      if (!this.jsonData || !this.jsonData.totalRouteList) {
+        return [];
+      }
+
+      return this.jsonData.totalRouteList.map((route) => ({
+        zoneId: route.zoneId || "",
+        vhclId: route.vhclId || "",
+        vhclTcd: route.vhclTcd || "",
+        stopRcnt: route.stopRcnt || 0,
+        totCostAmt: route.totCostAmt || 0,
+        totLoadWt: route.totLoadWt || 0,
+        totLoadWtRatio: route.totLoadWtRatio || 0,
+        totLoadCbm: route.totLoadCbm || 0,
+        totLoadCbmRatio: route.totLoadCbmRatio || 0,
+        totDistcVal: route.totDistcVal || 0,
+        totTrvlPeridVal: route.totTrvlPeridVal || 0,
+      }));
     },
   },
   methods: {

@@ -15,14 +15,6 @@
                 />
               </div>
             </th>
-            <th class="sortable" @click="sortBy('lockStatus')">
-              Lock
-              <i class="sort-icon" :class="getSortIcon('lockStatus')"></i>
-            </th>
-            <th class="sortable" @click="sortBy('statusColor')">
-              Status
-              <i class="sort-icon" :class="getSortIcon('statusColor')"></i>
-            </th>
             <th class="sortable" @click="sortBy('name')">
               Driver
               <i class="sort-icon" :class="getSortIcon('name')"></i>
@@ -43,7 +35,6 @@
               Distance
               <i class="sort-icon" :class="getSortIcon('distance')"></i>
             </th>
-            <th class="actions-column">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -64,26 +55,6 @@
                 />
               </div>
             </td>
-            <td>
-              <span
-                class="lock-icon"
-                :class="driver.lockStatus ? 'locked' : 'unlocked'"
-              >
-                <i
-                  :class="
-                    driver.lockStatus ? 'bi bi-lock-fill' : 'bi bi-unlock'
-                  "
-                ></i>
-              </span>
-            </td>
-            <td>
-              <span
-                class="status-badge"
-                :style="{ backgroundColor: getStatusColor(driver.statusColor) }"
-              >
-                {{ getColorStatus(driver.statusColor) }}
-              </span>
-            </td>
             <td class="fw-medium">{{ driver.name }}</td>
             <td>
               <span
@@ -98,22 +69,6 @@
               <span class="orders-badge">{{ driver.orders }}</span>
             </td>
             <td>{{ driver.distance }} km</td>
-            <td class="actions-column">
-              <div class="btn-group">
-                <button
-                  class="btn btn-sm btn-outline-primary"
-                  @click="viewDriver(driver)"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-secondary"
-                  @click="editDriver(driver)"
-                >
-                  <i class="bi bi-pencil"></i>
-                </button>
-              </div>
-            </td>
           </tr>
         </tbody>
       </table>
@@ -159,6 +114,18 @@ export default {
       type: Array,
       required: true,
     },
+    routeList: {
+      type: Array,
+      default: () => [],
+    },
+    searchTerm: {
+      type: String,
+      default: "",
+    },
+    searchType: {
+      type: String,
+      default: "driver",
+    },
   },
   data() {
     return {
@@ -187,25 +154,7 @@ export default {
         if (typeof aValue === "string" && typeof bValue === "string") {
           aValue = aValue.localeCompare(bValue);
         } else {
-          // Priority sorting by status
-          if (this.sortColumn === "status") {
-            const statusOrder = { active: 1, waiting: 2, offline: 3 };
-            aValue =
-              (statusOrder[aValue] || 999) - (statusOrder[bValue] || 999);
-          } else if (this.sortColumn === "lockStatus") {
-            aValue = aValue ? 1 : 0;
-            bValue = bValue ? 1 : 0;
-          } else if (this.sortColumn === "statusColor") {
-            // Priority sorting by status
-            const statusPriority = {
-              "#4caf50": 1, // Active
-              "#2196f3": 2, // En Route
-              "#ff9800": 3, // Standby
-              "#f44336": 4, // Offline
-            };
-            aValue = statusPriority[aValue] || 5;
-            bValue = statusPriority[bValue] || 5;
-          } else if (this.sortColumn === "orders") {
+          if (this.sortColumn === "orders") {
             aValue = parseInt(aValue) || 0;
             bValue = parseInt(bValue) || 0;
           } else if (this.sortColumn === "distance") {
@@ -233,34 +182,6 @@ export default {
       this.selectedDrivers = event.target.checked
         ? this.drivers.map((driver) => driver.id)
         : [];
-    },
-    viewDriver(driver) {
-      console.log("View driver:", driver.id);
-      // Implementation for viewing driver details
-    },
-    editDriver(driver) {
-      console.log("Edit driver:", driver.id);
-      // Implementation for editing driver
-    },
-    getStatusColor(color) {
-      // Status color mapping
-      const colorMap = {
-        "#4caf50": "#4caf50", // Green (Active)
-        "#ff9800": "#ff9800", // Orange (Waiting)
-        "#f44336": "#f44336", // Red (Offline)
-        "#2196f3": "#2196f3", // Blue (Moving)
-      };
-      return colorMap[color] || color;
-    },
-    getColorStatus(color) {
-      // Return status text based on color
-      const statusMap = {
-        "#4caf50": "Active",
-        "#ff9800": "Waiting",
-        "#f44336": "Offline",
-        "#2196f3": "Moving",
-      };
-      return statusMap[color] || "Unknown";
     },
     getDriverTypeClass(type) {
       // Return class based on driver type
@@ -351,22 +272,6 @@ export default {
   text-align: center;
 }
 
-.actions-column {
-  width: 100px;
-  text-align: right;
-}
-
-.status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 50px;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 500;
-  display: inline-block;
-  min-width: 70px;
-  text-align: center;
-}
-
 .driver-type-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -405,25 +310,6 @@ export default {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-weight: 500;
-}
-
-.lock-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-}
-
-.lock-icon.locked {
-  color: #dc3545;
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.lock-icon.unlocked {
-  color: #28a745;
-  background-color: rgba(40, 167, 69, 0.1);
 }
 
 .empty-state {
