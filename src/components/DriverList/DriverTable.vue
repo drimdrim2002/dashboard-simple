@@ -247,13 +247,14 @@ export default {
   min-height: 250px;
   max-height: 500px;
   overflow-y: scroll;
-  overflow-x: hidden;
+  overflow-x: auto;
   border: 1px solid #dee2e6;
 }
 
 /* 스크롤바 스타일 */
 .table-responsive::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
@@ -270,8 +271,13 @@ export default {
   background: #a8a8a8;
 }
 
+.table-responsive::-webkit-scrollbar-corner {
+  background: #f1f1f1;
+}
+
 .table {
   margin-bottom: 0;
+  min-width: 1200px;
 }
 
 .table thead th {

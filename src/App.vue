@@ -34,10 +34,29 @@
         </div>
       </div>
       <div
+        v-if="isBottomSectionVisible"
         class="horizontal-resize-handle"
         @mousedown="startTopSectionResize"
       ></div>
+
+      <!-- Toggle button for bottom section -->
+      <div class="bottom-toggle-container">
+        <button
+          class="bottom-toggle-btn"
+          @click="toggleBottomSection"
+          :class="{ active: isBottomSectionVisible }"
+        >
+          <i
+            :class="
+              isBottomSectionVisible ? 'bi bi-chevron-down' : 'bi bi-chevron-up'
+            "
+          ></i>
+          {{ isBottomSectionVisible ? "Hide JSON Data" : "Show JSON Data" }}
+        </button>
+      </div>
+
       <div
+        v-if="isBottomSectionVisible"
         class="bottom-section"
         ref="bottomSection"
         :style="{ height: bottomSectionHeight + 'px' }"
@@ -114,6 +133,8 @@ export default {
       jsonKeys: [],
       isLoading: false,
       error: null,
+      // Bottom section visibility
+      isBottomSectionVisible: false,
     };
   },
   created() {
@@ -140,8 +161,11 @@ export default {
       return this.windowHeight - this.dashboardHeight - 16;
     },
     bottomSectionHeight() {
+      if (!this.isBottomSectionVisible) {
+        return 0;
+      }
       return (
-        this.windowHeight - this.dashboardHeight - this.topSectionHeight - 32
+        this.windowHeight - this.dashboardHeight - this.topSectionHeight - 82
       );
     },
     planData() {
@@ -267,13 +291,26 @@ export default {
 
       const delta = e.clientY - this.startY;
       const newHeight = this.startTopSectionHeight + delta;
-      const maxHeight = this.windowHeight - this.dashboardHeight - 100 - 16; // Ensure bottom section minimum 100px, resize handle 16px
+      const toggleAreaHeight = 50; // toggle button container height
+      const minBottomHeight = this.isBottomSectionVisible ? 100 : 0;
+      const maxHeight =
+        this.windowHeight -
+        this.dashboardHeight -
+        minBottomHeight -
+        toggleAreaHeight -
+        16;
 
       if (newHeight >= 200 && newHeight <= maxHeight) {
         this.$refs.topSection.style.height = `${newHeight}px`;
-        this.$refs.bottomSection.style.height = `${
-          this.windowHeight - this.dashboardHeight - newHeight - 16
-        }px`;
+        if (this.isBottomSectionVisible && this.$refs.bottomSection) {
+          this.$refs.bottomSection.style.height = `${
+            this.windowHeight -
+            this.dashboardHeight -
+            newHeight -
+            toggleAreaHeight -
+            16
+          }px`;
+        }
 
         this.topSectionHeight = newHeight;
 
@@ -327,6 +364,9 @@ export default {
       } else {
         return typeof value;
       }
+    },
+    toggleBottomSection() {
+      this.isBottomSectionVisible = !this.isBottomSectionVisible;
     },
   },
 };
@@ -506,5 +546,46 @@ html {
   padding: 2px 6px;
   border-radius: 3px;
   margin-left: 10px;
+}
+
+.bottom-toggle-container {
+  width: 100%;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bottom-toggle-btn {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #495057;
+  cursor: pointer;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-toggle-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.bottom-toggle-btn.active {
+  background-color: #e7f5ff;
+  border-color: #74c0fc;
+  color: #1c7ed6;
+}
+
+.bottom-toggle-btn i {
+  font-size: 12px;
 }
 </style>
