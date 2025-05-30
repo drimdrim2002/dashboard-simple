@@ -16,24 +16,36 @@
               </div>
             </th>
             <th class="sortable" @click="sortBy('name')">
-              Driver
+              Vehicle ID
               <i class="sort-icon" :class="getSortIcon('name')"></i>
             </th>
             <th class="sortable" @click="sortBy('type')">
-              Driver Type
+              Vehicle Type
               <i class="sort-icon" :class="getSortIcon('type')"></i>
             </th>
-            <th class="sortable" @click="sortBy('time')">
-              Time
-              <i class="sort-icon" :class="getSortIcon('time')"></i>
+            <th class="sortable" @click="sortBy('zone')">
+              Zone ID
+              <i class="sort-icon" :class="getSortIcon('zone')"></i>
             </th>
-            <th class="sortable" @click="sortBy('orders')">
-              Orders
-              <i class="sort-icon" :class="getSortIcon('orders')"></i>
+            <th class="sortable" @click="sortBy('stopCount')">
+              Stop Count
+              <i class="sort-icon" :class="getSortIcon('stopCount')"></i>
+            </th>
+            <th class="sortable" @click="sortBy('cost')">
+              Cost
+              <i class="sort-icon" :class="getSortIcon('cost')"></i>
+            </th>
+            <th class="sortable" @click="sortBy('loadWeight')">
+              Load Weight
+              <i class="sort-icon" :class="getSortIcon('loadWeight')"></i>
             </th>
             <th class="sortable" @click="sortBy('distance')">
               Distance
               <i class="sort-icon" :class="getSortIcon('distance')"></i>
+            </th>
+            <th class="sortable" @click="sortBy('travelTime')">
+              Travel Time
+              <i class="sort-icon" :class="getSortIcon('travelTime')"></i>
             </th>
           </tr>
         </thead>
@@ -64,11 +76,14 @@
                 {{ driver.type }}
               </span>
             </td>
-            <td>{{ driver.time }}</td>
+            <td>{{ driver.zone }}</td>
             <td>
-              <span class="orders-badge">{{ driver.orders }}</span>
+              <span class="orders-badge">{{ driver.stopCount }}</span>
             </td>
-            <td>{{ driver.distance }} km</td>
+            <td>{{ formatCurrency(driver.cost) }}</td>
+            <td>{{ formatWeight(driver.loadWeight) }}</td>
+            <td>{{ formatDistance(driver.distance) }}</td>
+            <td>{{ formatTime(driver.travelTime) }}</td>
           </tr>
         </tbody>
       </table>
@@ -130,13 +145,22 @@ export default {
         if (typeof aValue === "string" && typeof bValue === "string") {
           aValue = aValue.localeCompare(bValue);
         } else {
-          if (this.sortColumn === "orders") {
-            aValue = parseInt(aValue) || 0;
-            bValue = parseInt(bValue) || 0;
+          if (
+            this.sortColumn === "stopCount" ||
+            this.sortColumn === "cost" ||
+            this.sortColumn === "loadWeight" ||
+            this.sortColumn === "travelTime"
+          ) {
+            aValue = parseFloat(aValue) || 0;
+            bValue = parseFloat(bValue) || 0;
           } else if (this.sortColumn === "distance") {
             aValue = parseFloat(aValue) || 0;
             bValue = parseFloat(bValue) || 0;
-          } else if (this.sortColumn === "name" || this.sortColumn === "type") {
+          } else if (
+            this.sortColumn === "name" ||
+            this.sortColumn === "type" ||
+            this.sortColumn === "zone"
+          ) {
             aValue = (aValue || "").toLowerCase();
             bValue = (bValue || "").toLowerCase();
           }
@@ -186,6 +210,22 @@ export default {
       return this.sortDirection === "asc"
         ? "bi bi-arrow-up"
         : "bi bi-arrow-down";
+    },
+    formatCurrency(value) {
+      // Implement currency formatting logic
+      return value.toLocaleString();
+    },
+    formatWeight(value) {
+      // Implement weight formatting logic
+      return value.toLocaleString() + " kg";
+    },
+    formatDistance(value) {
+      // Implement distance formatting logic
+      return value.toLocaleString() + " km";
+    },
+    formatTime(value) {
+      // Implement time formatting logic
+      return value.toLocaleString() + " minutes";
     },
   },
 };
