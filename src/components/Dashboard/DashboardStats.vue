@@ -172,57 +172,86 @@ export default {
 <style scoped>
 .dashboard-container {
   width: 100%;
+  height: 100%;
+  max-height: 200px;
   background-color: #fafafa;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .dashboard-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   color: #333;
   margin: 0;
-  padding: 16px 24px 12px 24px;
+  padding: 12px 16px 8px 16px;
+  flex-shrink: 0;
 }
 
 .dashboard {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 20px;
-  padding: 0 24px 24px 24px;
+  gap: 12px;
+  padding: 0 16px 12px 16px;
   width: 100%;
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 1200px) {
   .dashboard {
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 10px;
   }
 }
 
 @media (max-width: 992px) {
   .dashboard {
     grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 0 16px 16px 16px;
+    gap: 8px;
+    padding: 0 12px 8px 12px;
   }
 
   .dashboard-title {
-    padding: 16px 16px 12px 16px;
+    padding: 8px 12px 6px 12px;
+    font-size: 14px;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 6px;
   }
 
   .dashboard-title {
-    padding: 12px 16px 8px 16px;
-    font-size: 18px;
+    padding: 6px 12px 4px 12px;
+    font-size: 13px;
+  }
+
+  .plan-overview-card,
+  .metric-card,
+  .cost-card {
+    padding: 8px;
+  }
+
+  .card-header h3 {
+    font-size: 10px;
+  }
+
+  .primary-number {
+    font-size: 16px;
+  }
+
+  .plan-id {
+    font-size: 14px;
+  }
+
+  .cost-amount {
+    font-size: 16px;
   }
 }
 
@@ -231,12 +260,15 @@ export default {
 .metric-card,
 .cost-card {
   background-color: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 12px;
   box-sizing: border-box;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .plan-overview-card:hover,
@@ -246,13 +278,14 @@ export default {
 }
 
 .card-header {
-  margin-bottom: 16px;
-  border-bottom: 2px solid #f7fafc;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #f7fafc;
+  padding-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .card-header h3 {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   color: #4a5568;
   margin: 0;
@@ -264,45 +297,48 @@ export default {
 .plan-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
 }
 
 .plan-id {
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: #2d3748;
+  line-height: 1.1;
 }
 
 .plan-status {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   color: #48bb78;
   background-color: #f0fff4;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
   display: inline-block;
   width: fit-content;
 }
 
 .plan-period {
-  font-size: 13px;
+  font-size: 10px;
   color: #718096;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .plan-details-mini {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 2px;
+  margin-top: 4px;
 }
 
 .plan-details-mini div {
-  font-size: 12px;
+  font-size: 9px;
   color: #a0aec0;
   background-color: #f7fafc;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   width: fit-content;
 }
 
@@ -310,37 +346,39 @@ export default {
 .metric-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
+  flex: 1;
 }
 
 .metric-numbers {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
 }
 
 .primary-number {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
   color: #2d3748;
+  line-height: 1;
 }
 
 .divider {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
   color: #a0aec0;
 }
 
 .secondary-number {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
   color: #718096;
 }
 
 .progress-bar {
-  height: 8px;
+  height: 6px;
   background-color: #edf2f7;
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -351,26 +389,30 @@ export default {
 }
 
 .progress-text {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   color: #48bb78;
+  line-height: 1;
 }
 
 /* Cost Card */
 .cost-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
 }
 
 .cost-amount {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: #2d3748;
+  line-height: 1.1;
 }
 
 .cost-label {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: #a0aec0;
   text-transform: uppercase;
