@@ -1,8 +1,5 @@
 <template>
   <div class="map-container">
-    <div class="header">
-      <h1>Map</h1>
-    </div>
     <div class="content">
       <div id="map" ref="mapContainer" @wheel="handleWheel"></div>
     </div>

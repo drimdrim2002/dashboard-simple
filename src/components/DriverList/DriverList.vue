@@ -1,8 +1,5 @@
 <template>
   <div class="driver-list">
-    <div class="header">
-      <h1>Driver List</h1>
-    </div>
     <div>
       <search-bar
         @search="handleSearch"
