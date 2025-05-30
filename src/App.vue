@@ -7,10 +7,6 @@
     >
       <dashboard-stats :plan-data="planData" />
     </div>
-    <div
-      class="horizontal-resize-handle"
-      @mousedown="startDashboardResize"
-    ></div>
     <div class="main-container" :style="{ height: mainContainerHeight + 'px' }">
       <div
         class="top-section"
@@ -33,11 +29,6 @@
           <map-view />
         </div>
       </div>
-      <div
-        v-if="isBottomSectionVisible"
-        class="horizontal-resize-handle"
-        @mousedown="startTopSectionResize"
-      ></div>
 
       <!-- Toggle button for bottom section -->
       <div class="bottom-toggle-container">
@@ -119,13 +110,8 @@ export default {
       dashboardHeight: 130, // Initial dashboard height
       topSectionHeight: 620, // Initial top section height
       isHorizontalResizing: false,
-      isDashboardResizing: false,
-      isTopSectionResizing: false,
       startX: 0,
-      startY: 0,
       startWidth: 0,
-      startDashboardHeight: 0,
-      startTopSectionHeight: 0,
       windowHeight: window.innerHeight,
       windowWidth: window.innerWidth,
       // JSON data related additions
@@ -148,10 +134,6 @@ export default {
     window.removeEventListener("resize", this.handleResize);
     document.removeEventListener("mousemove", this.onHorizontalResize);
     document.removeEventListener("mouseup", this.stopHorizontalResize);
-    document.removeEventListener("mousemove", this.onDashboardResize);
-    document.removeEventListener("mouseup", this.stopDashboardResize);
-    document.removeEventListener("mousemove", this.onTopSectionResize);
-    document.removeEventListener("mouseup", this.stopTopSectionResize);
   },
   computed: {
     mapViewWidth() {
@@ -246,86 +228,6 @@ export default {
       document.removeEventListener("mousemove", this.onHorizontalResize);
       document.removeEventListener("mouseup", this.stopHorizontalResize);
     },
-    startDashboardResize(e) {
-      this.isDashboardResizing = true;
-      this.startY = e.clientY;
-      this.startDashboardHeight = this.dashboardHeight;
-      document.body.style.cursor = "ns-resize";
-
-      document.addEventListener("mousemove", this.onDashboardResize);
-      document.addEventListener("mouseup", this.stopDashboardResize);
-    },
-    onDashboardResize(e) {
-      if (!this.isDashboardResizing) return;
-
-      const delta = e.clientY - this.startY;
-      const newHeight = this.startDashboardHeight + delta;
-
-      if (newHeight >= 100 && newHeight <= this.windowHeight - 200) {
-        this.$refs.dashboardContainer.style.height = `${newHeight}px`;
-        this.dashboardHeight = newHeight;
-
-        this.$nextTick(() => {
-          this.$emit("map-resize");
-        });
-      }
-    },
-    stopDashboardResize() {
-      this.isDashboardResizing = false;
-      document.body.style.cursor = "default";
-
-      document.removeEventListener("mousemove", this.onDashboardResize);
-      document.removeEventListener("mouseup", this.stopDashboardResize);
-    },
-    startTopSectionResize(e) {
-      this.isTopSectionResizing = true;
-      this.startY = e.clientY;
-      this.startTopSectionHeight = this.topSectionHeight;
-      document.body.style.cursor = "ns-resize";
-
-      document.addEventListener("mousemove", this.onTopSectionResize);
-      document.addEventListener("mouseup", this.stopTopSectionResize);
-    },
-    onTopSectionResize(e) {
-      if (!this.isTopSectionResizing) return;
-
-      const delta = e.clientY - this.startY;
-      const newHeight = this.startTopSectionHeight + delta;
-      const toggleAreaHeight = 50; // toggle button container height
-      const minBottomHeight = this.isBottomSectionVisible ? 100 : 0;
-      const maxHeight =
-        this.windowHeight -
-        this.dashboardHeight -
-        minBottomHeight -
-        toggleAreaHeight -
-        16;
-
-      if (newHeight >= 200 && newHeight <= maxHeight) {
-        this.$refs.topSection.style.height = `${newHeight}px`;
-        if (this.isBottomSectionVisible && this.$refs.bottomSection) {
-          this.$refs.bottomSection.style.height = `${
-            this.windowHeight -
-            this.dashboardHeight -
-            newHeight -
-            toggleAreaHeight -
-            16
-          }px`;
-        }
-
-        this.topSectionHeight = newHeight;
-
-        this.$nextTick(() => {
-          this.$emit("map-resize");
-        });
-      }
-    },
-    stopTopSectionResize() {
-      this.isTopSectionResizing = false;
-      document.body.style.cursor = "default";
-
-      document.removeEventListener("mousemove", this.onTopSectionResize);
-      document.removeEventListener("mouseup", this.stopTopSectionResize);
-    },
     async loadJsonData() {
       this.isLoading = true;
       this.error = null;
@@ -414,34 +316,6 @@ html {
 
 .bottom-content {
   padding: 20px;
-}
-
-.horizontal-resize-handle {
-  width: 100%;
-  height: 8px;
-  background-color: #e0e0e0;
-  cursor: ns-resize;
-  transition: background-color 0.2s;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.horizontal-resize-handle::after {
-  content: "";
-  width: 40px;
-  height: 4px;
-  background-color: #bdbdbd;
-  border-radius: 2px;
-}
-
-.horizontal-resize-handle:hover {
-  background-color: #d0d0d0;
-}
-
-.horizontal-resize-handle:hover::after {
-  background-color: #9e9e9e;
 }
 
 .driver-list-container,
