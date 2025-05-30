@@ -324,7 +324,7 @@ export default {
 .table-responsive {
   height: calc(100vh - 400px);
   min-height: 250px;
-  max-height: 500px;
+  max-height: calc(100% - 180px);
   overflow-y: scroll;
   overflow-x: auto;
   border: 1px solid #dee2e6;
