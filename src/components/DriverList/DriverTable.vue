@@ -4,7 +4,6 @@
       <table class="table table-hover">
         <thead>
           <tr class="bg-light">
-            <th class="seq-column">Seq</th>
             <th class="checkbox-column">
               <div class="form-check">
                 <input
@@ -15,6 +14,8 @@
                 />
               </div>
             </th>
+            <th class="seq-column">Seq</th>
+
             <th class="sortable" @click="sortBy('name')">
               Vehicle ID
               <i class="sort-icon" :class="getSortIcon('name')"></i>
@@ -56,7 +57,6 @@
             :data-driver-id="driver.id"
             class="align-middle"
           >
-            <td class="seq-column">{{ index + showingStart }}</td>
             <td class="checkbox-column">
               <div class="form-check">
                 <input
@@ -67,6 +67,8 @@
                 />
               </div>
             </td>
+            <td class="seq-column">{{ index + showingStart }}</td>
+
             <td class="fw-medium">{{ driver.name }}</td>
             <td>
               <span
@@ -364,7 +366,7 @@ export default {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   vertical-align: middle;
   background-color: #f8f9fa;
 }
@@ -552,6 +554,8 @@ export default {
   user-select: none;
   position: relative;
   transition: background-color 0.2s;
+  min-width: 100px;
+  font-size: 0.75rem;
 }
 
 .sortable:hover {
@@ -559,7 +563,6 @@ export default {
 }
 
 .sort-icon {
-  margin-left: 0.5rem;
   font-size: 0.75rem;
   opacity: 0.6;
   transition: opacity 0.2s;
@@ -581,16 +584,18 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.75rem;
 }
 
 .pagination-info {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #6c757d;
 }
 
 .pagination-controls {
   display: flex;
   align-items: center;
+  font-size: 0.75rem;
 }
 
 .pagination-btn {
@@ -601,6 +606,7 @@ export default {
   border-radius: 0.25rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 0.75rem;
 }
 
 .pagination-btn:hover {

@@ -35,7 +35,7 @@ export default {
 
 <style scoped>
 .search-container {
-  padding: 10px 20px;
+  padding: 6px 12px;
   background-color: #f9f9f9;
   border-bottom: 1px solid #ddd;
   display: flex;
@@ -44,15 +44,17 @@ export default {
 }
 
 .search-container input[type="text"] {
-  width: 200px;
-  padding: 5px;
-  margin-right: 10px;
+  width: 160px;
+  padding: 4px 6px;
+  margin-right: 8px;
   box-sizing: border-box;
+  font-size: 0.875rem;
 }
 
 .search-container select {
-  width: 90px;
-  height: 30px;
-  margin-right: 10px;
+  width: 80px;
+  height: 26px;
+  margin-right: 8px;
+  font-size: 0.875rem;
 }
 </style>
