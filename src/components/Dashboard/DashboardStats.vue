@@ -83,7 +83,6 @@
           <div class="cost-amount">
             {{ formatCurrency(planData?.totCostAmt || 0) }}
           </div>
-          <div class="cost-label">Total Cost</div>
         </div>
       </div>
     </div>
@@ -401,7 +400,8 @@ export default {
   flex-direction: column;
   gap: 4px;
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-end;
 }
 
 .cost-amount {
@@ -409,6 +409,7 @@ export default {
   font-weight: 700;
   color: #2d3748;
   line-height: 1.1;
+  text-align: right;
 }
 
 .cost-label {
