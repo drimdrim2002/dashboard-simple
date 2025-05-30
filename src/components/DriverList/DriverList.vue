@@ -45,7 +45,7 @@ export default {
       // routeList 데이터를 driver 형태로 변환
       return this.routeList.map((route, index) => ({
         id: index + 1,
-        name: `Vehicle ${route.vhclId}`,
+        name: route.vhclId || "",
         type: route.vhclTcd || "Unknown",
         zone: route.zoneId || "",
         stopCount: route.stopRcnt || 0,
