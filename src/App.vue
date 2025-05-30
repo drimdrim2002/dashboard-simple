@@ -43,21 +43,21 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <h3>JSON 데이터 정보</h3>
+          <h3>JSON Data Information</h3>
 
-          <!-- 로딩 상태 -->
+          <!-- Loading status -->
           <div v-if="isLoading" class="loading">
-            <p>JSON 파일을 로드 중입니다...</p>
+            <p>Loading JSON file...</p>
           </div>
 
-          <!-- 오류 상태 -->
+          <!-- Error status -->
           <div v-else-if="error" class="error">
-            <p>오류: {{ error }}</p>
+            <p>Error: {{ error }}</p>
           </div>
 
-          <!-- JSON 키 목록 -->
+          <!-- JSON keys list -->
           <div v-else-if="jsonKeys.length > 0" class="json-info">
-            <h4>JSON 파일 키 목록 ({{ jsonKeys.length }}개):</h4>
+            <h4>JSON File Keys ({{ jsonKeys.length }} items):</h4>
             <div class="keys-container">
               <div
                 v-for="(key, index) in jsonKeys"
@@ -72,9 +72,9 @@
             </div>
           </div>
 
-          <!-- 초기 상태 -->
+          <!-- Initial state -->
           <div v-else>
-            <p>JSON 데이터를 로드하지 못했습니다.</p>
+            <p>Failed to load JSON data.</p>
           </div>
         </div>
       </div>
@@ -97,8 +97,8 @@ export default {
   data() {
     return {
       driverListWidth: 400,
-      dashboardHeight: 200, // 대시보드 초기 높이
-      topSectionHeight: 400, // 상단 섹션 초기 높이
+      dashboardHeight: 200, // Initial dashboard height
+      topSectionHeight: 400, // Initial top section height
       isHorizontalResizing: false,
       isDashboardResizing: false,
       isTopSectionResizing: false,
@@ -109,7 +109,7 @@ export default {
       startTopSectionHeight: 0,
       windowHeight: window.innerHeight,
       windowWidth: window.innerWidth,
-      // JSON 데이터 관련 추가
+      // JSON data related additions
       jsonData: null,
       jsonKeys: [],
       isLoading: false,
@@ -120,7 +120,7 @@ export default {
     this.loadJsonData();
   },
   mounted() {
-    // 창 크기 변경 감지
+    // Window size change detection
     window.addEventListener("resize", this.handleResize);
   },
   beforeDestroy() {
@@ -248,7 +248,7 @@ export default {
 
       const delta = e.clientY - this.startY;
       const newHeight = this.startTopSectionHeight + delta;
-      const maxHeight = this.windowHeight - this.dashboardHeight - 100 - 16; // 하단 섹션 최소 100px 보장, 리사이즈 핸들 16px
+      const maxHeight = this.windowHeight - this.dashboardHeight - 100 - 16; // Ensure bottom section minimum 100px, resize handle 16px
 
       if (newHeight >= 200 && newHeight <= maxHeight) {
         this.$refs.topSection.style.height = `${newHeight}px`;
@@ -284,27 +284,27 @@ export default {
         this.jsonData = data;
         this.jsonKeys = Object.keys(data);
 
-        console.log("JSON 키 목록:", this.jsonKeys);
+        console.log("JSON keys list:", this.jsonKeys);
         console.log(
-          "전체 JSON 데이터 크기:",
+          "Total JSON data size:",
           JSON.stringify(data).length,
-          "문자"
+          "characters"
         );
       } catch (err) {
         this.error = err.message;
-        console.error("JSON 로드 오류:", err);
+        console.error("JSON load error:", err);
       } finally {
         this.isLoading = false;
       }
     },
     getDataType(value) {
       if (Array.isArray(value)) {
-        return `배열 (${value.length}개 항목)`;
+        return `Array (${value.length} items)`;
       } else if (value === null) {
         return "null";
       } else if (typeof value === "object") {
         const keys = Object.keys(value);
-        return `객체 (${keys.length}개 속성)`;
+        return `Object (${keys.length} properties)`;
       } else {
         return typeof value;
       }
@@ -429,7 +429,7 @@ html {
   background-color: #9e9e9e;
 }
 
-/* JSON 데이터 표시 스타일 */
+/* JSON data display styles */
 .loading {
   text-align: center;
   color: #666;

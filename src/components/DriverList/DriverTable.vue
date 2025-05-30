@@ -81,7 +81,7 @@
                 class="status-badge"
                 :style="{ backgroundColor: getStatusColor(driver.statusColor) }"
               >
-                {{ getStatusText(driver.statusColor) }}
+                {{ getColorStatus(driver.statusColor) }}
               </span>
             </td>
             <td class="fw-medium">{{ driver.name }}</td>
@@ -183,29 +183,38 @@ export default {
         let aValue = a[this.sortColumn];
         let bValue = b[this.sortColumn];
 
-        // 특별한 정렬 처리
-        if (this.sortColumn === "lockStatus") {
-          aValue = a.lockStatus ? 1 : 0;
-          bValue = b.lockStatus ? 1 : 0;
-        } else if (this.sortColumn === "statusColor") {
-          // 상태별 우선순위 정렬
-          const statusPriority = {
-            "#4caf50": 1, // Active
-            "#2196f3": 2, // En Route
-            "#ff9800": 3, // Standby
-            "#f44336": 4, // Offline
-          };
-          aValue = statusPriority[a.statusColor] || 5;
-          bValue = statusPriority[b.statusColor] || 5;
-        } else if (this.sortColumn === "orders") {
-          aValue = parseInt(a.orders) || 0;
-          bValue = parseInt(b.orders) || 0;
-        } else if (this.sortColumn === "distance") {
-          aValue = parseFloat(a.distance) || 0;
-          bValue = parseFloat(b.distance) || 0;
-        } else if (this.sortColumn === "name" || this.sortColumn === "type") {
-          aValue = (aValue || "").toLowerCase();
-          bValue = (bValue || "").toLowerCase();
+        // Special sorting for different types
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          aValue = aValue.localeCompare(bValue);
+        } else {
+          // Priority sorting by status
+          if (this.sortColumn === "status") {
+            const statusOrder = { active: 1, waiting: 2, offline: 3 };
+            aValue =
+              (statusOrder[aValue] || 999) - (statusOrder[bValue] || 999);
+          } else if (this.sortColumn === "lockStatus") {
+            aValue = aValue ? 1 : 0;
+            bValue = bValue ? 1 : 0;
+          } else if (this.sortColumn === "statusColor") {
+            // Priority sorting by status
+            const statusPriority = {
+              "#4caf50": 1, // Active
+              "#2196f3": 2, // En Route
+              "#ff9800": 3, // Standby
+              "#f44336": 4, // Offline
+            };
+            aValue = statusPriority[aValue] || 5;
+            bValue = statusPriority[bValue] || 5;
+          } else if (this.sortColumn === "orders") {
+            aValue = parseInt(aValue) || 0;
+            bValue = parseInt(bValue) || 0;
+          } else if (this.sortColumn === "distance") {
+            aValue = parseFloat(aValue) || 0;
+            bValue = parseFloat(bValue) || 0;
+          } else if (this.sortColumn === "name" || this.sortColumn === "type") {
+            aValue = (aValue || "").toLowerCase();
+            bValue = (bValue || "").toLowerCase();
+          }
         }
 
         let result = 0;
@@ -234,27 +243,27 @@ export default {
       // Implementation for editing driver
     },
     getStatusColor(color) {
-      // 상태 색상 매핑
+      // Status color mapping
       const colorMap = {
-        "#4caf50": "#4caf50", // 초록색 (활성)
-        "#ff9800": "#ff9800", // 주황색 (대기)
-        "#f44336": "#f44336", // 빨간색 (오프라인)
-        "#2196f3": "#2196f3", // 파란색 (이동 중)
+        "#4caf50": "#4caf50", // Green (Active)
+        "#ff9800": "#ff9800", // Orange (Waiting)
+        "#f44336": "#f44336", // Red (Offline)
+        "#2196f3": "#2196f3", // Blue (Moving)
       };
       return colorMap[color] || color;
     },
-    getStatusText(color) {
-      // 색상에 따른 상태 텍스트 반환
+    getColorStatus(color) {
+      // Return status text based on color
       const statusMap = {
         "#4caf50": "Active",
-        "#ff9800": "Standby",
+        "#ff9800": "Waiting",
         "#f44336": "Offline",
-        "#2196f3": "En Route",
+        "#2196f3": "Moving",
       };
       return statusMap[color] || "Unknown";
     },
     getDriverTypeClass(type) {
-      // 드라이버 타입에 따른 클래스 반환
+      // Return class based on driver type
       const typeMap = {
         "Full-time": "type-full",
         "Part-time": "type-part",
@@ -265,17 +274,17 @@ export default {
     },
     sortBy(column) {
       if (this.sortColumn === column) {
-        // 같은 컬럼을 클릭하면 정렬 방향 변경
+        // Change sort direction if same column is clicked
         this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
       } else {
-        // 다른 컬럼을 클릭하면 해당 컬럼으로 오름차순 정렬
+        // Sort ascending if different column is clicked
         this.sortColumn = column;
         this.sortDirection = "asc";
       }
     },
     getSortIcon(column) {
       if (this.sortColumn !== column) {
-        return "bi bi-arrow-down-up"; // 정렬되지 않은 상태
+        return "bi bi-arrow-down-up"; // Unsorted state
       }
       return this.sortDirection === "asc"
         ? "bi bi-arrow-up"
@@ -438,13 +447,12 @@ export default {
   border-color: #0d6efd;
 }
 
-/* 부트스트랩 아이콘 (CDN으로 불러와야 함) */
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css");
-
-/* 부트스트랩 유틸리티 클래스 (실제로는 부트스트랩 CSS를 불러와야 함) */
-.bg-light {
-  background-color: #f8f9fa !important;
+/* Bootstrap Icons (Should be loaded via CDN) */
+.bi {
+  font-family: bootstrap-icons !important;
 }
+
+/* Bootstrap Utility Classes (Should load Bootstrap CSS) */
 .text-muted {
   color: #6c757d !important;
 }

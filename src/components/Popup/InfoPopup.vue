@@ -1,9 +1,8 @@
 <template>
-  <div>
-    <div class="popup-backdrop" v-if="isVisible" @click="hidePopup"></div>
-    <div id="popup" class="popup" v-if="isVisible">
-      <h3>상세 정보</h3>
-      <p id="popup-content">선택된 숫자: {{ formatNumber(number) }}</p>
+  <div v-if="show" class="popup-overlay" @click="closePopup">
+    <div class="popup" @click.stop>
+      <h3>Detailed Information</h3>
+      <p id="popup-content">Selected number: {{ formatNumber(number) }}</p>
     </div>
   </div>
 </template>
@@ -13,17 +12,17 @@ export default {
   name: "InfoPopup",
   data() {
     return {
-      isVisible: false,
+      show: false,
       number: 0,
     };
   },
   methods: {
     showPopup(number) {
       this.number = number;
-      this.isVisible = true;
+      this.show = true;
     },
-    hidePopup() {
-      this.isVisible = false;
+    closePopup() {
+      this.show = false;
     },
     formatNumber(num) {
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");

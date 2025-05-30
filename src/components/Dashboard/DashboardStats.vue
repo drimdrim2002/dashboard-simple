@@ -27,7 +27,7 @@
       <!-- 2. Order Assignment Card -->
       <div class="metric-card">
         <div class="card-header">
-          <h3>📋 주문 배정</h3>
+          <h3>📋 ORDER ASSIGNMENT</h3>
         </div>
         <div class="metric-content">
           <div class="metric-numbers">
@@ -45,14 +45,14 @@
               :style="{ width: orderProgress + '%' }"
             ></div>
           </div>
-          <div class="progress-text">{{ orderProgress }}% 완료</div>
+          <div class="progress-text">{{ orderProgress }}% Complete</div>
         </div>
       </div>
 
       <!-- 3. Vehicle Usage Card -->
       <div class="metric-card">
         <div class="card-header">
-          <h3>🚛 차량 사용</h3>
+          <h3>🚛 VEHICLE USAGE</h3>
         </div>
         <div class="metric-content">
           <div class="metric-numbers">
@@ -70,14 +70,14 @@
               :style="{ width: vehicleProgress + '%' }"
             ></div>
           </div>
-          <div class="progress-text">{{ vehicleProgress }}% 사용</div>
+          <div class="progress-text">{{ vehicleProgress }}% Used</div>
         </div>
       </div>
 
       <!-- 4. Cost Card -->
       <div class="cost-card">
         <div class="card-header">
-          <h3>💰 총 비용</h3>
+          <h3>💰 TOTAL COST</h3>
         </div>
         <div class="cost-content">
           <div class="cost-amount">
@@ -226,7 +226,7 @@ export default {
   }
 }
 
-/* 카드 공통 스타일 */
+/* Common card styles */
 .plan-overview-card,
 .metric-card,
 .cost-card {
@@ -377,7 +377,7 @@ export default {
   letter-spacing: 0.5px;
 }
 
-/* Plan Details 스타일 */
+/* Plan Details Styles */
 .plan-details {
   margin: 0 24px 24px 24px;
   padding: 20px;

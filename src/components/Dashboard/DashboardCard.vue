@@ -15,81 +15,55 @@
       <div class="divider"></div>
 
       <div class="details">
-        <!-- 주문 & 차량 카드 공통 UI -->
-        <template v-if="type === 'order' || type === 'vehicle'">
-          <div class="stat-item">
-            <div class="stat-row">
-              <div class="stat-label">{{ firstItemLabel }}</div>
-              <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
-              <div class="progress-bar">
-                <div
-                  class="progress"
-                  :style="{
-                    width: percentage + '%',
-                    backgroundColor: progressColor,
-                  }"
-                ></div>
-              </div>
-            </div>
+        <!-- Order & Vehicle card common UI -->
+        <div v-if="type === 'order' || type === 'vehicle'" class="card-body">
+          <div class="card-numbers">
+            <span class="primary-number">{{ primaryValue }}</span>
+            <span class="divider">/</span>
+            <span class="secondary-number">{{ secondaryValue }}</span>
           </div>
-
-          <div class="stat-item">
-            <div class="stat-row">
-              <div class="stat-label">{{ secondItemLabel }}</div>
-              <div class="stat-value">{{ formatNumber(secondItemValue) }}</div>
-              <div class="progress-bar">
-                <div
-                  class="progress-inverse"
-                  :style="{
-                    width: 100 - percentage + '%',
-                    backgroundColor: secondaryColor,
-                  }"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <!-- 계획 카드용 UI -->
-        <template v-else-if="type === 'plan'">
-          <div class="stat-item">
-            <div class="stat-row">
-              <div class="stat-label">{{ firstItemLabel }}</div>
-              <div class="stat-value">{{ firstItemValue }}</div>
-            </div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-row plan-status-row">
-              <div class="stat-label">{{ secondItemLabel }}</div>
+          <div class="card-progress">
+            <div class="progress-bar">
               <div
-                class="stat-value plan-status"
-                :style="{ color: progressColor }"
-              >
-                {{ secondItemValue }}
-              </div>
+                class="progress-fill"
+                :style="{ width: progressPercentage + '%' }"
+              ></div>
+            </div>
+            <div class="progress-text">
+              {{ progressPercentage }}% {{ getSecondaryLabel() }}
             </div>
           </div>
-        </template>
+        </div>
 
-        <!-- 비용 카드용 UI -->
-        <template v-else-if="type === 'cost'">
-          <div class="stat-item">
-            <div class="stat-row">
-              <div class="stat-label">{{ firstItemLabel }}</div>
-              <div class="stat-value">{{ formatNumber(firstItemValue) }}</div>
+        <!-- Plan card UI -->
+        <div v-else-if="type === 'plan'" class="card-body plan-card">
+          <div class="plan-info">
+            <div class="plan-id">{{ primaryValue }}</div>
+            <div class="plan-status" :class="getStatusClass()">
+              {{ secondaryValue }}
             </div>
           </div>
+        </div>
 
-          <div class="stat-item">
-            <div class="stat-row">
-              <div class="stat-label">{{ secondItemLabel }}</div>
-              <div class="stat-value">
-                ₩{{ formatCurrency(secondItemValue) }}
-              </div>
+        <!-- Cost card UI -->
+        <div v-else-if="type === 'cost'" class="card-body">
+          <div class="card-numbers">
+            <span class="primary-number">{{ primaryValue }}</span>
+            <span class="divider">/</span>
+            <span class="secondary-number">{{ secondaryValue }}</span>
+          </div>
+          <div class="card-progress">
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                :style="{ width: progressPercentage + '%' }"
+              ></div>
+            </div>
+            <div class="progress-text">
+              {{ progressPercentage }}% {{ getSecondaryLabel() }}
             </div>
           </div>
-        </template>
+        </div>
       </div>
     </div>
   </div>
@@ -121,10 +95,10 @@ export default {
   computed: {
     cardTitle() {
       const titles = {
-        order: "주문",
-        vehicle: "차량",
-        cost: "비용",
-        plan: "계획",
+        order: "Order",
+        vehicle: "Vehicle",
+        cost: "Cost",
+        plan: "Plan",
       };
       return titles[this.type];
     },
@@ -156,17 +130,17 @@ export default {
       return colors[this.type];
     },
     firstItemLabel() {
-      if (this.type === "order") return "배정됨";
-      if (this.type === "vehicle") return "사용중";
-      if (this.type === "cost") return "경로";
+      if (this.type === "order") return "Assigned";
+      if (this.type === "vehicle") return "In Use";
+      if (this.type === "cost") return "Route";
       if (this.type === "plan") return "ID";
       return "";
     },
     secondItemLabel() {
-      if (this.type === "order") return "미배정";
-      if (this.type === "vehicle") return "미사용";
-      if (this.type === "cost") return "경로당 비용";
-      if (this.type === "plan") return "상태";
+      if (this.type === "order") return "Unassigned";
+      if (this.type === "vehicle") return "Unused";
+      if (this.type === "cost") return "Cost per Route";
+      if (this.type === "plan") return "Status";
       return "";
     },
     firstItemValue() {
@@ -198,6 +172,21 @@ export default {
         return 100; // 계획 카드는 항상 100% 채워진 상태바 표시
       }
       return 0;
+    },
+    progressPercentage() {
+      return this.percentage;
+    },
+    getSecondaryLabel() {
+      return this.secondItemLabel;
+    },
+    getStatusClass() {
+      const statuses = {
+        order: "",
+        vehicle: "",
+        cost: "",
+        plan: "",
+      };
+      return statuses[this.type];
     },
   },
   methods: {
@@ -275,64 +264,72 @@ export default {
   flex: 1;
 }
 
-.stat-item {
-  margin-bottom: 5px;
+.card-body {
+  margin-bottom: 16px;
 }
 
-.stat-item:last-child {
-  margin-bottom: 0;
+.card-numbers {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.stat-row {
+.primary-number,
+.secondary-number {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.divider {
+  margin: 0 8px;
+}
+
+.card-progress {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 18px;
-  flex-wrap: wrap;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #666;
-  width: 25%;
-  white-space: nowrap;
-}
-
-.stat-value {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-  width: 25%;
-  text-align: right;
-  margin-right: 10px;
 }
 
 .progress-bar {
   height: 2px;
   flex-grow: 1;
-  width: 40%;
   background-color: #f5f5f5;
   border-radius: 1px;
   overflow: hidden;
 }
 
-.progress {
+.progress-fill {
   height: 100%;
   border-radius: 1px;
+  background-color: #4876f8;
 }
 
-.progress-inverse {
-  height: 100%;
-  border-radius: 1px;
+.progress-text {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #666;
 }
 
-.plan-status-row {
+.plan-card {
+  padding: 16px;
+}
+
+.plan-info {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.plan-id {
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .plan-status {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
   text-align: right;
-  font-weight: 600;
   margin-right: 0;
   width: auto;
 }

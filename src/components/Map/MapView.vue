@@ -42,19 +42,21 @@ export default {
         }),
       });
 
-      // 기본 마우스 휠 동작 비활성화
+      // Disable default mouse wheel interaction
       this.map.getViewport().style.pointerEvents = "none";
       this.map.getViewport().style.cursor = "default";
     },
     handleWheel(event) {
-      // Ctrl 키가 눌린 상태에서만 줌 동작 실행
+      // Disable default mouse wheel behavior
+      event.preventDefault();
+
       if (event.ctrlKey) {
-        event.preventDefault();
+        // Execute zoom action only when Ctrl key is pressed
+        const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
         const view = this.map.getView();
-        const delta = event.deltaY;
         const zoom = view.getZoom();
         view.animate({
-          zoom: zoom + (delta > 0 ? -0.5 : 0.5),
+          zoom: zoom * zoomFactor,
           duration: 100,
         });
       }

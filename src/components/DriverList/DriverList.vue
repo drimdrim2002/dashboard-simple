@@ -52,20 +52,20 @@ export default {
         });
       }
 
-      // driver 이름 기준으로 먼저 정렬하고, 이름이 같으면 driver type으로 정렬
+      // Sort by driver name first, then by driver type if names are the same
       return filtered.sort((a, b) => {
         const nameA = (a.name || "").toLowerCase();
         const nameB = (b.name || "").toLowerCase();
         const typeA = (a.type || "").toLowerCase();
         const typeB = (b.type || "").toLowerCase();
 
-        // 먼저 이름으로 비교
+        // Compare by name first
         const nameComparison = nameA.localeCompare(nameB);
         if (nameComparison !== 0) {
           return nameComparison;
         }
 
-        // 이름이 같으면 타입으로 비교
+        // If names are the same, compare by type
         return typeA.localeCompare(typeB);
       });
     },
