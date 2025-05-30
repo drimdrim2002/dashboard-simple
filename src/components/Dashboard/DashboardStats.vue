@@ -1,6 +1,5 @@
 <template>
   <div class="dashboard-container">
-    <h2 class="dashboard-title">Dispatch Summary</h2>
     <div class="dashboard">
       <!-- 1. Plan Overview Card -->
       <div class="plan-overview-card">
@@ -16,10 +15,6 @@
           </div>
           <div class="plan-period">
             {{ formatDateRange(planData?.statDate, planData?.endDate) }}
-          </div>
-          <div class="plan-details-mini">
-            <div v-if="planData?.lssId">LSS: {{ planData.lssId }}</div>
-            <div v-if="planData?.tnntId">TNT: {{ planData.tnntId }}</div>
           </div>
         </div>
       </div>

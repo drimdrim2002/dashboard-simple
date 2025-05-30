@@ -116,8 +116,8 @@ export default {
   data() {
     return {
       driverListWidth: 400,
-      dashboardHeight: 200, // Initial dashboard height
-      topSectionHeight: 400, // Initial top section height
+      dashboardHeight: 130, // Initial dashboard height
+      topSectionHeight: 650, // Initial top section height
       isHorizontalResizing: false,
       isDashboardResizing: false,
       isTopSectionResizing: false,

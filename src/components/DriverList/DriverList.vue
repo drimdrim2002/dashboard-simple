@@ -132,7 +132,7 @@ export default {
   flex: 1;
   position: relative;
   overflow: hidden;
-  padding: 20px;
+  padding: 6px;
   min-height: 0;
 }
 </style>

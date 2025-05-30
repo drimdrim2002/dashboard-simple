@@ -51,12 +51,12 @@
         </thead>
         <tbody>
           <tr
-            v-for="(driver, index) in sortedDrivers"
+            v-for="(driver, index) in paginatedDrivers"
             :key="driver.id"
             :data-driver-id="driver.id"
             class="align-middle"
           >
-            <td class="seq-column">{{ index + 1 }}</td>
+            <td class="seq-column">{{ index + showingStart }}</td>
             <td class="checkbox-column">
               <div class="form-check">
                 <input
@@ -88,6 +88,48 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="pagination-container">
+      <div class="pagination-info">
+        Showing {{ showingStart }} to {{ showingEnd }} of
+        {{ sortedDrivers.length }} entries
+      </div>
+      <div class="pagination-controls">
+        <button
+          @click="goToFirstPage"
+          :disabled="currentPage === 1"
+          class="pagination-btn"
+        >
+          First
+        </button>
+        <button
+          @click="prevPage"
+          :disabled="currentPage === 1"
+          class="pagination-btn"
+        >
+          Previous
+        </button>
+        <span class="pagination-info">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+        <button
+          @click="nextPage"
+          :disabled="currentPage === totalPages"
+          class="pagination-btn"
+        >
+          Next
+        </button>
+        <button
+          @click="goToLastPage"
+          :disabled="currentPage === totalPages"
+          class="pagination-btn"
+        >
+          Last
+        </button>
+      </div>
+    </div>
+
     <div v-if="drivers.length === 0" class="empty-state">
       <div class="text-center p-4">
         <i class="bi bi-car-front display-4 text-muted"></i>
@@ -123,6 +165,8 @@ export default {
       selectedDrivers: [],
       sortColumn: null,
       sortDirection: "asc", // 'asc' or 'desc'
+      currentPage: 1,
+      itemsPerPage: 10,
     };
   },
   computed: {
@@ -176,6 +220,23 @@ export default {
         return this.sortDirection === "desc" ? -result : result;
       });
     },
+    paginatedDrivers() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.sortedDrivers.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.sortedDrivers.length / this.itemsPerPage);
+    },
+    showingStart() {
+      return this.sortedDrivers.length === 0
+        ? 0
+        : (this.currentPage - 1) * this.itemsPerPage + 1;
+    },
+    showingEnd() {
+      const end = this.currentPage * this.itemsPerPage;
+      return Math.min(end, this.sortedDrivers.length);
+    },
   },
   methods: {
     toggleAllDrivers(event) {
@@ -226,6 +287,22 @@ export default {
     formatTime(value) {
       // Implement time formatting logic
       return value.toLocaleString() + " minutes";
+    },
+    goToFirstPage() {
+      this.currentPage = 1;
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    goToLastPage() {
+      this.currentPage = this.totalPages;
     },
   },
 };
@@ -371,6 +448,10 @@ export default {
 }
 
 /* Bootstrap Utility Classes (Should load Bootstrap CSS) */
+.align-middle {
+  vertical-align: middle !important;
+  font-size: 0.8rem !important;
+}
 .text-muted {
   color: #6c757d !important;
 }
@@ -492,5 +573,42 @@ export default {
 .sortable .sort-icon.bi-arrow-down {
   opacity: 1;
   color: #0d6efd;
+}
+
+.pagination-container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-btn {
+  padding: 0.25rem 0.5rem;
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-btn:hover {
+  background-color: #f8f9fa;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

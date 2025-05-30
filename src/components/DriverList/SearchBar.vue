@@ -10,18 +10,6 @@
       <option value="driver">Driver</option>
       <option value="type">Driver Type</option>
     </select>
-    <div class="icon-buttons">
-      <button
-        class="icon-button"
-        @click="$emit('replace-car')"
-        title="Replace Car"
-      >
-        🚗
-      </button>
-      <button class="icon-button" @click="$emit('unlock')" title="Unlock">
-        🔓
-      </button>
-    </div>
   </div>
 </template>
 
@@ -52,7 +40,7 @@ export default {
   border-bottom: 1px solid #ddd;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .search-container input[type="text"] {
@@ -66,18 +54,5 @@ export default {
   width: 90px;
   height: 30px;
   margin-right: 10px;
-}
-
-.icon-buttons {
-  display: flex;
-  gap: 10px;
-  margin-left: auto;
-}
-
-.icon-button {
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
 }
 </style>
