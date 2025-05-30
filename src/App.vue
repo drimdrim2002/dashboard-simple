@@ -43,8 +43,39 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <h3>하단 섹션</h3>
-          <p>이곳에 추가 컨텐츠를 배치할 수 있습니다.</p>
+          <h3>JSON 데이터 정보</h3>
+
+          <!-- 로딩 상태 -->
+          <div v-if="isLoading" class="loading">
+            <p>JSON 파일을 로드 중입니다...</p>
+          </div>
+
+          <!-- 오류 상태 -->
+          <div v-else-if="error" class="error">
+            <p>오류: {{ error }}</p>
+          </div>
+
+          <!-- JSON 키 목록 -->
+          <div v-else-if="jsonKeys.length > 0" class="json-info">
+            <h4>JSON 파일 키 목록 ({{ jsonKeys.length }}개):</h4>
+            <div class="keys-container">
+              <div
+                v-for="(key, index) in jsonKeys"
+                :key="index"
+                class="key-item"
+              >
+                <span class="key-name">{{ key }}</span>
+                <span v-if="jsonData && jsonData[key]" class="key-type">
+                  {{ getDataType(jsonData[key]) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 초기 상태 -->
+          <div v-else>
+            <p>JSON 데이터를 로드하지 못했습니다.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -78,7 +109,15 @@ export default {
       startTopSectionHeight: 0,
       windowHeight: window.innerHeight,
       windowWidth: window.innerWidth,
+      // JSON 데이터 관련 추가
+      jsonData: null,
+      jsonKeys: [],
+      isLoading: false,
+      error: null,
     };
+  },
+  created() {
+    this.loadJsonData();
   },
   mounted() {
     // 창 크기 변경 감지
@@ -211,6 +250,45 @@ export default {
       document.removeEventListener("mousemove", this.onTopSectionResize);
       document.removeEventListener("mouseup", this.stopTopSectionResize);
     },
+    async loadJsonData() {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const response = await fetch("/simple_input.json");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        this.jsonData = data;
+        this.jsonKeys = Object.keys(data);
+
+        console.log("JSON 키 목록:", this.jsonKeys);
+        console.log(
+          "전체 JSON 데이터 크기:",
+          JSON.stringify(data).length,
+          "문자"
+        );
+      } catch (err) {
+        this.error = err.message;
+        console.error("JSON 로드 오류:", err);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    getDataType(value) {
+      if (Array.isArray(value)) {
+        return `배열 (${value.length}개 항목)`;
+      } else if (value === null) {
+        return "null";
+      } else if (typeof value === "object") {
+        const keys = Object.keys(value);
+        return `객체 (${keys.length}개 속성)`;
+      } else {
+        return typeof value;
+      }
+    },
   },
 };
 </script>
@@ -261,7 +339,7 @@ html {
 
 .horizontal-resize-handle {
   width: 100%;
-  height: 16px;
+  height: 8px;
   background-color: #e0e0e0;
   cursor: ns-resize;
   transition: background-color 0.2s;
@@ -304,7 +382,7 @@ html {
 }
 
 .resize-handle {
-  width: 16px;
+  width: 8px;
   background-color: #e0e0e0;
   cursor: ew-resize;
   transition: background-color 0.2s;
@@ -329,5 +407,65 @@ html {
 
 .resize-handle:hover::after {
   background-color: #9e9e9e;
+}
+
+/* JSON 데이터 표시 스타일 */
+.loading {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.error {
+  color: #e53e3e;
+  background-color: #fed7d7;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #feb2b2;
+}
+
+.json-info h4 {
+  color: #2d3748;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.keys-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.key-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.key-item:hover {
+  background-color: #edf2f7;
+}
+
+.key-name {
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+}
+
+.key-type {
+  font-size: 0.85em;
+  color: #718096;
+  background-color: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 10px;
 }
 </style>
