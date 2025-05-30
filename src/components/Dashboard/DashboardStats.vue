@@ -218,6 +218,16 @@ export default {
     padding: 8px 12px 6px 12px;
     font-size: 14px;
   }
+
+  /* Adjust minimum widths for tablet */
+  .plan-overview-card {
+    min-width: 280px;
+  }
+
+  .metric-card,
+  .cost-card {
+    min-width: 190px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -235,6 +245,16 @@ export default {
   .metric-card,
   .cost-card {
     padding: 8px;
+  }
+
+  /* Reduce minimum widths for mobile */
+  .plan-overview-card {
+    min-width: 250px;
+  }
+
+  .metric-card,
+  .cost-card {
+    min-width: 180px;
   }
 
   .card-header h3 {
@@ -268,6 +288,16 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Individual card minimum widths */
+.plan-overview-card {
+  min-width: 300px;
+}
+
+.metric-card,
+.cost-card {
+  min-width: 200px;
 }
 
 .plan-overview-card:hover,
