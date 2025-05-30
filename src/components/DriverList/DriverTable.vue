@@ -79,30 +79,6 @@
         <p class="mt-3 text-muted">No drivers found</p>
       </div>
     </div>
-    <div
-      class="pagination-container mt-3 d-flex justify-content-between align-items-center"
-    >
-      <div class="showing-entries text-muted small">
-        Showing {{ drivers.length }} entries
-      </div>
-      <nav aria-label="Driver table navigation">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled">
-            <a class="page-link" href="#" aria-label="Previous">
-              <span aria-hidden="true">&laquo;</span>
-            </a>
-          </li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item">
-            <a class="page-link" href="#" aria-label="Next">
-              <span aria-hidden="true">&raquo;</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
   </div>
 </template>
 
@@ -221,11 +197,37 @@ export default {
   background-color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .table-responsive {
-  max-height: calc(100vh - 280px);
-  overflow-y: auto;
+  height: calc(100vh - 400px);
+  min-height: 250px;
+  max-height: 500px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  border: 1px solid #dee2e6;
+}
+
+/* 스크롤바 스타일 */
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .table {
@@ -315,22 +317,6 @@ export default {
 .empty-state {
   padding: 3rem 0;
   background-color: #fff;
-}
-
-.pagination-container {
-  padding: 0.75rem 1rem;
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-}
-
-.page-link {
-  color: #495057;
-  border-color: #dee2e6;
-}
-
-.page-item.active .page-link {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
 }
 
 /* Bootstrap Icons (Should be loaded via CDN) */
@@ -432,45 +418,6 @@ export default {
   color: #fff;
   background-color: #6c757d;
   border-color: #6c757d;
-}
-
-.pagination {
-  display: flex;
-  padding-left: 0;
-  list-style: none;
-}
-
-.page-item:not(:first-child) .page-link {
-  margin-left: -1px;
-}
-
-.page-link {
-  position: relative;
-  display: block;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  text-decoration: none;
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-}
-
-.pagination-sm .page-link {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.page-item.disabled .page-link {
-  color: #6c757d;
-  pointer-events: none;
-  background-color: #fff;
-  border-color: #dee2e6;
-}
-
-.page-item.active .page-link {
-  z-index: 3;
-  color: #fff;
-  background-color: #0d6efd;
-  border-color: #0d6efd;
 }
 
 .sortable {

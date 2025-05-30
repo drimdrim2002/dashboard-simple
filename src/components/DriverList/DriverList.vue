@@ -112,6 +112,8 @@ export default {
 .driver-list {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
   transition: all 0.3s ease;
 }
 
@@ -123,12 +125,14 @@ export default {
   padding: 0 20px;
   background-color: #f4f4f4;
   border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
 }
 
 .content {
-  flex-grow: 1;
+  flex: 1;
   position: relative;
   overflow: hidden;
   padding: 20px;
+  min-height: 0;
 }
 </style>
