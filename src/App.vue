@@ -5,7 +5,7 @@
       ref="dashboardContainer"
       :style="{ height: dashboardHeight + 'px' }"
     >
-      <dashboard-stats />
+      <dashboard-stats :plan-data="planData" />
     </div>
     <div
       class="horizontal-resize-handle"
@@ -143,6 +143,26 @@ export default {
       return (
         this.windowHeight - this.dashboardHeight - this.topSectionHeight - 32
       );
+    },
+    planData() {
+      if (!this.jsonData || !this.jsonData.planVo) {
+        return null;
+      }
+
+      const planVo = this.jsonData.planVo;
+      return {
+        planId: planVo.planId || "",
+        lssId: planVo.lssId || "",
+        tnntId: planVo.tnntId || "",
+        statDate: planVo.statDate || "",
+        endDate: planVo.endDate || "",
+        exeScd: planVo.exeScd || "",
+        totCostAmt: planVo.totCostAmt || 0,
+        totOrderCnt: planVo.totOrderCnt || 0,
+        alocOrderCnt: planVo.alocOrderCnt || 0,
+        totVhclCnt: planVo.totVhclCnt || 0,
+        alocVhclCnt: planVo.alocVhclCnt || 0,
+      };
     },
   },
   methods: {
