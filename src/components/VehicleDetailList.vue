@@ -143,13 +143,9 @@
                 class="vehicle-section mb-3 ms-3"
               >
                 <div
-                  class="vehicle-header mb-3 drop-zone"
+                  class="vehicle-header mb-3"
                   @dragover="onDragOver"
                   @drop="onDrop($event, vehicle)"
-                  @dragenter="$event.currentTarget.classList.add('drag-over')"
-                  @dragleave="
-                    $event.currentTarget.classList.remove('drag-over')
-                  "
                 >
                   <!-- Vehicle 기본 정보 + 토글 버튼 -->
                   <div
@@ -240,26 +236,18 @@
                       </tr>
                     </thead>
                     <tbody
-                      @dragover="onTableDragOver($event, vehicle)"
+                      @dragover="onDragOver"
+                      @mousemove="calculateDropPosition($event, vehicle)"
                       @drop="onDrop($event, vehicle)"
                       @dragleave="hideDropIndicator"
                     >
-                      <!-- 드롭 인서트 라인 (테이블 시작 부분) -->
+                      <!-- 맨 위 드롭 라인 -->
                       <tr
-                        v-if="
-                          dropIndicator.show &&
-                          dropIndicator.targetVehicle?.id === vehicle.id &&
-                          dropIndicator.insertIndex === 0
-                        "
+                        v-if="showDropLineAt(vehicle, 0)"
                         class="drop-insert-row"
                       >
                         <td colspan="11" class="drop-insert-cell">
-                          <div class="drop-insert-indicator">
-                            <i class="bi bi-arrow-down-circle-fill"></i>
-                            <span class="drop-text"
-                              >여기에 드롭하세요 (첫 번째 위치)</span
-                            >
-                          </div>
+                          <div class="drop-insert-line"></div>
                         </td>
                       </tr>
 
@@ -285,17 +273,8 @@
                         role="gridcell"
                         @dragstart="onDragStart($event, detail, vehicle)"
                         @dragend="onDragEnd"
-                        @dragover="onRowDragOver"
                         @drop="onRowDrop($event, vehicle, detailIndex)"
-                        @dragenter="
-                          $event.currentTarget.classList.add('row-drag-over')
-                        "
-                        @dragleave="
-                          $event.currentTarget.classList.remove('row-drag-over')
-                        "
-                        @keydown="
-                          onRowKeyDown($event, detail, vehicle, detailIndex)
-                        "
+                        @keydown="onRowKeyDown($event, detail)"
                       >
                         <td>{{ detailIndex + 1 }}</td>
 
@@ -330,37 +309,14 @@
                         </td>
                       </tr>
 
-                      <!-- 각 행 뒤의 드롭 인서트 라인들 -->
+                      <!-- 각 행 뒤의 드롭 라인 -->
                       <tr
-                        v-for="dropLine in getDropLinesForVehicle(vehicle)"
-                        :key="dropLine.key"
+                        v-if="showDropLineAt(vehicle, detailIndex + 1)"
+                        :key="`drop-after-${vehicle.id}-${detailIndex}`"
                         class="drop-insert-row"
                       >
                         <td colspan="11" class="drop-insert-cell">
-                          <div class="drop-insert-indicator">
-                            <i class="bi bi-arrow-down-circle-fill"></i>
-                            <span class="drop-text">{{
-                              dropLine.message
-                            }}</span>
-                          </div>
-                        </td>
-                      </tr>
-
-                      <!-- 마지막 위치 드롭 인서트 라인 -->
-                      <tr
-                        v-if="shouldShowDropLineForIndex(vehicle, null)"
-                        :key="`drop-end-${vehicle.id}`"
-                        class="drop-insert-row"
-                      >
-                        <td colspan="11" class="drop-insert-cell">
-                          <div class="drop-insert-indicator">
-                            <i class="bi bi-arrow-down-circle-fill"></i>
-                            <span class="drop-text"
-                              >여기에 드롭하세요 ({{
-                                (vehicle.detailList?.length || 0) + 1
-                              }}번째 위치)</span
-                            >
-                          </div>
+                          <div class="drop-insert-line"></div>
                         </td>
                       </tr>
                     </tbody>
@@ -437,17 +393,15 @@ export default {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
-      // 대안 3: 마우스 위치 기반 드롭 위치 추적
+      // 드롭 위치 표시용
       dropIndicator: {
         show: false,
         targetVehicle: null,
         insertIndex: -1,
-        mouseY: 0,
       },
       // 성능 최적화용 캐시
       vehicleSummaryCache: new Map(),
       lastUpdateTime: 0,
-      dragOverTimeout: null,
     };
   },
   computed: {
@@ -619,10 +573,10 @@ export default {
     isDragable(detail) {
       console.log("isDragable called:", detail);
       // stopSeqNo가 0보다 크면 드래그 가능
-      // return Number(detail.stopSeqNo || 0) > 0;
-      const result = true;
-      console.log("isDragable result:", result);
-      return result;
+      return Number(detail.stopSeqNo || 0) > 1;
+      // const result = true;
+      // console.log("isDragable result:", result);
+      // return result;
     },
     onDragStart(event, detail, sourceVehicle) {
       console.log("🔵 onDragStart called:", detail, sourceVehicle);
@@ -668,73 +622,7 @@ export default {
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
     },
-    onTableDragOver(event, vehicle) {
-      // 디바운싱을 위한 래퍼 함수
-      if (this.dragOverTimeout) {
-        clearTimeout(this.dragOverTimeout);
-      }
 
-      this.dragOverTimeout = setTimeout(() => {
-        this.handleTableDragOver(event, vehicle);
-      }, 16); // 60fps를 위한 16ms 간격
-    },
-    handleTableDragOver(event, vehicle) {
-      console.log("🟠 handleTableDragOver called for vehicle:", vehicle.id);
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
-
-      // 마우스 위치 기반으로 정확한 드롭 위치 계산
-      this.calculateDropPosition(event, vehicle);
-    },
-    onRowDragOver(event) {
-      event.preventDefault();
-      event.stopPropagation(); // 부모 요소의 dragover 이벤트 방지
-      event.dataTransfer.dropEffect = "move";
-    },
-    onRowDrop(event, targetVehicle, dropIndex) {
-      console.log(
-        "🎯 onRowDrop called at index:",
-        dropIndex,
-        "vehicle:",
-        targetVehicle.id
-      );
-      event.preventDefault();
-      event.stopPropagation(); // 부모 요소의 drop 이벤트 방지
-
-      try {
-        const dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
-        console.log("🎯 Retrieved dragData:", dragData);
-
-        const { detail, sourceVehicleId, sourceZoneId } = dragData;
-
-        // Validation 로직
-        console.log(
-          "🎯 Validating drop:",
-          sourceZoneId,
-          "→",
-          targetVehicle.zone
-        );
-        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
-          console.log("🔴 Validation failed: different zones");
-          alert("Cannot move order to different zone!");
-          return;
-        }
-
-        console.log("🎯 Moving order to specific position:", dropIndex);
-        // Order를 특정 위치로 이동
-        this.moveOrderToPosition(
-          detail,
-          sourceVehicleId,
-          targetVehicle.id,
-          dropIndex
-        );
-
-        // 드래그 오버 스타일 제거
-        event.currentTarget.classList.remove("row-drag-over");
-      } catch (error) {
-        console.error("🔴 Row drop failed:", error);
-      }
-    },
     onDrop(event, targetVehicle) {
       console.log("🟢 onDrop called:", targetVehicle);
       event.preventDefault();
@@ -772,8 +660,16 @@ export default {
           "to",
           targetVehicle.id
         );
-        // Order 이동 실행
-        this.moveOrder(detail, sourceVehicleId, targetVehicle.id);
+        // Order 이동 실행 - dropIndicator의 insertIndex 사용
+        const insertPosition = this.dropIndicator.show
+          ? this.dropIndicator.insertIndex
+          : -1;
+        this.moveOrder(
+          detail,
+          sourceVehicleId,
+          targetVehicle.id,
+          insertPosition
+        );
         this.showSuccessMessage("주문이 성공적으로 이동되었습니다.");
       } catch (error) {
         console.error("🔴 Drop failed:", error);
@@ -878,16 +774,17 @@ export default {
       this.lastUpdateTime = Date.now();
       console.log("📊 Vehicle summaries updated at:", this.lastUpdateTime);
     },
-    // 대안 2+3: 마우스 위치 기반 정확한 드롭 위치 계산
+    // 정확한 드롭 위치 계산
     calculateDropPosition(event, vehicle) {
+      event.preventDefault();
       const tbody = event.currentTarget;
-      // 드롭 인서트 라인이 아닌 실제 데이터 행만 선택
-      const dataRows = tbody.querySelectorAll("tr:not(.drop-insert-row)");
+      const dataRows = Array.from(
+        tbody.querySelectorAll("tr:not(.drop-insert-row)")
+      );
       const mouseY = event.clientY;
 
       this.dropIndicator.show = true;
       this.dropIndicator.targetVehicle = vehicle;
-      this.dropIndicator.mouseY = mouseY;
 
       let insertIndex = 0;
 
@@ -896,15 +793,33 @@ export default {
         insertIndex = 0;
       } else {
         // 각 행의 위치를 확인하여 마우스 위치에 따른 삽입 인덱스 계산
+        let found = false;
         for (let i = 0; i < dataRows.length; i++) {
           const rect = dataRows[i].getBoundingClientRect();
-          const rowMiddle = rect.top + rect.height / 2;
+          const rowTop = rect.top;
+          const rowBottom = rect.bottom;
 
-          if (mouseY < rowMiddle) {
+          // 마우스가 현재 행의 상반부에 있으면 이 행 앞에 삽입
+          if (mouseY >= rowTop && mouseY <= rowTop + rect.height / 2) {
             insertIndex = i;
+            found = true;
             break;
           }
-          insertIndex = i + 1;
+          // 마우스가 현재 행의 하반부에 있으면 이 행 뒤에 삽입
+          else if (mouseY > rowTop + rect.height / 2 && mouseY <= rowBottom) {
+            insertIndex = i + 1;
+            found = true;
+            break;
+          }
+        }
+
+        // 모든 행 위에 있으면 맨 처음에
+        if (!found && mouseY < dataRows[0].getBoundingClientRect().top) {
+          insertIndex = 0;
+        }
+        // 모든 행 아래에 있으면 맨 마지막에
+        else if (!found) {
+          insertIndex = dataRows.length;
         }
       }
 
@@ -912,7 +827,9 @@ export default {
       console.log(
         "🎯 Drop position calculated:",
         insertIndex,
-        "at Y:",
+        "/ total rows:",
+        dataRows.length,
+        "mouseY:",
         mouseY,
         "for vehicle:",
         vehicle.id
@@ -923,49 +840,102 @@ export default {
       this.dropIndicator.targetVehicle = null;
       this.dropIndicator.insertIndex = -1;
     },
-    shouldShowDropLineForIndex(vehicle, afterIndex) {
+    // 특정 위치에 드롭 인서트 라인 표시 여부
+    shouldShowDropLine(vehicle, afterIndex) {
       if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
         return false;
       }
-
       if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
         return false;
       }
 
-      // afterIndex가 null인 경우 마지막 위치 체크
-      if (afterIndex === null) {
-        const vehicleLength = vehicle.detailList
-          ? vehicle.detailList.length
-          : 0;
-        return this.dropIndicator.insertIndex === vehicleLength;
+      // afterIndex 처리
+      let targetIndex;
+      if (afterIndex === -1) {
+        // 첫 번째 위치 (맨 위)
+        targetIndex = 0;
+      } else if (afterIndex === null) {
+        // 마지막 위치
+        targetIndex = vehicle.detailList ? vehicle.detailList.length : 0;
+      } else {
+        // 특정 인덱스 뒤
+        targetIndex = afterIndex + 1;
       }
 
-      // 특정 인덱스 뒤 위치 체크
-      return this.dropIndicator.insertIndex === afterIndex + 1;
+      return this.dropIndicator.insertIndex === targetIndex;
     },
-    getDropLinesForVehicle(vehicle) {
+    // 드롭 라인 위치 배열 반환
+    getDropLines(vehicle) {
       if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
         return [];
       }
-
       if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
         return [];
       }
 
-      const dropLines = [];
-      const vehicleDetails = vehicle.detailList || [];
-
-      // 각 행 뒤의 드롭 라인들 체크
-      for (let i = 0; i < vehicleDetails.length; i++) {
-        if (this.dropIndicator.insertIndex === i + 1) {
-          dropLines.push({
-            key: `drop-after-${vehicle.id}-${i}`,
-            message: `여기에 드롭하세요 (${i + 2}번째 위치)`,
-          });
-        }
+      // 정확히 insertIndex 위치에만 라인 표시
+      return [this.dropIndicator.insertIndex];
+    },
+    // 모든 가능한 드롭 위치 반환
+    getAllDropPositions(vehicle) {
+      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
+        return [];
+      }
+      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
+        return [];
       }
 
-      return dropLines;
+      // 현재 계산된 insertIndex 위치만 반환
+      return [this.dropIndicator.insertIndex];
+    },
+    // 특정 위치에 드롭 라인 표시 여부
+    showDropLineAt(vehicle, position) {
+      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
+        return false;
+      }
+      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
+        return false;
+      }
+
+      return this.dropIndicator.insertIndex === position;
+    },
+    // 행별 드롭 이벤트 처리
+    onRowDrop(event, targetVehicle, dropIndex) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      try {
+        const dragDataText = event.dataTransfer.getData("text/plain");
+        if (!dragDataText) {
+          throw new Error("드래그 데이터를 찾을 수 없습니다.");
+        }
+
+        const dragData = JSON.parse(dragDataText);
+        const { detail, sourceVehicleId, sourceZoneId } = dragData;
+
+        if (!detail || !sourceVehicleId || !sourceZoneId) {
+          throw new Error("필수 드래그 데이터가 누락되었습니다.");
+        }
+
+        // Validation
+        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
+          this.showErrorMessage("다른 Zone으로는 주문을 이동할 수 없습니다!");
+          return;
+        }
+
+        console.log("🎯 Moving order to specific position:", dropIndex);
+        // 정확한 위치로 이동
+        this.moveOrder(detail, sourceVehicleId, targetVehicle.id, dropIndex);
+        this.showSuccessMessage("주문이 성공적으로 이동되었습니다.");
+      } catch (error) {
+        console.error("🔴 Row drop failed:", error);
+        this.showErrorMessage(
+          `드롭 처리 중 오류가 발생했습니다: ${error.message}`
+        );
+      } finally {
+        this.hideDropIndicator();
+        this.cleanupDragStyles();
+      }
     },
     showErrorMessage(message) {
       // 실제 구현에서는 toast나 notification 라이브러리 사용
@@ -984,11 +954,12 @@ export default {
         el.removeAttribute("dragging");
       });
     },
-    onRowKeyDown(event, detail, vehicle, detailIndex) {
+    onRowKeyDown(event, detail) {
       if (event.key === "Enter" && this.isDragable(detail)) {
-        console.log("🟢 onRowKeyDown called for vehicle:", vehicle.id);
+        console.log("🟢 onRowKeyDown - Enter pressed for draggable item");
         event.preventDefault();
-        this.onRowDrop(event, vehicle, detailIndex);
+        // 키보드로 드롭 기능은 단순화
+        // 실제 구현에서는 더 복잡한 키보드 네비게이션 구현 가능
       }
     },
   },
@@ -1432,16 +1403,6 @@ export default {
   cursor: not-allowed !important;
 }
 
-tbody[draggable="true"] {
-  border: 2px dashed #0d6efd;
-  background-color: rgba(13, 110, 253, 0.05);
-}
-
-/* Drop zone 시각적 피드백 */
-tbody:hover {
-  background-color: rgba(13, 110, 253, 0.02);
-}
-
 /* 추가 커서 강제 적용 */
 tr[draggable="true"] {
   cursor: grab !important;
@@ -1465,162 +1426,22 @@ tr:not([draggable="true"]) td {
   cursor: not-allowed !important;
 }
 
-/* Drop Zone Styles */
-.drop-zone {
-  transition: all 0.2s ease;
-  border: 2px dashed transparent;
-  border-radius: 0.375rem;
-  padding: 0.25rem;
-}
-
-.drop-zone.drag-over {
-  border-color: #0d6efd !important;
-  background-color: rgba(13, 110, 253, 0.05) !important;
-  box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
-}
-
-.vehicle-header.drop-zone {
-  min-height: 60px;
-}
-
-.vehicle-header.drop-zone.drag-over {
-  transform: scale(1.02);
-}
-
-/* Row Drop Zone Styles */
-.row-drag-over {
-  background-color: rgba(13, 110, 253, 0.15) !important;
-  border: 3px solid #0d6efd !important;
-  border-radius: 8px;
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-  position: relative;
-}
-
-.row-drag-over::before {
-  content: "← 여기에 드롭됩니다";
-  position: absolute;
-  right: -150px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #0d6efd;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: bold;
-  white-space: nowrap;
-  z-index: 100;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) translateX(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
-}
-
-/* 대안 2+3: 정확한 드롭 인서트 라인 */
+/* 간단한 드롭 인서트 라인 */
 .drop-insert-row {
-  height: 50px !important;
-  background: linear-gradient(
-    90deg,
-    rgba(13, 110, 253, 0.95),
-    rgba(25, 135, 84, 0.95)
-  ) !important;
-  animation: pulseInsert 1.5s infinite;
-  position: relative;
+  height: 4px !important;
 }
 
 .drop-insert-cell {
   padding: 0 !important;
   border: none !important;
-  position: relative;
-  text-align: center;
+  height: 4px !important;
 }
 
-.drop-insert-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  background: linear-gradient(135deg, #0d6efd, #198754);
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  border-radius: 25px;
-  margin: 3px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.drop-insert-indicator::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: shine 2s infinite;
-}
-
-.drop-insert-indicator i {
-  margin-right: 10px;
-  font-size: 18px;
-  animation: bounce 1.5s infinite;
-}
-
-.drop-text {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  font-weight: 700;
-}
-
-@keyframes pulseInsert {
-  0%,
-  100% {
-    box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 8px 30px rgba(25, 135, 84, 0.5);
-    transform: scale(1.02);
-  }
-}
-
-@keyframes shine {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-@keyframes bounce {
-  0%,
-  20%,
-  50%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-4px);
-  }
-  60% {
-    transform: translateY(-2px);
-  }
+.drop-insert-line {
+  height: 3px;
+  background-color: #0d6efd;
+  margin: 0 10px;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(13, 110, 253, 0.5);
 }
 </style>
