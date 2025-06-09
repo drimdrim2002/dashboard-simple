@@ -143,16 +143,63 @@
                 class="vehicle-section mb-3 ms-3"
               >
                 <div class="vehicle-header mb-3">
-                  <h6 class="text-primary mb-0">
-                    <i class="bi bi-truck"></i>
-                    {{ vehicle.name }} ({{ vehicle.type }})
-                    <span
-                      v-if="vehicle.detailList && vehicle.detailList.length > 0"
-                      class="badge bg-info ms-1"
+                  <!-- Vehicle 기본 정보 + 토글 버튼 -->
+                  <div
+                    class="vehicle-basic-info"
+                    @click="toggleVehicleDetails(vehicle.id)"
+                    style="cursor: pointer"
+                  >
+                    <h6
+                      class="text-primary mb-0 d-flex align-items-center justify-content-between"
                     >
-                      {{ vehicle.detailList.length }} details
-                    </span>
-                  </h6>
+                      <span>
+                        <i class="bi bi-truck"></i>
+                        {{ vehicle.name }} ({{ vehicle.type }})
+                        <span
+                          v-if="
+                            vehicle.detailList && vehicle.detailList.length > 0
+                          "
+                          class="badge bg-info ms-1"
+                        >
+                          {{ vehicle.detailList.length }} details
+                        </span>
+                        <span class="text-muted ms-2 small">
+                          Total:
+                          {{
+                            formatDecimal(
+                              calculateVehicleSummary(vehicle.detailList)
+                                .totalLoadWt,
+                              1
+                            )
+                          }}kg |
+                          {{
+                            formatDecimal(
+                              calculateVehicleSummary(vehicle.detailList)
+                                .totalLoadVol,
+                              1
+                            )
+                          }}m³ | Max: {{ vehicle.maxWt || 0 }}kg |
+                          {{ vehicle.maxVol || 0 }}m³
+                          <span class="expand-hint ms-1"
+                            >({{
+                              isVehicleExpanded(vehicle.id)
+                                ? "Click to collapse"
+                                : "Click to expand"
+                            }})</span
+                          >
+                        </span>
+                      </span>
+                      <span class="toggle-icon">
+                        <i
+                          :class="
+                            isVehicleExpanded(vehicle.id)
+                              ? 'bi bi-chevron-up'
+                              : 'bi bi-chevron-down'
+                          "
+                        ></i>
+                      </span>
+                    </h6>
+                  </div>
                 </div>
 
                 <div
@@ -162,7 +209,10 @@
                   이 vehicle에 대한 detail 정보가 없습니다.
                 </div>
 
-                <div v-else class="table-responsive">
+                <div
+                  v-else-if="isVehicleExpanded(vehicle.id)"
+                  class="table-responsive"
+                >
                   <table class="table table-striped table-hover table-sm">
                     <thead class="table-dark">
                       <tr>
@@ -289,6 +339,7 @@ export default {
   data() {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
+      expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
     };
   },
   computed: {
@@ -404,6 +455,30 @@ export default {
     },
     isZoneExpanded(zoneId) {
       return this.expandedZones[zoneId] || false;
+    },
+    toggleVehicleDetails(vehicleId) {
+      this.$set(
+        this.expandedVehicles,
+        vehicleId,
+        !this.expandedVehicles[vehicleId]
+      );
+    },
+    isVehicleExpanded(vehicleId) {
+      return this.expandedVehicles[vehicleId] || false;
+    },
+    calculateVehicleSummary(detailList) {
+      if (!detailList || detailList.length === 0) {
+        return { totalLoadWt: 0, totalLoadVol: 0 };
+      }
+
+      return detailList.reduce(
+        (summary, detail) => {
+          summary.totalLoadWt += Number(detail.loadWt || 0);
+          summary.totalLoadVol += Number(detail.loadVol || 0);
+          return summary;
+        },
+        { totalLoadWt: 0, totalLoadVol: 0 }
+      );
     },
   },
 };
@@ -754,6 +829,17 @@ export default {
 
 .zone-basic-info:hover {
   background-color: rgba(25, 135, 84, 0.1);
+}
+
+/* Vehicle Toggle Styles */
+.vehicle-basic-info {
+  transition: background-color 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.vehicle-basic-info:hover {
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
 .toggle-icon {
