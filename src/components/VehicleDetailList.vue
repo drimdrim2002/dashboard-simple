@@ -169,6 +169,51 @@
                       </td>
                     </tr>
                   </tbody>
+                  <tfoot class="table-secondary">
+                    <tr>
+                      <td colspan="2" class="text-end fw-bold">합계:</td>
+                      <td class="fw-bold">
+                        {{
+                          formatDecimal(
+                            calculateVehicleTotal(vehicle.detailList, "loadWt"),
+                            1
+                          )
+                        }}
+                      </td>
+                      <td class="fw-bold">
+                        {{
+                          formatDecimal(
+                            calculateVehicleTotal(
+                              vehicle.detailList,
+                              "loadVol"
+                            ),
+                            1
+                          )
+                        }}
+                      </td>
+                      <td colspan="4"></td>
+                      <td class="fw-bold">
+                        {{
+                          formatDistanceKM(
+                            calculateVehicleTotal(
+                              vehicle.detailList,
+                              "distcVal"
+                            )
+                          )
+                        }}
+                      </td>
+                      <td class="fw-bold">
+                        {{
+                          formatSecondsToTime(
+                            calculateVehicleTotal(
+                              vehicle.detailList,
+                              "trnsPeridVal"
+                            )
+                          )
+                        }}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -282,6 +327,18 @@ export default {
       return `${hours.toString().padStart(2, "0")}:${minutes
         .toString()
         .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    },
+    calculateVehicleTotal(detailList, field) {
+      if (!detailList || detailList.length === 0) return 0;
+
+      return detailList.reduce((total, detail) => {
+        const value = Number(detail[field] || 0);
+        return total + value;
+      }, 0);
+    },
+    formatDecimal(value, decimals) {
+      if (!value || value === 0) return "0.0";
+      return Number(value).toFixed(decimals);
     },
   },
 };
@@ -544,6 +601,18 @@ export default {
   --bs-table-hover-bg: #373b3e;
   color: #fff;
   border-color: #373b3e;
+}
+
+.table-secondary {
+  --bs-table-bg: #e9ecef;
+  color: #000;
+  border-color: #dee2e6;
+}
+
+.table tfoot td {
+  font-weight: 600;
+  border-top: 2px solid #dee2e6;
+  background-color: var(--bs-table-bg);
 }
 
 .table-responsive {
