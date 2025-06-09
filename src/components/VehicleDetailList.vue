@@ -17,7 +17,7 @@
           class="text-center text-muted py-4"
         >
           <i class="bi bi-inbox display-4"></i>
-          <p class="mt-3">선택된 vehicle이 없습니다</p>
+          <p class="mt-3">No selected vehicle</p>
         </div>
 
         <div v-else>
@@ -59,8 +59,18 @@
                   </div>
                   <div class="col-md-2">
                     <div class="summary-card">
+                      <small class="text-muted">Total Cost</small>
+                      <div class="fw-bold">
+                        {{
+                          Number(zoneData.summary.totCostAmt).toLocaleString()
+                        }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="summary-card">
                       <small class="text-muted">Total Weight</small>
-                      <div class="fw-bold text-primary">
+                      <div class="fw-bold">
                         {{ formatWeight(zoneData.summary.totLoadWt) }}
                       </div>
                     </div>
@@ -68,7 +78,7 @@
                   <div class="col-md-2">
                     <div class="summary-card">
                       <small class="text-muted">Total Volume</small>
-                      <div class="fw-bold text-info">
+                      <div class="fw-bold">
                         {{ formatVolume(zoneData.summary.totLoadCbm) }}
                       </div>
                     </div>
@@ -76,7 +86,7 @@
                   <div class="col-md-2">
                     <div class="summary-card">
                       <small class="text-muted">Total Distance</small>
-                      <div class="fw-bold text-warning">
+                      <div class="fw-bold text">
                         {{ formatDistance(zoneData.summary.totDistcVal) }}
                       </div>
                     </div>
@@ -84,7 +94,7 @@
                   <div class="col-md-1">
                     <div class="summary-card">
                       <small class="text-muted">Total Time</small>
-                      <div class="fw-bold text-danger">
+                      <div class="fw-bold">
                         {{ formatTime(zoneData.summary.totTrvlPeridVal) }}
                       </div>
                     </div>
@@ -256,6 +266,7 @@ export default {
               totLoadCbm: 0,
               totDistcVal: 0,
               totTrvlPeridVal: 0,
+              totCostAmt: 0,
               vhclIds: [],
               vhclTcds: [],
             },
@@ -270,7 +281,7 @@ export default {
         summary.totLoadCbm += Number(vehicle.totLoadCbm || 0);
         summary.totDistcVal += Number(vehicle.totDistcVal || 0);
         summary.totTrvlPeridVal += Number(vehicle.totTrvlPeridVal || 0);
-
+        summary.totCostAmt += Number(vehicle.totCostAmt || 0);
         // vhclId와 vhclTcd 수집
         if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
         if (vehicle.vhclTcd) summary.vhclTcds.push(vehicle.vhclTcd);
