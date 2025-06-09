@@ -142,7 +142,15 @@
                 :key="vehicle.id"
                 class="vehicle-section mb-3 ms-3"
               >
-                <div class="vehicle-header mb-3">
+                <div
+                  class="vehicle-header mb-3 drop-zone"
+                  @dragover="onDragOver"
+                  @drop="onDrop($event, vehicle)"
+                  @dragenter="$event.currentTarget.classList.add('drag-over')"
+                  @dragleave="
+                    $event.currentTarget.classList.remove('drag-over')
+                  "
+                >
                   <!-- Vehicle 기본 정보 + 토글 버튼 -->
                   <div
                     class="vehicle-basic-info"
@@ -231,10 +239,28 @@
                         <th scope="col">Departure Time</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody
+                      @dragover="onDragOver"
+                      @drop="onDrop($event, vehicle)"
+                    >
                       <tr
                         v-for="(detail, detailIndex) in vehicle.detailList"
                         :key="`${vehicle.id}-${detailIndex}`"
+                        :draggable="isDragable(detail)"
+                        :class="{
+                          'draggable-row': isDragable(detail),
+                          'non-draggable-row': !isDragable(detail),
+                        }"
+                        @dragstart="onDragStart($event, detail, vehicle)"
+                        @dragend="onDragEnd"
+                        @dragover="onRowDragOver"
+                        @drop="onRowDrop($event, vehicle, detailIndex)"
+                        @dragenter="
+                          $event.currentTarget.classList.add('row-drag-over')
+                        "
+                        @dragleave="
+                          $event.currentTarget.classList.remove('row-drag-over')
+                        "
                       >
                         <td>{{ detailIndex + 1 }}</td>
 
@@ -485,6 +511,268 @@ export default {
         },
         { totalLoadWt: 0, totalLoadVol: 0 }
       );
+    },
+    // Drag and Drop 관련 함수들
+    isDragable(detail) {
+      console.log("isDragable called:", detail);
+      // stopSeqNo가 0보다 크면 드래그 가능
+      // return Number(detail.stopSeqNo || 0) > 0;
+      const result = true;
+      console.log("isDragable result:", result);
+      return result;
+    },
+    onDragStart(event, detail, sourceVehicle) {
+      console.log("🔵 onDragStart called:", detail, sourceVehicle);
+
+      const dragData = {
+        detail: detail,
+        sourceVehicleId: sourceVehicle.id,
+        sourceZoneId: sourceVehicle.zone,
+      };
+
+      console.log("🔵 dragData:", dragData);
+
+      try {
+        event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+        event.dataTransfer.effectAllowed = "move";
+        console.log("🔵 dataTransfer set successfully");
+
+        // 드래그 중인 요소에 시각적 표시
+        event.target.style.opacity = "0.5";
+        event.target.style.cursor = "grabbing";
+        event.target.setAttribute("dragging", "true");
+
+        console.log("🔵 Drag start completed");
+      } catch (error) {
+        console.error("🔴 Error in onDragStart:", error);
+      }
+    },
+    onDragEnd(event) {
+      console.log("🟡 onDragEnd called");
+      // 드래그 완료 후 스타일 복원
+      event.target.style.opacity = "";
+      event.target.style.cursor = "";
+      event.target.removeAttribute("dragging");
+    },
+    onDragOver(event) {
+      console.log("🟠 onDragOver called");
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    },
+    onRowDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation(); // 부모 요소의 dragover 이벤트 방지
+      event.dataTransfer.dropEffect = "move";
+    },
+    onRowDrop(event, targetVehicle, dropIndex) {
+      console.log(
+        "🎯 onRowDrop called at index:",
+        dropIndex,
+        "vehicle:",
+        targetVehicle.id
+      );
+      event.preventDefault();
+      event.stopPropagation(); // 부모 요소의 drop 이벤트 방지
+
+      try {
+        const dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
+        console.log("🎯 Retrieved dragData:", dragData);
+
+        const { detail, sourceVehicleId, sourceZoneId } = dragData;
+
+        // Validation 로직
+        console.log(
+          "🎯 Validating drop:",
+          sourceZoneId,
+          "→",
+          targetVehicle.zone
+        );
+        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
+          console.log("🔴 Validation failed: different zones");
+          alert("Cannot move order to different zone!");
+          return;
+        }
+
+        console.log("🎯 Moving order to specific position:", dropIndex);
+        // Order를 특정 위치로 이동
+        this.moveOrderToPosition(
+          detail,
+          sourceVehicleId,
+          targetVehicle.id,
+          dropIndex
+        );
+
+        // 드래그 오버 스타일 제거
+        event.currentTarget.classList.remove("row-drag-over");
+      } catch (error) {
+        console.error("🔴 Row drop failed:", error);
+      }
+    },
+    onDrop(event, targetVehicle) {
+      console.log("🟢 onDrop called:", targetVehicle);
+      event.preventDefault();
+
+      try {
+        const dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
+        console.log("🟢 Retrieved dragData:", dragData);
+
+        const { detail, sourceVehicleId, sourceZoneId } = dragData;
+
+        // Validation 로직
+        console.log(
+          "🟢 Validating drop:",
+          sourceZoneId,
+          "→",
+          targetVehicle.zone
+        );
+        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
+          console.log("🔴 Validation failed: different zones");
+          alert("Cannot move order to different zone!");
+          return;
+        }
+
+        // if (sourceVehicleId === targetVehicle.id) {
+        //   console.log("🔴 Same vehicle, skipping");
+        //   // 같은 vehicle 내에서 이동은 현재 구현하지 않음
+        //   return;
+        // }
+
+        console.log(
+          "🟢 Moving order from",
+          sourceVehicleId,
+          "to",
+          targetVehicle.id
+        );
+        // Order 이동 실행
+        this.moveOrder(detail, sourceVehicleId, targetVehicle.id);
+      } catch (error) {
+        console.error("🔴 Drop failed:", error);
+      }
+    },
+    validateDrop(sourceZoneId, targetZoneId) {
+      // zoneId가 다르면 fail, 그 외는 true
+      return sourceZoneId === targetZoneId;
+    },
+    moveOrderToPosition(detail, sourceVehicleId, targetVehicleId, dropIndex) {
+      console.log(
+        "🎯 Moving order to position:",
+        detail.orderId,
+        "from",
+        sourceVehicleId,
+        "to",
+        targetVehicleId,
+        "at index",
+        dropIndex
+      );
+
+      // 원본 vehicle에서 order 제거
+      const sourceVehicle = this.selectedVehicles.find(
+        (v) => v.id === sourceVehicleId
+      );
+      let removedFromIndex = -1;
+      if (sourceVehicle && sourceVehicle.detailList) {
+        const detailIndex = sourceVehicle.detailList.findIndex(
+          (d) => d.orderId === detail.orderId && d.locId === detail.locId
+        );
+        if (detailIndex !== -1) {
+          console.log("🎯 Removing from source vehicle at index", detailIndex);
+          sourceVehicle.detailList.splice(detailIndex, 1);
+          removedFromIndex = detailIndex;
+        } else {
+          console.log("🔴 Detail not found in source vehicle");
+        }
+      } else {
+        console.log("🔴 Source vehicle not found or has no detailList");
+      }
+
+      // 타겟 vehicle에 order를 특정 위치에 삽입
+      const targetVehicle = this.selectedVehicles.find(
+        (v) => v.id === targetVehicleId
+      );
+      if (targetVehicle) {
+        if (!targetVehicle.detailList) {
+          targetVehicle.detailList = [];
+        }
+
+        let insertIndex = dropIndex;
+
+        // 같은 vehicle 내에서 이동하는 경우 index 조정
+        if (sourceVehicleId === targetVehicleId && removedFromIndex !== -1) {
+          if (removedFromIndex < dropIndex) {
+            insertIndex = dropIndex - 1; // 앞에서 제거했으므로 index를 하나 줄임
+          }
+        }
+
+        console.log("🎯 Inserting at index", insertIndex);
+        targetVehicle.detailList.splice(insertIndex, 0, detail);
+      } else {
+        console.log("🔴 Target vehicle not found");
+      }
+
+      // Vehicle summary 정보 갱신
+      this.updateVehicleSummaries();
+    },
+    moveOrder(detail, sourceVehicleId, targetVehicleId) {
+      console.log(
+        "🚚 Moving order:",
+        detail.orderId,
+        "from",
+        sourceVehicleId,
+        "to",
+        targetVehicleId
+      );
+
+      // 원본 vehicle에서 order 제거
+      const sourceVehicle = this.selectedVehicles.find(
+        (v) => v.id === sourceVehicleId
+      );
+      if (sourceVehicle && sourceVehicle.detailList) {
+        const detailIndex = sourceVehicle.detailList.findIndex(
+          (d) => d.orderId === detail.orderId && d.locId === detail.locId
+        );
+        if (detailIndex !== -1) {
+          console.log("🚚 Removing from source vehicle at index", detailIndex);
+          sourceVehicle.detailList.splice(detailIndex, 1);
+        } else {
+          console.log("🔴 Detail not found in source vehicle");
+        }
+      } else {
+        console.log("🔴 Source vehicle not found or has no detailList");
+      }
+
+      // 타겟 vehicle에 order 추가 (맨 아래)
+      const targetVehicle = this.selectedVehicles.find(
+        (v) => v.id === targetVehicleId
+      );
+      if (targetVehicle) {
+        if (!targetVehicle.detailList) {
+          targetVehicle.detailList = [];
+        }
+        console.log("🚚 Adding to target vehicle at end");
+        targetVehicle.detailList.push(detail);
+      } else {
+        console.log("🔴 Target vehicle not found");
+      }
+
+      // Vehicle summary 정보 갱신
+      this.updateVehicleSummaries();
+    },
+    updateVehicleSummaries() {
+      console.log("📊 Updating vehicle summaries");
+      // 모든 vehicle의 summary 정보를 다시 계산
+      this.selectedVehicles.forEach((vehicle) => {
+        if (vehicle.detailList) {
+          const summary = this.calculateVehicleSummary(vehicle.detailList);
+          // Vehicle의 총 weight와 volume 업데이트
+          vehicle.totLoadWt = summary.totalLoadWt;
+          vehicle.totLoadCbm = summary.totalLoadVol;
+          console.log("📊 Updated vehicle", vehicle.id, "summary:", summary);
+        }
+      });
+
+      // Zone summary도 다시 계산하도록 강제 업데이트
+      this.$forceUpdate();
+      console.log("📊 Force update triggered");
     },
   },
 };
@@ -877,5 +1165,119 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Drag and Drop Styles */
+.table .draggable-row {
+  cursor: grab !important;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.table .draggable-row:hover {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  cursor: grab !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table .draggable-row:active,
+.table .draggable-row[dragging="true"] {
+  cursor: grabbing !important;
+  background-color: rgba(13, 110, 253, 0.2) !important;
+  transform: scale(0.98);
+}
+
+.table .draggable-row td {
+  cursor: grab !important;
+}
+
+.table .draggable-row:hover td {
+  cursor: grab !important;
+}
+
+.table .non-draggable-row {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  user-select: none;
+}
+
+.table .non-draggable-row td {
+  cursor: not-allowed !important;
+}
+
+.table .non-draggable-row:hover {
+  background-color: rgba(220, 53, 69, 0.05) !important;
+  cursor: not-allowed !important;
+}
+
+.table .non-draggable-row:hover td {
+  cursor: not-allowed !important;
+}
+
+tbody[draggable="true"] {
+  border: 2px dashed #0d6efd;
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Drop zone 시각적 피드백 */
+tbody:hover {
+  background-color: rgba(13, 110, 253, 0.02);
+}
+
+/* 추가 커서 강제 적용 */
+tr[draggable="true"] {
+  cursor: grab !important;
+}
+
+tr[draggable="true"]:hover {
+  cursor: grab !important;
+}
+
+tr[draggable="true"] td {
+  cursor: grab !important;
+}
+
+tr[draggable="false"],
+tr:not([draggable="true"]) {
+  cursor: not-allowed !important;
+}
+
+tr[draggable="false"] td,
+tr:not([draggable="true"]) td {
+  cursor: not-allowed !important;
+}
+
+/* Drop Zone Styles */
+.drop-zone {
+  transition: all 0.2s ease;
+  border: 2px dashed transparent;
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+}
+
+.drop-zone.drag-over {
+  border-color: #0d6efd !important;
+  background-color: rgba(13, 110, 253, 0.05) !important;
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
+}
+
+.vehicle-header.drop-zone {
+  min-height: 60px;
+}
+
+.vehicle-header.drop-zone.drag-over {
+  transform: scale(1.02);
+}
+
+/* Row Drop Zone Styles */
+.row-drag-over {
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  border-top: 3px solid #0d6efd !important;
+  border-bottom: 3px solid #0d6efd !important;
+}
+
+.row-drag-over td {
+  background-color: transparent !important;
 }
 </style>
