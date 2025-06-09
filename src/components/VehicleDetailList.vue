@@ -54,14 +54,15 @@
                 <thead class="table-dark">
                   <tr>
                     <th scope="col">#</th>
-                    <th scope="col">Detail ID</th>
-                    <th scope="col">Stop Order</th>
-                    <th scope="col">Customer</th>
-                    <th scope="col">Address</th>
-                    <th scope="col">Load Weight</th>
-                    <th scope="col">Load Volume</th>
-                    <th scope="col">Distance</th>
-                    <th scope="col">Travel Time</th>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Weight(KG)</th>
+                    <th scope="col">Volume(CBM)</th>
+                    <th scope="col">Request Time</th>
+                    <th scope="col">Customer Time</th>
+                    <th scope="col">Arrival Time</th>
+                    <th scope="col">Departure Time</th>
+                    <th scope="col">Distance(KM)</th>
+                    <th scope="col">Duration</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -70,39 +71,32 @@
                     :key="`${vehicle.id}-${detailIndex}`"
                   >
                     <td>{{ detailIndex + 1 }}</td>
+
                     <td>
-                      <span class="badge bg-light text-dark">
-                        {{ detail.dtlId || "N/A" }}
-                      </span>
+                      {{ detail.orderId || detail.locId }}
                     </td>
                     <td>
-                      <span class="badge bg-primary">
-                        {{ detail.stopOrder || detail.stopSeq || "N/A" }}
-                      </span>
-                    </td>
-                    <td>{{ detail.customerName || detail.custNm || "N/A" }}</td>
-                    <td class="text-truncate" style="max-width: 200px">
-                      {{ detail.address || detail.addr || "N/A" }}
+                      {{ detail.loadWt }}
                     </td>
                     <td>
-                      {{
-                        formatWeight(detail.loadWeight || detail.loadWt || 0)
-                      }}
+                      {{ detail.loadVol }}
                     </td>
                     <td>
-                      {{
-                        formatVolume(detail.loadVolume || detail.loadCbm || 0)
-                      }}
+                      {{ detail.reqDate }}
                     </td>
                     <td>
-                      {{
-                        formatDistance(detail.distance || detail.distcVal || 0)
-                      }}
+                      {{ formatTime24(detail.custOpenTime) }} ~
+                      {{ formatTime24(detail.custCloseTime) }}
                     </td>
                     <td>
-                      {{
-                        formatTime(detail.travelTime || detail.trvlTime || 0)
-                      }}
+                      {{ detail.arrDtm }}
+                    </td>
+                    <td>
+                      {{ detail.depDtm }}
+                    </td>
+                    <td>{{ formatDistanceKM(detail.distcVal) }}</td>
+                    <td>
+                      {{ formatSecondsToTime(detail.trnsPeridVal) }}
                     </td>
                   </tr>
                 </tbody>
@@ -147,6 +141,44 @@ export default {
     formatTime(value) {
       if (!value || value === 0) return "-";
       return Number(value).toLocaleString() + " min";
+    },
+    formatTime24(timeString) {
+      if (!timeString || timeString === "000000") return "00:00:00";
+
+      // 6자리 숫자 문자열을 HH:MM:SS 형식으로 변환
+      const timeStr = timeString.toString().padStart(6, "0");
+      const hours = timeStr.substring(0, 2);
+      const minutes = timeStr.substring(2, 4);
+      const seconds = timeStr.substring(4, 6);
+
+      return `${hours}:${minutes}:${seconds}`;
+    },
+    formatDistanceKM(value) {
+      if (!value) return "-";
+
+      // 문자를 숫자로 변환하고 1000으로 나눈 후 정수로 반올림
+      const numValue = Number(value);
+      if (isNaN(numValue)) return "-";
+
+      const kmValue = Math.round(numValue / 1000);
+      return `${kmValue}`;
+    },
+    formatSecondsToTime(seconds) {
+      if (!seconds || seconds === 0) return "00:00:00";
+
+      // 초를 숫자로 변환
+      const totalSeconds = Number(seconds);
+      if (isNaN(totalSeconds)) return "00:00:00";
+
+      // 시, 분, 초 계산
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const remainingSeconds = totalSeconds % 60;
+
+      // 2자리로 패딩하여 hh:mm:ss 형식으로 반환
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
     },
   },
 };
