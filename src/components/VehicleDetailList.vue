@@ -22,85 +22,98 @@
 
         <div v-else>
           <div
-            v-for="vehicle in selectedVehicles"
-            :key="vehicle.id"
-            class="vehicle-section mb-4"
+            v-for="(vehicles, zoneId) in vehiclesByZone"
+            :key="zoneId"
+            class="zone-section mb-4"
           >
-            <div class="vehicle-header mb-3">
-              <h6 class="text-primary mb-0">
-                <i class="bi bi-truck"></i>
-                {{ vehicle.name }} ({{ vehicle.type }})
-                <span class="badge bg-secondary ms-2">
-                  Zone: {{ vehicle.zone }}
+            <div class="zone-header mb-3">
+              <h5 class="text-success mb-0">
+                <i class="bi bi-geo-alt"></i>
+                Zone: {{ zoneId }}
+                <span class="badge bg-success ms-2">
+                  {{ vehicles.length }} vehicles
                 </span>
-                <span
-                  v-if="vehicle.detailList && vehicle.detailList.length > 0"
-                  class="badge bg-info ms-1"
-                >
-                  {{ vehicle.detailList.length }} details
-                </span>
-              </h6>
+              </h5>
             </div>
 
             <div
-              v-if="!vehicle.detailList || vehicle.detailList.length === 0"
-              class="text-muted small"
+              v-for="vehicle in vehicles"
+              :key="vehicle.id"
+              class="vehicle-section mb-3 ms-3"
             >
-              이 vehicle에 대한 detail 정보가 없습니다.
-            </div>
-
-            <div v-else class="table-responsive">
-              <table class="table table-striped table-hover table-sm">
-                <thead class="table-dark">
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Order ID</th>
-                    <th scope="col">Weight(KG)</th>
-                    <th scope="col">Volume(CBM)</th>
-                    <th scope="col">Request Time</th>
-                    <th scope="col">Customer Time</th>
-                    <th scope="col">Arrival Time</th>
-                    <th scope="col">Departure Time</th>
-                    <th scope="col">Distance(KM)</th>
-                    <th scope="col">Duration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(detail, detailIndex) in vehicle.detailList"
-                    :key="`${vehicle.id}-${detailIndex}`"
+              <div class="vehicle-header mb-3">
+                <h6 class="text-primary mb-0">
+                  <i class="bi bi-truck"></i>
+                  {{ vehicle.name }} ({{ vehicle.type }})
+                  <span
+                    v-if="vehicle.detailList && vehicle.detailList.length > 0"
+                    class="badge bg-info ms-1"
                   >
-                    <td>{{ detailIndex + 1 }}</td>
+                    {{ vehicle.detailList.length }} details
+                  </span>
+                </h6>
+              </div>
 
-                    <td>
-                      {{ detail.orderId || detail.locId }}
-                    </td>
-                    <td>
-                      {{ detail.loadWt }}
-                    </td>
-                    <td>
-                      {{ detail.loadVol }}
-                    </td>
-                    <td>
-                      {{ detail.reqDate }}
-                    </td>
-                    <td>
-                      {{ formatTime24(detail.custOpenTime) }} ~
-                      {{ formatTime24(detail.custCloseTime) }}
-                    </td>
-                    <td>
-                      {{ detail.arrDtm }}
-                    </td>
-                    <td>
-                      {{ detail.depDtm }}
-                    </td>
-                    <td>{{ formatDistanceKM(detail.distcVal) }}</td>
-                    <td>
-                      {{ formatSecondsToTime(detail.trnsPeridVal) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div
+                v-if="!vehicle.detailList || vehicle.detailList.length === 0"
+                class="text-muted small"
+              >
+                이 vehicle에 대한 detail 정보가 없습니다.
+              </div>
+
+              <div v-else class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                  <thead class="table-dark">
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Order ID</th>
+                      <th scope="col">Weight(KG)</th>
+                      <th scope="col">Volume(CBM)</th>
+                      <th scope="col">Request Time</th>
+                      <th scope="col">Customer Time</th>
+                      <th scope="col">Arrival Time</th>
+                      <th scope="col">Departure Time</th>
+                      <th scope="col">Distance(KM)</th>
+                      <th scope="col">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(detail, detailIndex) in vehicle.detailList"
+                      :key="`${vehicle.id}-${detailIndex}`"
+                    >
+                      <td>{{ detailIndex + 1 }}</td>
+
+                      <td>
+                        {{ detail.orderId || detail.locId }}
+                      </td>
+                      <td>
+                        {{ detail.loadWt }}
+                      </td>
+                      <td>
+                        {{ detail.loadVol }}
+                      </td>
+                      <td>
+                        {{ detail.reqDate }}
+                      </td>
+                      <td>
+                        {{ formatTime24(detail.custOpenTime) }} ~
+                        {{ formatTime24(detail.custCloseTime) }}
+                      </td>
+                      <td>
+                        {{ detail.arrDtm }}
+                      </td>
+                      <td>
+                        {{ detail.depDtm }}
+                      </td>
+                      <td>{{ formatDistanceKM(detail.distcVal) }}</td>
+                      <td>
+                        {{ formatSecondsToTime(detail.trnsPeridVal) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -123,6 +136,17 @@ export default {
       return this.selectedVehicles.reduce((total, vehicle) => {
         return total + (vehicle.detailList ? vehicle.detailList.length : 0);
       }, 0);
+    },
+    vehiclesByZone() {
+      const grouped = {};
+      this.selectedVehicles.forEach((vehicle) => {
+        const zoneId = vehicle.zone || "Unknown Zone";
+        if (!grouped[zoneId]) {
+          grouped[zoneId] = [];
+        }
+        grouped[zoneId].push(vehicle);
+      });
+      return grouped;
     },
   },
   methods: {
@@ -206,6 +230,20 @@ export default {
   padding: 1.25rem;
   overflow-y: auto;
   height: calc(100% - 80px);
+}
+
+.zone-section {
+  border: 2px solid #198754;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  background-color: #f8fff9;
+  margin-bottom: 2rem;
+}
+
+.zone-header {
+  border-bottom: 2px solid #198754;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .vehicle-section {
@@ -322,6 +360,15 @@ export default {
 .bg-info {
   background-color: #0dcaf0 !important;
   color: black !important;
+}
+
+.bg-success {
+  background-color: #198754 !important;
+  color: white !important;
+}
+
+.text-success {
+  color: #198754 !important;
 }
 
 .bg-light {
