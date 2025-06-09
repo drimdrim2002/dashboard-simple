@@ -272,6 +272,17 @@
                           'draggable-row': isDragable(detail),
                           'non-draggable-row': !isDragable(detail),
                         }"
+                        :aria-label="
+                          isDragable(detail)
+                            ? `드래그 가능한 주문 ${
+                                detail.orderId || detail.locId
+                              }`
+                            : `드래그 불가능한 주문 ${
+                                detail.orderId || detail.locId
+                              }`
+                        "
+                        :tabindex="isDragable(detail) ? 0 : -1"
+                        role="gridcell"
                         @dragstart="onDragStart($event, detail, vehicle)"
                         @dragend="onDragEnd"
                         @dragover="onRowDragOver"
@@ -281,6 +292,9 @@
                         "
                         @dragleave="
                           $event.currentTarget.classList.remove('row-drag-over')
+                        "
+                        @keydown="
+                          onRowKeyDown($event, detail, vehicle, detailIndex)
                         "
                       >
                         <td>{{ detailIndex + 1 }}</td>
@@ -430,6 +444,10 @@ export default {
         insertIndex: -1,
         mouseY: 0,
       },
+      // 성능 최적화용 캐시
+      vehicleSummaryCache: new Map(),
+      lastUpdateTime: 0,
+      dragOverTimeout: null,
     };
   },
   computed: {
@@ -565,14 +583,37 @@ export default {
         return { totalLoadWt: 0, totalLoadVol: 0 };
       }
 
-      return detailList.reduce(
-        (summary, detail) => {
-          summary.totalLoadWt += Number(detail.loadWt || 0);
-          summary.totalLoadVol += Number(detail.loadVol || 0);
-          return summary;
+      // 캐시 키 생성 (detailList의 해시)
+      const cacheKey = JSON.stringify(
+        detailList.map((d) => ({
+          orderId: d.orderId,
+          loadWt: d.loadWt,
+          loadVol: d.loadVol,
+        }))
+      );
+
+      // 캐시에서 조회
+      if (this.vehicleSummaryCache.has(cacheKey)) {
+        return this.vehicleSummaryCache.get(cacheKey);
+      }
+
+      const summary = detailList.reduce(
+        (acc, detail) => {
+          acc.totalLoadWt += Number(detail.loadWt || 0);
+          acc.totalLoadVol += Number(detail.loadVol || 0);
+          return acc;
         },
         { totalLoadWt: 0, totalLoadVol: 0 }
       );
+
+      // 캐시에 저장 (최대 100개까지만)
+      if (this.vehicleSummaryCache.size > 100) {
+        const firstKey = this.vehicleSummaryCache.keys().next().value;
+        this.vehicleSummaryCache.delete(firstKey);
+      }
+      this.vehicleSummaryCache.set(cacheKey, summary);
+
+      return summary;
     },
     // Drag and Drop 관련 함수들
     isDragable(detail) {
@@ -628,7 +669,17 @@ export default {
       event.dataTransfer.dropEffect = "move";
     },
     onTableDragOver(event, vehicle) {
-      console.log("🟠 onTableDragOver called for vehicle:", vehicle.id);
+      // 디바운싱을 위한 래퍼 함수
+      if (this.dragOverTimeout) {
+        clearTimeout(this.dragOverTimeout);
+      }
+
+      this.dragOverTimeout = setTimeout(() => {
+        this.handleTableDragOver(event, vehicle);
+      }, 16); // 60fps를 위한 16ms 간격
+    },
+    handleTableDragOver(event, vehicle) {
+      console.log("🟠 handleTableDragOver called for vehicle:", vehicle.id);
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
 
@@ -689,10 +740,19 @@ export default {
       event.preventDefault();
 
       try {
-        const dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
+        const dragDataText = event.dataTransfer.getData("text/plain");
+        if (!dragDataText) {
+          throw new Error("드래그 데이터를 찾을 수 없습니다.");
+        }
+
+        const dragData = JSON.parse(dragDataText);
         console.log("🟢 Retrieved dragData:", dragData);
 
         const { detail, sourceVehicleId, sourceZoneId } = dragData;
+
+        if (!detail || !sourceVehicleId || !sourceZoneId) {
+          throw new Error("필수 드래그 데이터가 누락되었습니다.");
+        }
 
         // Validation 로직
         console.log(
@@ -702,16 +762,9 @@ export default {
           targetVehicle.zone
         );
         if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
-          console.log("🔴 Validation failed: different zones");
-          alert("Cannot move order to different zone!");
+          this.showErrorMessage("다른 Zone으로는 주문을 이동할 수 없습니다!");
           return;
         }
-
-        // if (sourceVehicleId === targetVehicle.id) {
-        //   console.log("🔴 Same vehicle, skipping");
-        //   // 같은 vehicle 내에서 이동은 현재 구현하지 않음
-        //   return;
-        // }
 
         console.log(
           "🟢 Moving order from",
@@ -721,24 +774,30 @@ export default {
         );
         // Order 이동 실행
         this.moveOrder(detail, sourceVehicleId, targetVehicle.id);
+        this.showSuccessMessage("주문이 성공적으로 이동되었습니다.");
       } catch (error) {
         console.error("🔴 Drop failed:", error);
+        this.showErrorMessage(
+          `드롭 처리 중 오류가 발생했습니다: ${error.message}`
+        );
+      } finally {
+        this.hideDropIndicator();
+        this.cleanupDragStyles();
       }
     },
     validateDrop(sourceZoneId, targetZoneId) {
       // zoneId가 다르면 fail, 그 외는 true
       return sourceZoneId === targetZoneId;
     },
-    moveOrderToPosition(detail, sourceVehicleId, targetVehicleId, dropIndex) {
+    moveOrder(detail, sourceVehicleId, targetVehicleId, insertIndex = -1) {
       console.log(
-        "🎯 Moving order to position:",
+        "🚚 Moving order:",
         detail.orderId,
         "from",
         sourceVehicleId,
         "to",
         targetVehicleId,
-        "at index",
-        dropIndex
+        insertIndex !== -1 ? `at position ${insertIndex}` : "at end"
       );
 
       // 원본 vehicle에서 order 제거
@@ -751,7 +810,7 @@ export default {
           (d) => d.orderId === detail.orderId && d.locId === detail.locId
         );
         if (detailIndex !== -1) {
-          console.log("🎯 Removing from source vehicle at index", detailIndex);
+          console.log("🚚 Removing from source vehicle at index", detailIndex);
           sourceVehicle.detailList.splice(detailIndex, 1);
           removedFromIndex = detailIndex;
         } else {
@@ -761,7 +820,7 @@ export default {
         console.log("🔴 Source vehicle not found or has no detailList");
       }
 
-      // 타겟 vehicle에 order를 특정 위치에 삽입
+      // 타겟 vehicle에 order 추가
       const targetVehicle = this.selectedVehicles.find(
         (v) => v.id === targetVehicleId
       );
@@ -770,17 +829,24 @@ export default {
           targetVehicle.detailList = [];
         }
 
-        let insertIndex = dropIndex;
+        if (insertIndex === -1) {
+          // 끝에 추가
+          console.log("🚚 Adding to target vehicle at end");
+          targetVehicle.detailList.push(detail);
+        } else {
+          // 특정 위치에 삽입
+          let finalInsertIndex = insertIndex;
 
-        // 같은 vehicle 내에서 이동하는 경우 index 조정
-        if (sourceVehicleId === targetVehicleId && removedFromIndex !== -1) {
-          if (removedFromIndex < dropIndex) {
-            insertIndex = dropIndex - 1; // 앞에서 제거했으므로 index를 하나 줄임
+          // 같은 vehicle 내에서 이동하는 경우 index 조정
+          if (sourceVehicleId === targetVehicleId && removedFromIndex !== -1) {
+            if (removedFromIndex < insertIndex) {
+              finalInsertIndex = insertIndex - 1;
+            }
           }
-        }
 
-        console.log("🎯 Inserting at index", insertIndex);
-        targetVehicle.detailList.splice(insertIndex, 0, detail);
+          console.log("🚚 Inserting at index", finalInsertIndex);
+          targetVehicle.detailList.splice(finalInsertIndex, 0, detail);
+        }
       } else {
         console.log("🔴 Target vehicle not found");
       }
@@ -788,67 +854,29 @@ export default {
       // Vehicle summary 정보 갱신
       this.updateVehicleSummaries();
     },
-    moveOrder(detail, sourceVehicleId, targetVehicleId) {
-      console.log(
-        "🚚 Moving order:",
-        detail.orderId,
-        "from",
-        sourceVehicleId,
-        "to",
-        targetVehicleId
-      );
-
-      // 원본 vehicle에서 order 제거
-      const sourceVehicle = this.selectedVehicles.find(
-        (v) => v.id === sourceVehicleId
-      );
-      if (sourceVehicle && sourceVehicle.detailList) {
-        const detailIndex = sourceVehicle.detailList.findIndex(
-          (d) => d.orderId === detail.orderId && d.locId === detail.locId
-        );
-        if (detailIndex !== -1) {
-          console.log("🚚 Removing from source vehicle at index", detailIndex);
-          sourceVehicle.detailList.splice(detailIndex, 1);
-        } else {
-          console.log("🔴 Detail not found in source vehicle");
-        }
-      } else {
-        console.log("🔴 Source vehicle not found or has no detailList");
-      }
-
-      // 타겟 vehicle에 order 추가 (맨 아래)
-      const targetVehicle = this.selectedVehicles.find(
-        (v) => v.id === targetVehicleId
-      );
-      if (targetVehicle) {
-        if (!targetVehicle.detailList) {
-          targetVehicle.detailList = [];
-        }
-        console.log("🚚 Adding to target vehicle at end");
-        targetVehicle.detailList.push(detail);
-      } else {
-        console.log("🔴 Target vehicle not found");
-      }
-
-      // Vehicle summary 정보 갱신
-      this.updateVehicleSummaries();
+    moveOrderToPosition(detail, sourceVehicleId, targetVehicleId, dropIndex) {
+      // 통합된 moveOrder 함수 사용
+      this.moveOrder(detail, sourceVehicleId, targetVehicleId, dropIndex);
     },
     updateVehicleSummaries() {
       console.log("📊 Updating vehicle summaries");
+      // 캐시 초기화
+      this.vehicleSummaryCache.clear();
+
       // 모든 vehicle의 summary 정보를 다시 계산
       this.selectedVehicles.forEach((vehicle) => {
         if (vehicle.detailList) {
           const summary = this.calculateVehicleSummary(vehicle.detailList);
           // Vehicle의 총 weight와 volume 업데이트
-          vehicle.totLoadWt = summary.totalLoadWt;
-          vehicle.totLoadCbm = summary.totalLoadVol;
+          this.$set(vehicle, "totLoadWt", summary.totalLoadWt);
+          this.$set(vehicle, "totLoadCbm", summary.totalLoadVol);
           console.log("📊 Updated vehicle", vehicle.id, "summary:", summary);
         }
       });
 
-      // Zone summary도 다시 계산하도록 강제 업데이트
-      this.$forceUpdate();
-      console.log("📊 Force update triggered");
+      // 마지막 업데이트 시간 기록
+      this.lastUpdateTime = Date.now();
+      console.log("📊 Vehicle summaries updated at:", this.lastUpdateTime);
     },
     // 대안 2+3: 마우스 위치 기반 정확한 드롭 위치 계산
     calculateDropPosition(event, vehicle) {
@@ -938,6 +966,30 @@ export default {
       }
 
       return dropLines;
+    },
+    showErrorMessage(message) {
+      // 실제 구현에서는 toast나 notification 라이브러리 사용
+      alert(message);
+    },
+    showSuccessMessage(message) {
+      // 실제 구현에서는 toast나 notification 라이브러리 사용
+      console.log("✅ Success:", message);
+    },
+    cleanupDragStyles() {
+      // 모든 드래그 관련 스타일 정리
+      const draggedElements = document.querySelectorAll('[dragging="true"]');
+      draggedElements.forEach((el) => {
+        el.style.opacity = "";
+        el.style.cursor = "";
+        el.removeAttribute("dragging");
+      });
+    },
+    onRowKeyDown(event, detail, vehicle, detailIndex) {
+      if (event.key === "Enter" && this.isDragable(detail)) {
+        console.log("🟢 onRowKeyDown called for vehicle:", vehicle.id);
+        event.preventDefault();
+        this.onRowDrop(event, vehicle, detailIndex);
+      }
     },
   },
 };
