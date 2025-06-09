@@ -240,12 +240,33 @@
                       </tr>
                     </thead>
                     <tbody
-                      @dragover="onDragOver"
+                      @dragover="onTableDragOver($event, vehicle)"
                       @drop="onDrop($event, vehicle)"
+                      @dragleave="hideDropIndicator"
                     >
+                      <!-- 드롭 인서트 라인 (테이블 시작 부분) -->
+                      <tr
+                        v-if="
+                          dropIndicator.show &&
+                          dropIndicator.targetVehicle?.id === vehicle.id &&
+                          dropIndicator.insertIndex === 0
+                        "
+                        class="drop-insert-row"
+                      >
+                        <td colspan="11" class="drop-insert-cell">
+                          <div class="drop-insert-indicator">
+                            <i class="bi bi-arrow-down-circle-fill"></i>
+                            <span class="drop-text"
+                              >여기에 드롭하세요 (첫 번째 위치)</span
+                            >
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- 데이터 행들 -->
                       <tr
                         v-for="(detail, detailIndex) in vehicle.detailList"
-                        :key="`${vehicle.id}-${detailIndex}`"
+                        :key="`data-${vehicle.id}-${detailIndex}`"
                         :draggable="isDragable(detail)"
                         :class="{
                           'draggable-row': isDragable(detail),
@@ -292,6 +313,40 @@
                         </td>
                         <td>
                           {{ detail.depDtm }}
+                        </td>
+                      </tr>
+
+                      <!-- 각 행 뒤의 드롭 인서트 라인들 -->
+                      <tr
+                        v-for="dropLine in getDropLinesForVehicle(vehicle)"
+                        :key="dropLine.key"
+                        class="drop-insert-row"
+                      >
+                        <td colspan="11" class="drop-insert-cell">
+                          <div class="drop-insert-indicator">
+                            <i class="bi bi-arrow-down-circle-fill"></i>
+                            <span class="drop-text">{{
+                              dropLine.message
+                            }}</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- 마지막 위치 드롭 인서트 라인 -->
+                      <tr
+                        v-if="shouldShowDropLineForIndex(vehicle, null)"
+                        :key="`drop-end-${vehicle.id}`"
+                        class="drop-insert-row"
+                      >
+                        <td colspan="11" class="drop-insert-cell">
+                          <div class="drop-insert-indicator">
+                            <i class="bi bi-arrow-down-circle-fill"></i>
+                            <span class="drop-text"
+                              >여기에 드롭하세요 ({{
+                                (vehicle.detailList?.length || 0) + 1
+                              }}번째 위치)</span
+                            >
+                          </div>
                         </td>
                       </tr>
                     </tbody>
@@ -368,6 +423,13 @@ export default {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
+      // 대안 3: 마우스 위치 기반 드롭 위치 추적
+      dropIndicator: {
+        show: false,
+        targetVehicle: null,
+        insertIndex: -1,
+        mouseY: 0,
+      },
     };
   },
   computed: {
@@ -542,6 +604,9 @@ export default {
         event.target.style.cursor = "grabbing";
         event.target.setAttribute("dragging", "true");
 
+        // 드롭 인디케이터 초기화
+        this.hideDropIndicator();
+
         console.log("🔵 Drag start completed");
       } catch (error) {
         console.error("🔴 Error in onDragStart:", error);
@@ -553,11 +618,22 @@ export default {
       event.target.style.opacity = "";
       event.target.style.cursor = "";
       event.target.removeAttribute("dragging");
+
+      // 드롭 인디케이터 숨기기
+      this.hideDropIndicator();
     },
     onDragOver(event) {
       console.log("🟠 onDragOver called");
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
+    },
+    onTableDragOver(event, vehicle) {
+      console.log("🟠 onTableDragOver called for vehicle:", vehicle.id);
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+
+      // 마우스 위치 기반으로 정확한 드롭 위치 계산
+      this.calculateDropPosition(event, vehicle);
     },
     onRowDragOver(event) {
       event.preventDefault();
@@ -773,6 +849,95 @@ export default {
       // Zone summary도 다시 계산하도록 강제 업데이트
       this.$forceUpdate();
       console.log("📊 Force update triggered");
+    },
+    // 대안 2+3: 마우스 위치 기반 정확한 드롭 위치 계산
+    calculateDropPosition(event, vehicle) {
+      const tbody = event.currentTarget;
+      // 드롭 인서트 라인이 아닌 실제 데이터 행만 선택
+      const dataRows = tbody.querySelectorAll("tr:not(.drop-insert-row)");
+      const mouseY = event.clientY;
+
+      this.dropIndicator.show = true;
+      this.dropIndicator.targetVehicle = vehicle;
+      this.dropIndicator.mouseY = mouseY;
+
+      let insertIndex = 0;
+
+      // 데이터 행이 없는 경우 (빈 vehicle)
+      if (dataRows.length === 0) {
+        insertIndex = 0;
+      } else {
+        // 각 행의 위치를 확인하여 마우스 위치에 따른 삽입 인덱스 계산
+        for (let i = 0; i < dataRows.length; i++) {
+          const rect = dataRows[i].getBoundingClientRect();
+          const rowMiddle = rect.top + rect.height / 2;
+
+          if (mouseY < rowMiddle) {
+            insertIndex = i;
+            break;
+          }
+          insertIndex = i + 1;
+        }
+      }
+
+      this.dropIndicator.insertIndex = insertIndex;
+      console.log(
+        "🎯 Drop position calculated:",
+        insertIndex,
+        "at Y:",
+        mouseY,
+        "for vehicle:",
+        vehicle.id
+      );
+    },
+    hideDropIndicator() {
+      this.dropIndicator.show = false;
+      this.dropIndicator.targetVehicle = null;
+      this.dropIndicator.insertIndex = -1;
+    },
+    shouldShowDropLineForIndex(vehicle, afterIndex) {
+      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
+        return false;
+      }
+
+      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
+        return false;
+      }
+
+      // afterIndex가 null인 경우 마지막 위치 체크
+      if (afterIndex === null) {
+        const vehicleLength = vehicle.detailList
+          ? vehicle.detailList.length
+          : 0;
+        return this.dropIndicator.insertIndex === vehicleLength;
+      }
+
+      // 특정 인덱스 뒤 위치 체크
+      return this.dropIndicator.insertIndex === afterIndex + 1;
+    },
+    getDropLinesForVehicle(vehicle) {
+      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
+        return [];
+      }
+
+      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
+        return [];
+      }
+
+      const dropLines = [];
+      const vehicleDetails = vehicle.detailList || [];
+
+      // 각 행 뒤의 드롭 라인들 체크
+      for (let i = 0; i < vehicleDetails.length; i++) {
+        if (this.dropIndicator.insertIndex === i + 1) {
+          dropLines.push({
+            key: `drop-after-${vehicle.id}-${i}`,
+            message: `여기에 드롭하세요 (${i + 2}번째 위치)`,
+          });
+        }
+      }
+
+      return dropLines;
     },
   },
 };
@@ -1273,11 +1438,137 @@ tr:not([draggable="true"]) td {
 /* Row Drop Zone Styles */
 .row-drag-over {
   background-color: rgba(13, 110, 253, 0.15) !important;
-  border-top: 3px solid #0d6efd !important;
-  border-bottom: 3px solid #0d6efd !important;
+  border: 3px solid #0d6efd !important;
+  border-radius: 8px;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  position: relative;
 }
 
-.row-drag-over td {
-  background-color: transparent !important;
+.row-drag-over::before {
+  content: "← 여기에 드롭됩니다";
+  position: absolute;
+  right: -150px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0d6efd;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* 대안 2+3: 정확한 드롭 인서트 라인 */
+.drop-insert-row {
+  height: 50px !important;
+  background: linear-gradient(
+    90deg,
+    rgba(13, 110, 253, 0.95),
+    rgba(25, 135, 84, 0.95)
+  ) !important;
+  animation: pulseInsert 1.5s infinite;
+  position: relative;
+}
+
+.drop-insert-cell {
+  padding: 0 !important;
+  border: none !important;
+  position: relative;
+  text-align: center;
+}
+
+.drop-insert-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  background: linear-gradient(135deg, #0d6efd, #198754);
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 25px;
+  margin: 3px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-insert-indicator::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shine 2s infinite;
+}
+
+.drop-insert-indicator i {
+  margin-right: 10px;
+  font-size: 18px;
+  animation: bounce 1.5s infinite;
+}
+
+.drop-text {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+}
+
+@keyframes pulseInsert {
+  0%,
+  100% {
+    box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(25, 135, 84, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
 }
 </style>
