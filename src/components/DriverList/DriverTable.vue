@@ -245,6 +245,7 @@ export default {
       this.selectedDrivers = event.target.checked
         ? this.drivers.map((driver) => driver.id)
         : [];
+      this.emitSelectedDrivers();
     },
     getDriverTypeClass(type) {
       // Return class based on driver type
@@ -305,6 +306,20 @@ export default {
     },
     goToLastPage() {
       this.currentPage = this.totalPages;
+    },
+    emitSelectedDrivers() {
+      const selectedDriversInfo = this.drivers.filter((driver) =>
+        this.selectedDrivers.includes(driver.id)
+      );
+      this.$emit("drivers-selected", selectedDriversInfo);
+    },
+  },
+  watch: {
+    selectedDrivers: {
+      handler() {
+        this.emitSelectedDrivers();
+      },
+      deep: true,
     },
   },
 };

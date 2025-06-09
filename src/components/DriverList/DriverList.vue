@@ -12,6 +12,7 @@
           :route-list="routeList"
           :search-term="searchTerm"
           :search-type="searchType"
+          @drivers-selected="handleDriversSelected"
         ></driver-table>
       </div>
     </div>
@@ -103,6 +104,11 @@ export default {
     handleUnlock() {
       console.log("Unlock action triggered");
       // Implement unlock logic
+    },
+    handleDriversSelected(selectedDrivers) {
+      // Emit selected drivers to parent component (App.vue)
+      this.$emit("vehicles-selected", selectedDrivers);
+      console.log("Selected drivers:", selectedDrivers);
     },
   },
 };

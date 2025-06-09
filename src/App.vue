@@ -18,7 +18,10 @@
           ref="driverList"
           :style="{ width: driverListWidth + 'px' }"
         >
-          <driver-list :route-list="totalRouteList" />
+          <driver-list
+            :route-list="totalRouteList"
+            @vehicles-selected="handleVehiclesSelected"
+          />
         </div>
         <div class="resize-handle" @mousedown="startHorizontalResize"></div>
         <div
@@ -121,6 +124,8 @@ export default {
       error: null,
       // Bottom section visibility
       isBottomSectionVisible: false,
+      // Selected vehicles management
+      selectedVehicles: [],
     };
   },
   created() {
@@ -269,6 +274,16 @@ export default {
     },
     toggleBottomSection() {
       this.isBottomSectionVisible = !this.isBottomSectionVisible;
+    },
+    handleVehiclesSelected(selectedVehicles) {
+      // Update selected vehicles in the main component
+      this.selectedVehicles = selectedVehicles;
+
+      console.log("Selected vehicles count:", selectedVehicles.length);
+      console.log("Selected vehicles details:", selectedVehicles);
+
+      // You can add additional logic here to handle the selected vehicles
+      // For example: update dashboard stats, send to map component, etc.
     },
   },
 };
