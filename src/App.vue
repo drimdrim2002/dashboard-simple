@@ -192,6 +192,7 @@ export default {
         totLoadCbmRatio: route.totLoadCbmRatio || 0,
         totDistcVal: route.totDistcVal || 0,
         totTrvlPeridVal: route.totTrvlPeridVal || 0,
+        detailList: route.detailList || [],
       }));
     },
   },
