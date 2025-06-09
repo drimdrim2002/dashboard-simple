@@ -61,7 +61,7 @@
                     <div class="summary-card">
                       <small class="text-muted">Total Weight</small>
                       <div class="fw-bold text-primary">
-                        {{ formatWeight(zoneData.summary.totalLoadWt) }}
+                        {{ formatWeight(zoneData.summary.totLoadWt) }}
                       </div>
                     </div>
                   </div>
@@ -69,7 +69,7 @@
                     <div class="summary-card">
                       <small class="text-muted">Total Volume</small>
                       <div class="fw-bold text-info">
-                        {{ formatVolume(zoneData.summary.totalLoadCbm) }}
+                        {{ formatVolume(zoneData.summary.totLoadCbm) }}
                       </div>
                     </div>
                   </div>
@@ -77,7 +77,7 @@
                     <div class="summary-card">
                       <small class="text-muted">Total Distance</small>
                       <div class="fw-bold text-warning">
-                        {{ formatDistance(zoneData.summary.totalDistance) }}
+                        {{ formatDistance(zoneData.summary.totDistcVal) }}
                       </div>
                     </div>
                   </div>
@@ -85,7 +85,7 @@
                     <div class="summary-card">
                       <small class="text-muted">Total Time</small>
                       <div class="fw-bold text-danger">
-                        {{ formatTime(zoneData.summary.totalTime) }}
+                        {{ formatTime(zoneData.summary.totTrvlPeridVal) }}
                       </div>
                     </div>
                   </div>
@@ -202,10 +202,10 @@ export default {
           grouped[zoneId] = {
             vehicles: [],
             summary: {
-              totalLoadWt: 0,
-              totalLoadCbm: 0,
-              totalDistance: 0,
-              totalTime: 0,
+              totLoadWt: 0,
+              totLoadCbm: 0,
+              totDistcVal: 0,
+              totTrvlPeridVal: 0,
               vhclIds: [],
               vhclTcds: [],
             },
@@ -216,10 +216,10 @@ export default {
 
         // 합계 계산
         const summary = grouped[zoneId].summary;
-        summary.totalLoadWt += Number(vehicle.totalLoadWt || 0);
-        summary.totalLoadCbm += Number(vehicle.totalLoadCbm || 0);
-        summary.totalDistance += Number(vehicle.totalDistance || 0);
-        summary.totalTime += Number(vehicle.totalTime || 0);
+        summary.totLoadWt += Number(vehicle.totLoadWt || 0);
+        summary.totLoadCbm += Number(vehicle.totLoadCbm || 0);
+        summary.totDistcVal += Number(vehicle.totDistcVal || 0);
+        summary.totTrvlPeridVal += Number(vehicle.totTrvlPeridVal || 0);
 
         // vhclId와 vhclTcd 수집
         if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
