@@ -161,25 +161,27 @@
                           "
                           class="badge bg-info ms-1"
                         >
-                          {{ vehicle.detailList.length }} details
+                          {{ vehicle.detailList.length }} orders
                         </span>
                         <span class="text-muted ms-2 small">
-                          Total:
+                          Loaded Weight:
                           {{
                             formatDecimal(
                               calculateVehicleSummary(vehicle.detailList)
                                 .totalLoadWt,
                               1
                             )
-                          }}kg |
+                          }}
+                          , Max Weight: {{ vehicle.maxWt || 0 }}kg | Loaded
+                          Volume:
                           {{
                             formatDecimal(
                               calculateVehicleSummary(vehicle.detailList)
                                 .totalLoadVol,
                               1
                             )
-                          }}m³ | Max: {{ vehicle.maxWt || 0 }}kg |
-                          {{ vehicle.maxVol || 0 }}m³
+                          }}
+                          , Max Volume: {{ vehicle.maxVol }}m³
                           <span class="expand-hint ms-1"
                             >({{
                               isVehicleExpanded(vehicle.id)
@@ -361,6 +363,8 @@ export default {
               totDistcVal: 0,
               totTrvlPeridVal: 0,
               totCostAmt: 0,
+              maxWt: 0,
+              maxVol: 0,
               vhclIds: [],
               vhclTcds: [],
             },
@@ -376,6 +380,8 @@ export default {
         summary.totDistcVal += Number(vehicle.totDistcVal || 0);
         summary.totTrvlPeridVal += Number(vehicle.totTrvlPeridVal || 0);
         summary.totCostAmt += Number(vehicle.totCostAmt || 0);
+        summary.maxWt += Number(vehicle.maxWt || 0);
+        summary.maxVol += Number(vehicle.maxVol || 0);
         // vhclId와 vhclTcd 수집
         if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
         if (vehicle.vhclTcd) summary.vhclTcds.push(vehicle.vhclTcd);
