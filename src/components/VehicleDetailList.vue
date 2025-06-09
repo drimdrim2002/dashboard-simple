@@ -306,12 +306,12 @@ export default {
     formatDistanceKM(value) {
       if (!value) return "-";
 
-      // 문자를 숫자로 변환하고 1000으로 나눈 후 정수로 반올림
+      // 문자를 숫자로 변환하고 1000으로 나눈 후 소수점 첫째자리까지 표시
       const numValue = Number(value);
       if (isNaN(numValue)) return "-";
 
-      const kmValue = Math.round(numValue / 1000);
-      return `${kmValue}`;
+      const kmValue = (numValue / 1000).toFixed(1);
+      return `${kmValue} km`;
     },
     formatSecondsToTime(seconds) {
       if (!seconds || seconds === 0) return "00:00:00";
