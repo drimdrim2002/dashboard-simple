@@ -56,38 +56,81 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <h3>JSON Data Information</h3>
-
-          <!-- Loading status -->
-          <div v-if="isLoading" class="loading">
-            <p>Loading JSON file...</p>
-          </div>
-
-          <!-- Error status -->
-          <div v-else-if="error" class="error">
-            <p>Error: {{ error }}</p>
-          </div>
-
-          <!-- JSON keys list -->
-          <div v-else-if="jsonKeys.length > 0" class="json-info">
-            <h4>JSON File Keys ({{ jsonKeys.length }} items):</h4>
-            <div class="keys-container">
-              <div
-                v-for="(key, index) in jsonKeys"
-                :key="index"
-                class="key-item"
+          <!-- Tab Navigation -->
+          <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                :class="{ active: activeTab === 'vehicles' }"
+                @click="activeTab = 'vehicles'"
               >
-                <span class="key-name">{{ key }}</span>
-                <span v-if="jsonData && jsonData[key]" class="key-type">
-                  {{ getDataType(jsonData[key]) }}
-                </span>
+                <i class="bi bi-truck"></i>
+                Selected Vehicles ({{ selectedVehicles.length }})
+              </button>
+            </li>
+            <li class="nav-item">
+              <button
+                class="nav-link"
+                :class="{ active: activeTab === 'json' }"
+                @click="activeTab = 'json'"
+              >
+                <i class="bi bi-file-earmark-code"></i>
+                JSON Data Information
+              </button>
+            </li>
+          </ul>
+
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- Selected Vehicles Tab -->
+            <div
+              v-show="activeTab === 'vehicles'"
+              class="tab-pane"
+              :class="{ active: activeTab === 'vehicles' }"
+            >
+              <vehicle-detail-list :selected-vehicles="selectedVehicles" />
+            </div>
+
+            <!-- JSON Data Tab -->
+            <div
+              v-show="activeTab === 'json'"
+              class="tab-pane"
+              :class="{ active: activeTab === 'json' }"
+            >
+              <h3>JSON Data Information</h3>
+
+              <!-- Loading status -->
+              <div v-if="isLoading" class="loading">
+                <p>Loading JSON file...</p>
+              </div>
+
+              <!-- Error status -->
+              <div v-else-if="error" class="error">
+                <p>Error: {{ error }}</p>
+              </div>
+
+              <!-- JSON keys list -->
+              <div v-else-if="jsonKeys.length > 0" class="json-info">
+                <h4>JSON File Keys ({{ jsonKeys.length }} items):</h4>
+                <div class="keys-container">
+                  <div
+                    v-for="(key, index) in jsonKeys"
+                    :key="index"
+                    class="key-item"
+                  >
+                    <span class="key-name">{{ key }}</span>
+                    <span v-if="jsonData && jsonData[key]" class="key-type">
+                      {{ getDataType(jsonData[key]) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Initial state -->
+              <div v-else>
+                <p>Failed to load JSON data.</p>
               </div>
             </div>
-          </div>
-
-          <!-- Initial state -->
-          <div v-else>
-            <p>Failed to load JSON data.</p>
           </div>
         </div>
       </div>
@@ -99,6 +142,7 @@
 import DashboardStats from "./components/Dashboard/DashboardStats.vue";
 import DriverList from "./components/DriverList/DriverList.vue";
 import MapView from "./components/Map/MapView.vue";
+import VehicleDetailList from "./components/VehicleDetailList.vue";
 
 export default {
   name: "App",
@@ -106,6 +150,7 @@ export default {
     DashboardStats,
     DriverList,
     MapView,
+    VehicleDetailList,
   },
   data() {
     return {
@@ -126,6 +171,7 @@ export default {
       isBottomSectionVisible: false,
       // Selected vehicles management
       selectedVehicles: [],
+      activeTab: "vehicles",
     };
   },
   created() {
@@ -477,5 +523,54 @@ html {
 
 .bottom-toggle-btn i {
   font-size: 12px;
+}
+
+/* Tab Navigation Styles */
+.nav-tabs {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link {
+  border: 1px solid transparent;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  color: #495057;
+  background: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: #e9ecef #e9ecef #dee2e6;
+  isolation: isolate;
+}
+
+.nav-tabs .nav-link.active {
+  color: #495057;
+  background-color: #fff;
+  border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav-tabs .nav-link i {
+  margin-right: 0.5rem;
+}
+
+.tab-content {
+  height: calc(100% - 60px);
+}
+
+.tab-pane {
+  height: 100%;
+}
+
+.tab-pane.active {
+  display: block;
 }
 </style>
