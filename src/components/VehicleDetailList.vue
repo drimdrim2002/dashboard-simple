@@ -27,16 +27,49 @@
             class="zone-section mb-4"
           >
             <div class="zone-header mb-3">
-              <h5 class="text-success mb-2">
-                <i class="bi bi-geo-alt"></i>
-                Zone: {{ zoneId }}
-                <span class="badge bg-success ms-2">
-                  {{ zoneData.vehicles.length }} vehicles
-                </span>
-              </h5>
+              <!-- 기본 Zone 정보 + 토글 버튼 -->
+              <div
+                class="zone-basic-info"
+                @click="toggleZoneDetails(zoneId)"
+                style="cursor: pointer"
+              >
+                <h5
+                  class="text-success mb-0 d-flex align-items-center justify-content-between"
+                >
+                  <span>
+                    <i class="bi bi-geo-alt"></i>
+                    Zone: {{ zoneId }}
+                    <span class="badge bg-success ms-2">
+                      {{ zoneData.vehicles.length }} vehicles
+                    </span>
+                    <span class="text-muted ms-2 small">
+                      Weight: {{ formatWeight(zoneData.summary.totLoadWt) }} |
+                      Volume: {{ formatVolume(zoneData.summary.totLoadCbm) }} |
+                      Cost:
+                      {{ Number(zoneData.summary.totCostAmt).toLocaleString() }}
+                      <span class="expand-hint ms-1"
+                        >({{
+                          isZoneExpanded(zoneId)
+                            ? "Click to collapse"
+                            : "Click to expand"
+                        }})</span
+                      >
+                    </span>
+                  </span>
+                  <span class="toggle-icon">
+                    <i
+                      :class="
+                        isZoneExpanded(zoneId)
+                          ? 'bi bi-chevron-up'
+                          : 'bi bi-chevron-down'
+                      "
+                    ></i>
+                  </span>
+                </h5>
+              </div>
 
-              <!-- Zone 합계 정보 -->
-              <div class="zone-summary">
+              <!-- 상세 Zone 합계 정보 (접기/펼치기) -->
+              <div v-if="isZoneExpanded(zoneId)" class="zone-summary mt-3">
                 <div class="row g-2">
                   <div class="col-md-2">
                     <div class="summary-card">
@@ -103,135 +136,140 @@
               </div>
             </div>
 
-            <div
-              v-for="vehicle in zoneData.vehicles"
-              :key="vehicle.id"
-              class="vehicle-section mb-3 ms-3"
-            >
-              <div class="vehicle-header mb-3">
-                <h6 class="text-primary mb-0">
-                  <i class="bi bi-truck"></i>
-                  {{ vehicle.name }} ({{ vehicle.type }})
-                  <span
-                    v-if="vehicle.detailList && vehicle.detailList.length > 0"
-                    class="badge bg-info ms-1"
-                  >
-                    {{ vehicle.detailList.length }} details
-                  </span>
-                </h6>
-              </div>
-
+            <template v-if="isZoneExpanded(zoneId)">
               <div
-                v-if="!vehicle.detailList || vehicle.detailList.length === 0"
-                class="text-muted small"
+                v-for="vehicle in zoneData.vehicles"
+                :key="vehicle.id"
+                class="vehicle-section mb-3 ms-3"
               >
-                이 vehicle에 대한 detail 정보가 없습니다.
-              </div>
-
-              <div v-else class="table-responsive">
-                <table class="table table-striped table-hover table-sm">
-                  <thead class="table-dark">
-                    <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">Order ID</th>
-                      <th scope="col">Location ID</th>
-                      <th scope="col">Weight(KG)</th>
-                      <th scope="col">Volume(CBM)</th>
-                      <th scope="col">Distance(KM)</th>
-                      <th scope="col">Duration</th>
-                      <th scope="col">Request Time</th>
-                      <th scope="col">Customer Time</th>
-                      <th scope="col">Arrival Time</th>
-                      <th scope="col">Departure Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(detail, detailIndex) in vehicle.detailList"
-                      :key="`${vehicle.id}-${detailIndex}`"
+                <div class="vehicle-header mb-3">
+                  <h6 class="text-primary mb-0">
+                    <i class="bi bi-truck"></i>
+                    {{ vehicle.name }} ({{ vehicle.type }})
+                    <span
+                      v-if="vehicle.detailList && vehicle.detailList.length > 0"
+                      class="badge bg-info ms-1"
                     >
-                      <td>{{ detailIndex + 1 }}</td>
+                      {{ vehicle.detailList.length }} details
+                    </span>
+                  </h6>
+                </div>
 
-                      <td>
-                        {{ detail.orderId || detail.locId }}
-                      </td>
-                      <td>
-                        {{ detail.locId }}
-                      </td>
-                      <td>
-                        {{ detail.loadWt }}
-                      </td>
-                      <td>
-                        {{ detail.loadVol }}
-                      </td>
-                      <td>{{ formatDistanceKM(detail.distcVal) }}</td>
-                      <td>
-                        {{ formatSecondsToTime(detail.trnsPeridVal) }}
-                      </td>
-                      <td>
-                        {{ detail.reqDate }}
-                      </td>
-                      <td>
-                        {{ formatTime24(detail.custOpenTime) }} ~
-                        {{ formatTime24(detail.custCloseTime) }}
-                      </td>
-                      <td>
-                        {{ detail.arrDtm }}
-                      </td>
-                      <td>
-                        {{ detail.depDtm }}
-                      </td>
-                    </tr>
-                  </tbody>
-                  <tfoot class="table-secondary">
-                    <tr>
-                      <td colspan="3" class="text-end fw-bold">Total:</td>
+                <div
+                  v-if="!vehicle.detailList || vehicle.detailList.length === 0"
+                  class="text-muted small"
+                >
+                  이 vehicle에 대한 detail 정보가 없습니다.
+                </div>
 
-                      <td class="fw-bold">
-                        {{
-                          formatDecimal(
-                            calculateVehicleTotal(vehicle.detailList, "loadWt"),
-                            1
-                          )
-                        }}
-                      </td>
-                      <td class="fw-bold">
-                        {{
-                          formatDecimal(
-                            calculateVehicleTotal(
-                              vehicle.detailList,
-                              "loadVol"
-                            ),
-                            1
-                          )
-                        }}
-                      </td>
-                      <td class="fw-bold">
-                        {{
-                          formatDistanceKM(
-                            calculateVehicleTotal(
-                              vehicle.detailList,
-                              "distcVal"
+                <div v-else class="table-responsive">
+                  <table class="table table-striped table-hover table-sm">
+                    <thead class="table-dark">
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Order ID</th>
+                        <th scope="col">Location ID</th>
+                        <th scope="col">Weight(KG)</th>
+                        <th scope="col">Volume(CBM)</th>
+                        <th scope="col">Distance(KM)</th>
+                        <th scope="col">Duration</th>
+                        <th scope="col">Request Time</th>
+                        <th scope="col">Customer Time</th>
+                        <th scope="col">Arrival Time</th>
+                        <th scope="col">Departure Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(detail, detailIndex) in vehicle.detailList"
+                        :key="`${vehicle.id}-${detailIndex}`"
+                      >
+                        <td>{{ detailIndex + 1 }}</td>
+
+                        <td>
+                          {{ detail.orderId || detail.locId }}
+                        </td>
+                        <td>
+                          {{ detail.locId }}
+                        </td>
+                        <td>
+                          {{ detail.loadWt }}
+                        </td>
+                        <td>
+                          {{ detail.loadVol }}
+                        </td>
+                        <td>{{ formatDistanceKM(detail.distcVal) }}</td>
+                        <td>
+                          {{ formatSecondsToTime(detail.trnsPeridVal) }}
+                        </td>
+                        <td>
+                          {{ detail.reqDate }}
+                        </td>
+                        <td>
+                          {{ formatTime24(detail.custOpenTime) }} ~
+                          {{ formatTime24(detail.custCloseTime) }}
+                        </td>
+                        <td>
+                          {{ detail.arrDtm }}
+                        </td>
+                        <td>
+                          {{ detail.depDtm }}
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot class="table-secondary">
+                      <tr>
+                        <td colspan="3" class="text-end fw-bold">Total:</td>
+
+                        <td class="fw-bold">
+                          {{
+                            formatDecimal(
+                              calculateVehicleTotal(
+                                vehicle.detailList,
+                                "loadWt"
+                              ),
+                              1
                             )
-                          )
-                        }}
-                      </td>
-                      <td class="fw-bold">
-                        {{
-                          formatSecondsToTime(
-                            calculateVehicleTotal(
-                              vehicle.detailList,
-                              "trnsPeridVal"
+                          }}
+                        </td>
+                        <td class="fw-bold">
+                          {{
+                            formatDecimal(
+                              calculateVehicleTotal(
+                                vehicle.detailList,
+                                "loadVol"
+                              ),
+                              1
                             )
-                          )
-                        }}
-                      </td>
-                      <td colspan="4"></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                          }}
+                        </td>
+                        <td class="fw-bold">
+                          {{
+                            formatDistanceKM(
+                              calculateVehicleTotal(
+                                vehicle.detailList,
+                                "distcVal"
+                              )
+                            )
+                          }}
+                        </td>
+                        <td class="fw-bold">
+                          {{
+                            formatSecondsToTime(
+                              calculateVehicleTotal(
+                                vehicle.detailList,
+                                "trnsPeridVal"
+                              )
+                            )
+                          }}
+                        </td>
+                        <td colspan="4"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -247,6 +285,11 @@ export default {
       type: Array,
       default: () => [],
     },
+  },
+  data() {
+    return {
+      expandedZones: {}, // zone별 펼침/접힘 상태 관리
+    };
   },
   computed: {
     totalDetailCount() {
@@ -355,6 +398,12 @@ export default {
     formatDecimal(value, decimals) {
       if (!value || value === 0) return "0.0";
       return Number(value).toFixed(decimals);
+    },
+    toggleZoneDetails(zoneId) {
+      this.$set(this.expandedZones, zoneId, !this.expandedZones[zoneId]);
+    },
+    isZoneExpanded(zoneId) {
+      return this.expandedZones[zoneId] || false;
     },
   },
 };
@@ -681,5 +730,60 @@ export default {
 
 .text-end {
   text-align: center !important;
+}
+
+/* Bootstrap Flex Utilities */
+.d-flex {
+  display: flex !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+/* Zone Toggle Styles */
+.zone-basic-info {
+  transition: background-color 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.zone-basic-info:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  color: #198754;
+  transition: transform 0.2s ease;
+}
+
+.expand-hint {
+  font-size: 0.7rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.zone-summary {
+  animation: slideDown 0.3s ease-out;
+}
+
+.vehicle-section {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
