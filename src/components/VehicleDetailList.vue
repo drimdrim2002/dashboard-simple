@@ -38,7 +38,7 @@
               <!-- Zone 합계 정보 -->
               <div class="zone-summary">
                 <div class="row g-2">
-                  <div class="col-md-3">
+                  <div class="col-md-2">
                     <div class="summary-card">
                       <small class="text-muted">Vehicle IDs</small>
                       <div class="fw-bold">
@@ -83,7 +83,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="col-md-2">
+                  <div class="col-md-1">
                     <div class="summary-card">
                       <small class="text-muted">Total Distance</small>
                       <div class="fw-bold text">
@@ -419,19 +419,6 @@ export default {
   letter-spacing: 0.05em;
 }
 
-.zone-summary {
-  margin-top: 1rem;
-}
-
-.summary-card {
-  background-color: #ffffff;
-  border: 1px solid #e9ecef;
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
 .vehicle-section {
   border: 1px solid #e9ecef;
   border-radius: 0.375rem;
@@ -651,8 +638,8 @@ export default {
   position: relative;
   width: 100%;
   min-height: 1px;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 @media (min-width: 768px) {
