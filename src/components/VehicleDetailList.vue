@@ -124,6 +124,7 @@
                     <tr>
                       <th scope="col">#</th>
                       <th scope="col">Order ID</th>
+                      <th scope="col">Location ID</th>
                       <th scope="col">Weight(KG)</th>
                       <th scope="col">Volume(CBM)</th>
                       <th scope="col">Distance(KM)</th>
@@ -144,7 +145,9 @@
                       <td>
                         {{ detail.orderId || detail.locId }}
                       </td>
-
+                      <td>
+                        {{ detail.locId }}
+                      </td>
                       <td>
                         {{ detail.loadWt }}
                       </td>
@@ -172,7 +175,7 @@
                   </tbody>
                   <tfoot class="table-secondary">
                     <tr>
-                      <td colspan="2" class="text-end fw-bold">Total:</td>
+                      <td colspan="3" class="text-end fw-bold">Total:</td>
 
                       <td class="fw-bold">
                         {{
