@@ -126,12 +126,12 @@
                       <th scope="col">Order ID</th>
                       <th scope="col">Weight(KG)</th>
                       <th scope="col">Volume(CBM)</th>
+                      <th scope="col">Distance(KM)</th>
+                      <th scope="col">Duration</th>
                       <th scope="col">Request Time</th>
                       <th scope="col">Customer Time</th>
                       <th scope="col">Arrival Time</th>
                       <th scope="col">Departure Time</th>
-                      <th scope="col">Distance(KM)</th>
-                      <th scope="col">Duration</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -144,11 +144,16 @@
                       <td>
                         {{ detail.orderId || detail.locId }}
                       </td>
+
                       <td>
                         {{ detail.loadWt }}
                       </td>
                       <td>
                         {{ detail.loadVol }}
+                      </td>
+                      <td>{{ formatDistanceKM(detail.distcVal) }}</td>
+                      <td>
+                        {{ formatSecondsToTime(detail.trnsPeridVal) }}
                       </td>
                       <td>
                         {{ detail.reqDate }}
@@ -163,15 +168,12 @@
                       <td>
                         {{ detail.depDtm }}
                       </td>
-                      <td>{{ formatDistanceKM(detail.distcVal) }}</td>
-                      <td>
-                        {{ formatSecondsToTime(detail.trnsPeridVal) }}
-                      </td>
                     </tr>
                   </tbody>
                   <tfoot class="table-secondary">
                     <tr>
-                      <td colspan="2" class="text-end fw-bold">합계:</td>
+                      <td colspan="2" class="text-end fw-bold">Total:</td>
+
                       <td class="fw-bold">
                         {{
                           formatDecimal(
@@ -191,7 +193,6 @@
                           )
                         }}
                       </td>
-                      <td colspan="4"></td>
                       <td class="fw-bold">
                         {{
                           formatDistanceKM(
@@ -212,6 +213,7 @@
                           )
                         }}
                       </td>
+                      <td colspan="4"></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -674,5 +676,9 @@ export default {
 
 .text-danger {
   color: #dc3545 !important;
+}
+
+.text-end {
+  text-align: center !important;
 }
 </style>
