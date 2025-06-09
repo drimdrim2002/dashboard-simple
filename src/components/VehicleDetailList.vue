@@ -22,22 +22,79 @@
 
         <div v-else>
           <div
-            v-for="(vehicles, zoneId) in vehiclesByZone"
+            v-for="(zoneData, zoneId) in vehiclesByZone"
             :key="zoneId"
             class="zone-section mb-4"
           >
             <div class="zone-header mb-3">
-              <h5 class="text-success mb-0">
+              <h5 class="text-success mb-2">
                 <i class="bi bi-geo-alt"></i>
                 Zone: {{ zoneId }}
                 <span class="badge bg-success ms-2">
-                  {{ vehicles.length }} vehicles
+                  {{ zoneData.vehicles.length }} vehicles
                 </span>
               </h5>
+
+              <!-- Zone 합계 정보 -->
+              <div class="zone-summary">
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <div class="summary-card">
+                      <small class="text-muted">Vehicle IDs</small>
+                      <div class="fw-bold">
+                        {{ zoneData.summary.vhclIds.join(", ") || "N/A" }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="summary-card">
+                      <small class="text-muted">Vehicle Types</small>
+                      <div class="fw-bold">
+                        {{
+                          [...new Set(zoneData.summary.vhclTcds)].join(", ") ||
+                          "N/A"
+                        }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="summary-card">
+                      <small class="text-muted">Total Weight</small>
+                      <div class="fw-bold text-primary">
+                        {{ formatWeight(zoneData.summary.totalLoadWt) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="summary-card">
+                      <small class="text-muted">Total Volume</small>
+                      <div class="fw-bold text-info">
+                        {{ formatVolume(zoneData.summary.totalLoadCbm) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="summary-card">
+                      <small class="text-muted">Total Distance</small>
+                      <div class="fw-bold text-warning">
+                        {{ formatDistance(zoneData.summary.totalDistance) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-1">
+                    <div class="summary-card">
+                      <small class="text-muted">Total Time</small>
+                      <div class="fw-bold text-danger">
+                        {{ formatTime(zoneData.summary.totalTime) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div
-              v-for="vehicle in vehicles"
+              v-for="vehicle in zoneData.vehicles"
               :key="vehicle.id"
               class="vehicle-section mb-3 ms-3"
             >
@@ -142,9 +199,31 @@ export default {
       this.selectedVehicles.forEach((vehicle) => {
         const zoneId = vehicle.zone || "Unknown Zone";
         if (!grouped[zoneId]) {
-          grouped[zoneId] = [];
+          grouped[zoneId] = {
+            vehicles: [],
+            summary: {
+              totalLoadWt: 0,
+              totalLoadCbm: 0,
+              totalDistance: 0,
+              totalTime: 0,
+              vhclIds: [],
+              vhclTcds: [],
+            },
+          };
         }
-        grouped[zoneId].push(vehicle);
+
+        grouped[zoneId].vehicles.push(vehicle);
+
+        // 합계 계산
+        const summary = grouped[zoneId].summary;
+        summary.totalLoadWt += Number(vehicle.totalLoadWt || 0);
+        summary.totalLoadCbm += Number(vehicle.totalLoadCbm || 0);
+        summary.totalDistance += Number(vehicle.totalDistance || 0);
+        summary.totalTime += Number(vehicle.totalTime || 0);
+
+        // vhclId와 vhclTcd 수집
+        if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
+        if (vehicle.vhclTcd) summary.vhclTcds.push(vehicle.vhclTcd);
       });
       return grouped;
     },
@@ -244,6 +323,40 @@ export default {
   border-bottom: 2px solid #198754;
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.zone-summary {
+  margin-top: 1rem;
+}
+
+.summary-card {
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card small {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.zone-summary {
+  margin-top: 1rem;
+}
+
+.summary-card {
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .vehicle-section {
@@ -371,6 +484,22 @@ export default {
   color: #198754 !important;
 }
 
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-info {
+  color: #0dcaf0 !important;
+}
+
+.fw-bold {
+  font-weight: 700 !important;
+}
+
 .bg-light {
   background-color: #f8f9fa !important;
 }
@@ -420,5 +549,61 @@ export default {
 .table-responsive {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Bootstrap Grid */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+}
+
+.col-md-1,
+.col-md-2,
+.col-md-3,
+.col-md-6 {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .col-md-1 {
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+  }
+  .col-md-2 {
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+  }
+  .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+.g-2 > * {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.fw-bold {
+  font-weight: 700 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
 }
 </style>
