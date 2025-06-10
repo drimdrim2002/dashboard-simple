@@ -136,41 +136,82 @@
               </div> -->
             </div>
 
-            <template v-if="isZoneExpanded(zoneId)">
-              <div
-                v-for="vehicle in zoneData.vehicles"
-                :key="vehicle.id"
-                class="vehicle-section mb-3 ms-3"
-              >
-                <div class="vehicle-header mb-3">
-                  <!-- Vehicle 기본 정보 + 토글 버튼 -->
-                  <div
-                    class="vehicle-basic-info"
-                    @click="toggleVehicleDetails(vehicle.id)"
-                    style="cursor: pointer"
-                  >
-                    <h6
-                      class="text-primary mb-0 d-flex align-items-center justify-content-between"
-                    >
-                      <span>
-                        <i class="bi bi-truck"></i>
-                        {{ vehicle.name }} ({{ vehicle.type }})
-                        <span
-                          v-if="
-                            vehicle.detailList && vehicle.detailList.length > 0
-                          "
-                          class="badge bg-info ms-1"
-                        >
-                          {{ vehicle.detailList.length }} orders
-                        </span>
-                        <span
-                          v-if="isDragging"
-                          class="badge bg-light text-muted ms-1"
-                        >
-                          드롭 가능
-                        </span>
-                        <span class="text-muted ms-2 small">
-                          Loaded Weight:
+            <!-- 통합 테이블 (Tree 구조) -->
+            <div
+              v-if="isZoneExpanded(zoneId)"
+              class="unified-table-section ms-3"
+            >
+              <div class="table-responsive">
+                <table
+                  class="table table-striped table-hover table-sm unified-vehicle-table"
+                  :class="{ 'dragging-active': isDragging }"
+                >
+                  <thead class="table-dark sticky-top">
+                    <tr>
+                      <th scope="col" class="drag-handle-header">
+                        <i class="bi bi-arrows-move text-light"></i>
+                      </th>
+                      <th scope="col" class="tree-col">Tree</th>
+                      <th scope="col">#</th>
+                      <th scope="col">Vehicle ID</th>
+                      <th scope="col">Order ID</th>
+                      <th scope="col">Location ID</th>
+                      <th scope="col">Weight(KG)</th>
+                      <th scope="col">Volume(CBM)</th>
+                      <th scope="col">Distance(KM)</th>
+                      <th scope="col">Duration</th>
+                      <th scope="col">Request Time</th>
+                      <th scope="col">Customer Time</th>
+                      <th scope="col">Arrival Time</th>
+                      <th scope="col">Departure Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template v-for="vehicle in zoneData.vehicles">
+                      <!-- Vehicle 헤더 행 -->
+                      <tr
+                        :key="`vehicle-header-${vehicle.id}`"
+                        class="vehicle-header-row"
+                        @click="toggleVehicleDetails(vehicle.id)"
+                        style="cursor: pointer"
+                      >
+                        <td></td>
+                        <td class="vehicle-tree-cell">
+                          <div class="d-flex align-items-center">
+                            <i
+                              :class="
+                                isVehicleExpanded(vehicle.id)
+                                  ? 'bi bi-chevron-down'
+                                  : 'bi bi-chevron-right'
+                              "
+                              class="tree-toggle me-2 text-primary"
+                            ></i>
+                            <i class="bi bi-truck text-primary me-2"></i>
+                            <strong class="text-primary"
+                              >{{ vehicle.name }} ({{ vehicle.type }})</strong
+                            >
+                            <span
+                              v-if="
+                                vehicle.detailList &&
+                                vehicle.detailList.length > 0
+                              "
+                              class="badge bg-info ms-2"
+                            >
+                              {{ vehicle.detailList.length }}
+                            </span>
+                            <span
+                              v-if="isDragging"
+                              class="badge bg-light text-muted ms-2"
+                            >
+                              드롭 가능
+                            </span>
+                          </div>
+                        </td>
+                        <td colspan="3" class="text-muted small">
+                          Max: {{ vehicle.maxWt || 0 }}kg,
+                          {{ vehicle.maxVol }}m³
+                        </td>
+                        <td class="text-end fw-bold">
                           {{
                             formatDecimal(
                               calculateVehicleSummary(vehicle.detailList)
@@ -178,8 +219,8 @@
                               1
                             )
                           }}
-                          , Max Weight: {{ vehicle.maxWt || 0 }}kg | Loaded
-                          Volume:
+                        </td>
+                        <td class="text-end fw-bold">
                           {{
                             formatDecimal(
                               calculateVehicleSummary(vehicle.detailList)
@@ -187,197 +228,8 @@
                               1
                             )
                           }}
-                          , Max Volume: {{ vehicle.maxVol }}m³
-                          <span class="expand-hint ms-1"
-                            >({{
-                              isVehicleExpanded(vehicle.id)
-                                ? "Click to collapse"
-                                : "Click to expand"
-                            }})</span
-                          >
-                        </span>
-                      </span>
-                      <span class="toggle-icon">
-                        <i
-                          :class="
-                            isVehicleExpanded(vehicle.id)
-                              ? 'bi bi-chevron-up'
-                              : 'bi bi-chevron-down'
-                          "
-                        ></i>
-                      </span>
-                    </h6>
-                  </div>
-                </div>
-
-                <div
-                  v-if="!vehicle.detailList || vehicle.detailList.length === 0"
-                  class="text-muted small"
-                >
-                  이 vehicle에 대한 detail 정보가 없습니다.
-                </div>
-
-                <div
-                  v-else-if="isVehicleExpanded(vehicle.id)"
-                  class="table-responsive"
-                >
-                  <table
-                    class="table table-striped table-hover table-sm vehicle-table"
-                    :class="{ 'dragging-active': isDragging }"
-                  >
-                    <thead class="table-dark">
-                      <tr>
-                        <th scope="col" class="drag-handle-header">
-                          <i class="bi bi-arrows-move text-light"></i>
-                        </th>
-                        <th scope="col">#</th>
-                        <th scope="col">Vehicle ID</th>
-                        <th scope="col">Order ID</th>
-                        <th scope="col">Location ID</th>
-                        <th scope="col">Weight(KG)</th>
-                        <th scope="col">Volume(CBM)</th>
-                        <th scope="col">Distance(KM)</th>
-                        <th scope="col">Duration</th>
-                        <th scope="col">Request Time</th>
-                        <th scope="col">Customer Time</th>
-                        <th scope="col">Arrival Time</th>
-                        <th scope="col">Departure Time</th>
-                      </tr>
-                    </thead>
-                    <!-- Vue.Draggable을 사용한 안정적인 드래그 앤 드롭 (Vehicle 간 이동 가능) -->
-                    <draggable
-                      :list="vehicle.detailList"
-                      :group="{
-                        name: `zone-${vehicle.zone}`,
-                        pull: true,
-                        put: true,
-                      }"
-                      :disabled="false"
-                      :animation="200"
-                      :ghost-class="'sortable-ghost'"
-                      :chosen-class="'sortable-chosen'"
-                      :drag-class="'sortable-drag'"
-                      :force-fallback="false"
-                      :fallback-class="'sortable-fallback'"
-                      :scroll="true"
-                      :scroll-sensitivity="100"
-                      :scroll-speed="10"
-                      :bubble="false"
-                      :move="onMove"
-                      @start="onDragStart"
-                      @end="onDragEnd"
-                      @add="onAdd"
-                      @update="onUpdate"
-                      @sort="onSort"
-                      @remove="onRemove"
-                      @change="onChange"
-                      tag="tbody"
-                      class="draggable-tbody"
-                      :data-vehicle-id="vehicle.id"
-                      :data-zone-id="vehicle.zone"
-                    >
-                      <tr
-                        v-for="(detail, detailIndex) in vehicle.detailList"
-                        :key="`${vehicle.id}-${
-                          detail.orderId || detail.locId
-                        }-${detailIndex}`"
-                        :class="{
-                          'draggable-row': isDragable(detail),
-                          'non-draggable-row': !isDragable(detail),
-                        }"
-                        :data-order-id="detail.orderId || detail.locId"
-                        :data-vehicle-id="vehicle.id"
-                        :data-zone-id="vehicle.zone"
-                      >
-                        <!-- 드래그 핸들 -->
-                        <td class="drag-handle-cell">
-                          <div
-                            v-if="isDragable(detail)"
-                            class="drag-handle"
-                            :title="'드래그하여 순서 변경'"
-                          >
-                            <i class="bi bi-grip-vertical"></i>
-                          </div>
-                          <div
-                            v-else
-                            class="drag-disabled"
-                            title="드래그 불가능 (첫 번째 위치)"
-                          >
-                            <i class="bi bi-lock-fill"></i>
-                          </div>
                         </td>
-
-                        <!-- 순번 -->
-                        <td class="seq-number">{{ detailIndex + 1 }}</td>
-
-                        <!-- Order ID -->
-                        <td class="vhcl-id">
-                          {{ detail.vhclId }}
-                        </td>
-                        <td>
-                          {{ detail.orderId || detail.locId }}
-                        </td>
-
-                        <!-- Location ID -->
-                        <td>{{ detail.locId }}</td>
-
-                        <!-- Weight -->
-                        <td class="text-end">{{ detail.loadWt }}</td>
-
-                        <!-- Volume -->
-                        <td class="text-end">{{ detail.loadVol }}</td>
-
-                        <!-- Distance -->
-                        <td class="text-end">
-                          {{ formatDistanceKM(detail.distcVal) }}
-                        </td>
-
-                        <!-- Duration -->
-                        <td>{{ formatSecondsToTime(detail.trnsPeridVal) }}</td>
-
-                        <!-- Request Time -->
-                        <td>{{ detail.reqDate }}</td>
-
-                        <!-- Customer Time -->
-                        <td>
-                          {{ formatTime24(detail.custOpenTime) }} ~
-                          {{ formatTime24(detail.custCloseTime) }}
-                        </td>
-
-                        <!-- Arrival Time -->
-                        <td>{{ detail.arrDtm }}</td>
-
-                        <!-- Departure Time -->
-                        <td>{{ detail.depDtm }}</td>
-                      </tr>
-                    </draggable>
-                    <tfoot class="table-secondary">
-                      <tr>
-                        <td></td>
-                        <td colspan="3" class="text-end fw-bold">Total:</td>
-                        <td class="fw-bold text-end">
-                          {{
-                            formatDecimal(
-                              calculateVehicleTotal(
-                                vehicle.detailList,
-                                "loadWt"
-                              ),
-                              1
-                            )
-                          }}
-                        </td>
-                        <td class="fw-bold text-end">
-                          {{
-                            formatDecimal(
-                              calculateVehicleTotal(
-                                vehicle.detailList,
-                                "loadVol"
-                              ),
-                              1
-                            )
-                          }}
-                        </td>
-                        <td class="fw-bold text-end">
+                        <td class="text-end fw-bold">
                           {{
                             formatDistanceKM(
                               calculateVehicleTotal(
@@ -399,11 +251,154 @@
                         </td>
                         <td colspan="4"></td>
                       </tr>
-                    </tfoot>
-                  </table>
-                </div>
+
+                      <!-- Vehicle Details - 빈 데이터 경우 -->
+                      <tr
+                        v-if="
+                          isVehicleExpanded(vehicle.id) &&
+                          (!vehicle.detailList ||
+                            vehicle.detailList.length === 0)
+                        "
+                        :key="`vehicle-empty-${vehicle.id}`"
+                      >
+                        <td></td>
+                        <td class="text-muted small ps-4">
+                          <i class="bi bi-dash text-muted me-1"></i>
+                          이 vehicle에 대한 detail 정보가 없습니다.
+                        </td>
+                        <td colspan="11"></td>
+                      </tr>
+
+                      <!-- Vehicle Details (Vue.Draggable 사용) -->
+                      <draggable
+                        v-if="
+                          isVehicleExpanded(vehicle.id) &&
+                          vehicle.detailList &&
+                          vehicle.detailList.length > 0
+                        "
+                        :key="`vehicle-draggable-${vehicle.id}`"
+                        :list="vehicle.detailList"
+                        :group="{
+                          name: `zone-${vehicle.zone}`,
+                          pull: true,
+                          put: true,
+                        }"
+                        :disabled="false"
+                        :animation="200"
+                        :ghost-class="'sortable-ghost'"
+                        :chosen-class="'sortable-chosen'"
+                        :drag-class="'sortable-drag'"
+                        :force-fallback="false"
+                        :fallback-class="'sortable-fallback'"
+                        :scroll="true"
+                        :scroll-sensitivity="100"
+                        :scroll-speed="10"
+                        :bubble="false"
+                        :move="onMove"
+                        @start="onDragStart"
+                        @end="onDragEnd"
+                        @add="onAdd"
+                        @update="onUpdate"
+                        @sort="onSort"
+                        @remove="onRemove"
+                        @change="onChange"
+                        tag="div"
+                        style="display: contents"
+                        :data-vehicle-id="vehicle.id"
+                        :data-zone-id="vehicle.zone"
+                      >
+                        <tr
+                          v-for="(detail, detailIndex) in vehicle.detailList"
+                          :key="`${vehicle.id}-${
+                            detail.orderId || detail.locId
+                          }-${detailIndex}`"
+                          :class="{
+                            'draggable-row': isDragable(detail),
+                            'non-draggable-row': !isDragable(detail),
+                            'detail-row': true,
+                          }"
+                          :data-order-id="detail.orderId || detail.locId"
+                          :data-vehicle-id="vehicle.id"
+                          :data-zone-id="vehicle.zone"
+                        >
+                          <!-- 드래그 핸들 -->
+                          <td class="drag-handle-cell">
+                            <div
+                              v-if="isDragable(detail)"
+                              class="drag-handle"
+                              :title="'드래그하여 순서 변경'"
+                            >
+                              <i class="bi bi-grip-vertical"></i>
+                            </div>
+                            <div
+                              v-else
+                              class="drag-disabled"
+                              title="드래그 불가능 (첫 번째 위치)"
+                            >
+                              <i class="bi bi-lock-fill"></i>
+                            </div>
+                          </td>
+
+                          <!-- Tree 구조 표시 -->
+                          <td class="tree-cell">
+                            <div class="tree-item ps-4">
+                              <i class="bi bi-dash text-muted me-1"></i>
+                            </div>
+                          </td>
+
+                          <!-- 순번 -->
+                          <td class="seq-number">{{ detailIndex + 1 }}</td>
+
+                          <!-- Vehicle ID -->
+                          <td class="vhcl-id">
+                            {{ detail.vhclId }}
+                          </td>
+
+                          <!-- Order ID -->
+                          <td>
+                            {{ detail.orderId || detail.locId }}
+                          </td>
+
+                          <!-- Location ID -->
+                          <td>{{ detail.locId }}</td>
+
+                          <!-- Weight -->
+                          <td class="text-end">{{ detail.loadWt }}</td>
+
+                          <!-- Volume -->
+                          <td class="text-end">{{ detail.loadVol }}</td>
+
+                          <!-- Distance -->
+                          <td class="text-end">
+                            {{ formatDistanceKM(detail.distcVal) }}
+                          </td>
+
+                          <!-- Duration -->
+                          <td>
+                            {{ formatSecondsToTime(detail.trnsPeridVal) }}
+                          </td>
+
+                          <!-- Request Time -->
+                          <td>{{ detail.reqDate }}</td>
+
+                          <!-- Customer Time -->
+                          <td>
+                            {{ formatTime24(detail.custOpenTime) }} ~
+                            {{ formatTime24(detail.custCloseTime) }}
+                          </td>
+
+                          <!-- Arrival Time -->
+                          <td>{{ detail.arrDtm }}</td>
+
+                          <!-- Departure Time -->
+                          <td>{{ detail.depDtm }}</td>
+                        </tr>
+                      </draggable>
+                    </template>
+                  </tbody>
+                </table>
               </div>
-            </template>
+            </div>
           </div>
         </div>
       </div>
@@ -558,14 +553,19 @@ export default {
       return this.expandedZones[zoneId] || false;
     },
     toggleVehicleDetails(vehicleId) {
+      console.log("🚛 Vehicle 토글 클릭:", vehicleId);
+      console.log("현재 상태:", this.expandedVehicles[vehicleId]);
       this.$set(
         this.expandedVehicles,
         vehicleId,
         !this.expandedVehicles[vehicleId]
       );
+      console.log("변경된 상태:", this.expandedVehicles[vehicleId]);
     },
     isVehicleExpanded(vehicleId) {
-      return this.expandedVehicles[vehicleId] || false;
+      const isExpanded = this.expandedVehicles[vehicleId] || false;
+      console.log(`🔍 Vehicle ${vehicleId} 펼쳐짐 상태:`, isExpanded);
+      return isExpanded;
     },
     calculateVehicleSummary(detailList) {
       if (!detailList || detailList.length === 0) {
@@ -1296,6 +1296,130 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* 통합 테이블 Tree 구조 스타일 */
+.unified-table-section {
+  animation: slideDown 0.3s ease-out;
+}
+
+.unified-vehicle-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.unified-vehicle-table .sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Vehicle 헤더 행 스타일 */
+.vehicle-header-row {
+  background-color: #f8f9fa !important;
+  border-top: 2px solid #0d6efd;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.vehicle-header-row:hover {
+  background-color: #e9ecef !important;
+}
+
+.vehicle-tree-cell {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+.tree-toggle {
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.tree-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Tree 구조 표시 */
+.tree-col {
+  width: 200px;
+  min-width: 150px;
+}
+
+.tree-cell {
+  position: relative;
+  padding-left: 1.5rem !important;
+}
+
+.tree-item {
+  position: relative;
+}
+
+.tree-item::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  width: 0.8rem;
+  height: 1px;
+  background-color: #dee2e6;
+}
+
+/* Detail 행 스타일 */
+.detail-row {
+  background-color: #fff;
+}
+
+.detail-row:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* 드래그 핸들 컬럼 폭 조정 */
+.drag-handle-header {
+  width: 50px;
+  min-width: 50px;
+}
+
+.drag-handle-cell {
+  width: 50px;
+  padding: 0.25rem !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Vehicle ID 컬럼 스타일 */
+.vhcl-id {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+/* 순번 컬럼 */
+.seq-number {
+  text-align: center;
+  font-weight: 500;
+  width: 60px;
+}
+
+/* 테이블 간격 조정 */
+.unified-vehicle-table tbody tr td {
+  border-top: 1px solid #dee2e6;
+}
+
+.unified-vehicle-table .vehicle-header-row td {
+  border-top: 2px solid #0d6efd;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* 반응형 대응 */
+@media (max-width: 768px) {
+  .tree-col {
+    width: 120px;
+    min-width: 100px;
+  }
+
+  .tree-cell {
+    padding-left: 1rem !important;
   }
 }
 </style>
