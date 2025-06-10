@@ -231,6 +231,7 @@
                           <i class="bi bi-arrows-move text-light"></i>
                         </th>
                         <th scope="col">#</th>
+                        <th scope="col">Vehicle ID</th>
                         <th scope="col">Order ID</th>
                         <th scope="col">Location ID</th>
                         <th scope="col">Weight(KG)</th>
@@ -310,7 +311,10 @@
                         <td class="seq-number">{{ detailIndex + 1 }}</td>
 
                         <!-- Order ID -->
-                        <td class="order-id">
+                        <td class="vhcl-id">
+                          {{ detail.vhclId }}
+                        </td>
+                        <td>
                           {{ detail.orderId || detail.locId }}
                         </td>
 
@@ -1024,7 +1028,7 @@ export default {
   font-size: 0.8rem;
 }
 
-.order-id {
+.vhcl-id {
   font-weight: 600;
   color: #0d6efd;
 }
