@@ -142,11 +142,7 @@
                 :key="vehicle.id"
                 class="vehicle-section mb-3 ms-3"
               >
-                <div
-                  class="vehicle-header mb-3"
-                  @dragover="onDragOver"
-                  @drop="onDrop($event, vehicle)"
-                >
+                <div class="vehicle-header mb-3">
                   <!-- Vehicle 기본 정보 + 토글 버튼 -->
                   <div
                     class="vehicle-basic-info"
@@ -222,6 +218,9 @@
                   <table class="table table-striped table-hover table-sm">
                     <thead class="table-dark">
                       <tr>
+                        <th scope="col" class="drag-handle-header">
+                          <i class="bi bi-arrows-move text-light"></i>
+                        </th>
                         <th scope="col">#</th>
                         <th scope="col">Order ID</th>
                         <th scope="col">Location ID</th>
@@ -235,96 +234,107 @@
                         <th scope="col">Departure Time</th>
                       </tr>
                     </thead>
-                    <tbody
-                      @dragover="onDragOver"
-                      @mousemove="calculateDropPosition($event, vehicle)"
-                      @drop="onDrop($event, vehicle)"
-                      @dragleave="hideDropIndicator"
+                    <!-- Vue.Draggable을 사용한 안정적인 드래그 앤 드롭 -->
+                    <draggable
+                      :list="vehicle.detailList"
+                      :disabled="false"
+                      :animation="200"
+                      :ghost-class="'sortable-ghost'"
+                      :chosen-class="'sortable-chosen'"
+                      :drag-class="'sortable-drag'"
+                      :force-fallback="false"
+                      :fallback-class="'sortable-fallback'"
+                      :scroll="true"
+                      :scroll-sensitivity="100"
+                      :scroll-speed="10"
+                      :bubble="false"
+                      :move="onMove"
+                      @start="onDragStart"
+                      @end="onDragEnd"
+                      @add="onAdd"
+                      @update="onUpdate"
+                      @sort="onSort"
+                      @remove="onRemove"
+                      tag="tbody"
+                      class="draggable-tbody"
                     >
-                      <!-- 맨 위 드롭 라인 -->
-                      <tr
-                        v-if="showDropLineAt(vehicle, 0)"
-                        class="drop-insert-row"
-                      >
-                        <td colspan="11" class="drop-insert-cell">
-                          <div class="drop-insert-line"></div>
-                        </td>
-                      </tr>
-
-                      <!-- 데이터 행들 -->
                       <tr
                         v-for="(detail, detailIndex) in vehicle.detailList"
-                        :key="`data-${vehicle.id}-${detailIndex}`"
-                        :draggable="isDragable(detail)"
+                        :key="`${vehicle.id}-${
+                          detail.orderId || detail.locId
+                        }-${detailIndex}`"
                         :class="{
                           'draggable-row': isDragable(detail),
                           'non-draggable-row': !isDragable(detail),
                         }"
-                        :aria-label="
-                          isDragable(detail)
-                            ? `드래그 가능한 주문 ${
-                                detail.orderId || detail.locId
-                              }`
-                            : `드래그 불가능한 주문 ${
-                                detail.orderId || detail.locId
-                              }`
-                        "
-                        :tabindex="isDragable(detail) ? 0 : -1"
-                        role="gridcell"
-                        @dragstart="onDragStart($event, detail, vehicle)"
-                        @dragend="onDragEnd"
-                        @drop="onRowDrop($event, vehicle, detailIndex)"
-                        @keydown="onRowKeyDown($event, detail)"
+                        :data-order-id="detail.orderId || detail.locId"
+                        :data-vehicle-id="vehicle.id"
+                        :data-zone-id="vehicle.zone"
                       >
-                        <td>{{ detailIndex + 1 }}</td>
+                        <!-- 드래그 핸들 -->
+                        <td class="drag-handle-cell">
+                          <div
+                            v-if="isDragable(detail)"
+                            class="drag-handle"
+                            :title="'드래그하여 순서 변경'"
+                          >
+                            <i class="bi bi-grip-vertical"></i>
+                          </div>
+                          <div
+                            v-else
+                            class="drag-disabled"
+                            title="드래그 불가능 (첫 번째 위치)"
+                          >
+                            <i class="bi bi-lock-fill"></i>
+                          </div>
+                        </td>
 
-                        <td>
+                        <!-- 순번 -->
+                        <td class="seq-number">{{ detailIndex + 1 }}</td>
+
+                        <!-- Order ID -->
+                        <td class="order-id">
                           {{ detail.orderId || detail.locId }}
                         </td>
-                        <td>
-                          {{ detail.locId }}
+
+                        <!-- Location ID -->
+                        <td>{{ detail.locId }}</td>
+
+                        <!-- Weight -->
+                        <td class="text-end">{{ detail.loadWt }}</td>
+
+                        <!-- Volume -->
+                        <td class="text-end">{{ detail.loadVol }}</td>
+
+                        <!-- Distance -->
+                        <td class="text-end">
+                          {{ formatDistanceKM(detail.distcVal) }}
                         </td>
-                        <td>
-                          {{ detail.loadWt }}
-                        </td>
-                        <td>
-                          {{ detail.loadVol }}
-                        </td>
-                        <td>{{ formatDistanceKM(detail.distcVal) }}</td>
-                        <td>
-                          {{ formatSecondsToTime(detail.trnsPeridVal) }}
-                        </td>
-                        <td>
-                          {{ detail.reqDate }}
-                        </td>
+
+                        <!-- Duration -->
+                        <td>{{ formatSecondsToTime(detail.trnsPeridVal) }}</td>
+
+                        <!-- Request Time -->
+                        <td>{{ detail.reqDate }}</td>
+
+                        <!-- Customer Time -->
                         <td>
                           {{ formatTime24(detail.custOpenTime) }} ~
                           {{ formatTime24(detail.custCloseTime) }}
                         </td>
-                        <td>
-                          {{ detail.arrDtm }}
-                        </td>
-                        <td>
-                          {{ detail.depDtm }}
-                        </td>
-                      </tr>
 
-                      <!-- 각 행 뒤의 드롭 라인 -->
-                      <tr
-                        v-if="showDropLineAt(vehicle, detailIndex + 1)"
-                        :key="`drop-after-${vehicle.id}-${detailIndex}`"
-                        class="drop-insert-row"
-                      >
-                        <td colspan="11" class="drop-insert-cell">
-                          <div class="drop-insert-line"></div>
-                        </td>
+                        <!-- Arrival Time -->
+                        <td>{{ detail.arrDtm }}</td>
+
+                        <!-- Departure Time -->
+                        <td>{{ detail.depDtm }}</td>
                       </tr>
-                    </tbody>
+                    </draggable>
                     <tfoot class="table-secondary">
                       <tr>
+                        <td></td>
                         <td colspan="3" class="text-end fw-bold">Total:</td>
-
-                        <td class="fw-bold">
+                        <td class="fw-bold text-end">
                           {{
                             formatDecimal(
                               calculateVehicleTotal(
@@ -335,7 +345,7 @@
                             )
                           }}
                         </td>
-                        <td class="fw-bold">
+                        <td class="fw-bold text-end">
                           {{
                             formatDecimal(
                               calculateVehicleTotal(
@@ -346,7 +356,7 @@
                             )
                           }}
                         </td>
-                        <td class="fw-bold">
+                        <td class="fw-bold text-end">
                           {{
                             formatDistanceKM(
                               calculateVehicleTotal(
@@ -381,8 +391,13 @@
 </template>
 
 <script>
+import draggable from "vuedraggable";
+
 export default {
   name: "VehicleDetailList",
+  components: {
+    draggable,
+  },
   props: {
     selectedVehicles: {
       type: Array,
@@ -393,12 +408,11 @@ export default {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
-      // 드롭 위치 표시용
-      dropIndicator: {
-        show: false,
-        targetVehicle: null,
-        insertIndex: -1,
-      },
+
+      // 드래그 상태 관리
+      isDragging: false,
+      draggedItem: null,
+
       // 성능 최적화용 캐시
       vehicleSummaryCache: new Map(),
       lastUpdateTime: 0,
@@ -569,398 +583,138 @@ export default {
 
       return summary;
     },
-    // Drag and Drop 관련 함수들
+    // Vue.Draggable 관련 메서드들
     isDragable(detail) {
-      console.log("isDragable called:", detail);
-      // stopSeqNo가 0보다 크면 드래그 가능
+      // stopSeqNo가 1보다 크면 드래그 가능 (첫 번째 위치는 고정)
       return Number(detail.stopSeqNo || 0) > 1;
-      // const result = true;
-      // console.log("isDragable result:", result);
-      // return result;
-    },
-    onDragStart(event, detail, sourceVehicle) {
-      console.log("🔵 onDragStart called:", detail, sourceVehicle);
-
-      const dragData = {
-        detail: detail,
-        sourceVehicleId: sourceVehicle.id,
-        sourceZoneId: sourceVehicle.zone,
-      };
-
-      console.log("🔵 dragData:", dragData);
-
-      try {
-        event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-        event.dataTransfer.effectAllowed = "move";
-        console.log("🔵 dataTransfer set successfully");
-
-        // 드래그 중인 요소에 시각적 표시
-        event.target.style.opacity = "0.5";
-        event.target.style.cursor = "grabbing";
-        event.target.setAttribute("dragging", "true");
-
-        // 드롭 인디케이터 초기화
-        this.hideDropIndicator();
-
-        console.log("🔵 Drag start completed");
-      } catch (error) {
-        console.error("🔴 Error in onDragStart:", error);
-      }
-    },
-    onDragEnd(event) {
-      console.log("🟡 onDragEnd called");
-      // 드래그 완료 후 스타일 복원
-      event.target.style.opacity = "";
-      event.target.style.cursor = "";
-      event.target.removeAttribute("dragging");
-
-      // 드롭 인디케이터 숨기기
-      this.hideDropIndicator();
-    },
-    onDragOver(event) {
-      console.log("🟠 onDragOver called");
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
     },
 
-    onDrop(event, targetVehicle) {
-      console.log("🟢 onDrop called:", targetVehicle);
-      event.preventDefault();
+    onMove(evt) {
+      // 드래그 이동 가능 여부 검증
+      const draggedItem = evt.draggedContext.element;
+      const relatedItem = evt.relatedContext.element;
 
-      try {
-        const dragDataText = event.dataTransfer.getData("text/plain");
-        if (!dragDataText) {
-          throw new Error("드래그 데이터를 찾을 수 없습니다.");
-        }
+      console.log("🔍 onMove 검증:", {
+        draggedItem: draggedItem?.orderId || draggedItem?.locId,
+        isDragable: this.isDragable(draggedItem),
+        relatedItem: relatedItem?.orderId || relatedItem?.locId,
+      });
 
-        const dragData = JSON.parse(dragDataText);
-        console.log("🟢 Retrieved dragData:", dragData);
-
-        const { detail, sourceVehicleId, sourceZoneId } = dragData;
-
-        if (!detail || !sourceVehicleId || !sourceZoneId) {
-          throw new Error("필수 드래그 데이터가 누락되었습니다.");
-        }
-
-        // Validation 로직
+      // 드래그 가능한 항목만 이동 허용
+      if (!this.isDragable(draggedItem)) {
         console.log(
-          "🟢 Validating drop:",
-          sourceZoneId,
-          "→",
-          targetVehicle.zone
+          "🚫 드래그 불가능한 항목:",
+          draggedItem?.orderId || draggedItem?.locId
         );
-        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
-          this.showErrorMessage("다른 Zone으로는 주문을 이동할 수 없습니다!");
-          return;
-        }
+        this.showMessage(
+          "첫 번째 위치의 항목은 이동할 수 없습니다.",
+          "warning"
+        );
+        return false;
+      }
 
-        console.log(
-          "🟢 Moving order from",
-          sourceVehicleId,
-          "to",
-          targetVehicle.id
+      return true;
+    },
+    onDragStart(evt) {
+      console.log("🔵 드래그 시작:", evt);
+      this.isDragging = true;
+
+      // 드래그되는 항목 정보 저장
+      if (evt.item && evt.item.dataset) {
+        this.draggedItem = {
+          orderId: evt.item.dataset.orderId,
+          vehicleId: evt.item.dataset.vehicleId,
+          zoneId: evt.item.dataset.zoneId,
+        };
+        console.log("🔵 드래그 항목:", this.draggedItem);
+        this.showMessage(
+          `주문 ${this.draggedItem.orderId} 드래그 시작`,
+          "info"
         );
-        // Order 이동 실행 - dropIndicator의 insertIndex 사용
-        const insertPosition = this.dropIndicator.show
-          ? this.dropIndicator.insertIndex
-          : -1;
-        this.moveOrder(
-          detail,
-          sourceVehicleId,
-          targetVehicle.id,
-          insertPosition
-        );
-        this.showSuccessMessage("주문이 성공적으로 이동되었습니다.");
-      } catch (error) {
-        console.error("🔴 Drop failed:", error);
-        this.showErrorMessage(
-          `드롭 처리 중 오류가 발생했습니다: ${error.message}`
-        );
-      } finally {
-        this.hideDropIndicator();
-        this.cleanupDragStyles();
       }
     },
-    validateDrop(sourceZoneId, targetZoneId) {
-      // zoneId가 다르면 fail, 그 외는 true
-      return sourceZoneId === targetZoneId;
-    },
-    moveOrder(detail, sourceVehicleId, targetVehicleId, insertIndex = -1) {
-      console.log(
-        "🚚 Moving order:",
-        detail.orderId,
-        "from",
-        sourceVehicleId,
-        "to",
-        targetVehicleId,
-        insertIndex !== -1 ? `at position ${insertIndex}` : "at end"
-      );
 
-      // 원본 vehicle에서 order 제거
-      const sourceVehicle = this.selectedVehicles.find(
-        (v) => v.id === sourceVehicleId
-      );
-      let removedFromIndex = -1;
-      if (sourceVehicle && sourceVehicle.detailList) {
-        const detailIndex = sourceVehicle.detailList.findIndex(
-          (d) => d.orderId === detail.orderId && d.locId === detail.locId
+    onDragEnd(evt) {
+      console.log("🟢 드래그 종료:", evt);
+      this.isDragging = false;
+
+      const oldIndex = evt.oldIndex;
+      const newIndex = evt.newIndex;
+
+      if (oldIndex !== newIndex) {
+        console.log(`🟢 순서 변경: ${oldIndex} → ${newIndex}`);
+        this.updateVehicleSummaries();
+        this.showMessage(
+          `주문 순서가 변경되었습니다 (${oldIndex + 1} → ${newIndex + 1})`,
+          "success"
         );
-        if (detailIndex !== -1) {
-          console.log("🚚 Removing from source vehicle at index", detailIndex);
-          sourceVehicle.detailList.splice(detailIndex, 1);
-          removedFromIndex = detailIndex;
-        } else {
-          console.log("🔴 Detail not found in source vehicle");
-        }
-      } else {
-        console.log("🔴 Source vehicle not found or has no detailList");
       }
 
-      // 타겟 vehicle에 order 추가
-      const targetVehicle = this.selectedVehicles.find(
-        (v) => v.id === targetVehicleId
-      );
-      if (targetVehicle) {
-        if (!targetVehicle.detailList) {
-          targetVehicle.detailList = [];
-        }
+      // 드래그 상태 초기화
+      this.draggedItem = null;
+    },
 
-        if (insertIndex === -1) {
-          // 끝에 추가
-          console.log("🚚 Adding to target vehicle at end");
-          targetVehicle.detailList.push(detail);
-        } else {
-          // 특정 위치에 삽입
-          let finalInsertIndex = insertIndex;
-
-          // 같은 vehicle 내에서 이동하는 경우 index 조정
-          if (sourceVehicleId === targetVehicleId && removedFromIndex !== -1) {
-            if (removedFromIndex < insertIndex) {
-              finalInsertIndex = insertIndex - 1;
-            }
-          }
-
-          console.log("🚚 Inserting at index", finalInsertIndex);
-          targetVehicle.detailList.splice(finalInsertIndex, 0, detail);
-        }
-      } else {
-        console.log("🔴 Target vehicle not found");
-      }
-
-      // Vehicle summary 정보 갱신
+    onAdd(evt) {
+      console.log("🟡 항목 추가:", evt);
+      // 다른 vehicle에서 항목이 추가된 경우
       this.updateVehicleSummaries();
     },
-    moveOrderToPosition(detail, sourceVehicleId, targetVehicleId, dropIndex) {
-      // 통합된 moveOrder 함수 사용
-      this.moveOrder(detail, sourceVehicleId, targetVehicleId, dropIndex);
+
+    onUpdate(evt) {
+      console.log("🔄 항목 업데이트:", evt);
+      // 같은 vehicle 내에서 순서 변경된 경우
+      this.updateVehicleSummaries();
     },
+
+    onSort(evt) {
+      console.log("🔀 정렬 완료:", evt);
+      // 정렬이 완료된 경우
+      this.updateVehicleSummaries();
+    },
+
+    onRemove(evt) {
+      console.log("🗑️ 항목 제거:", evt);
+      // 다른 vehicle로 항목이 이동된 경우
+      this.updateVehicleSummaries();
+    },
+    // 업데이트 메서드
     updateVehicleSummaries() {
-      console.log("📊 Updating vehicle summaries");
-      // 캐시 초기화
+      console.log("📊 Vehicle summary 업데이트 중...");
       this.vehicleSummaryCache.clear();
 
-      // 모든 vehicle의 summary 정보를 다시 계산
       this.selectedVehicles.forEach((vehicle) => {
         if (vehicle.detailList) {
           const summary = this.calculateVehicleSummary(vehicle.detailList);
-          // Vehicle의 총 weight와 volume 업데이트
           this.$set(vehicle, "totLoadWt", summary.totalLoadWt);
           this.$set(vehicle, "totLoadCbm", summary.totalLoadVol);
-          console.log("📊 Updated vehicle", vehicle.id, "summary:", summary);
+          console.log("📊 Vehicle", vehicle.id, "summary 업데이트:", summary);
         }
       });
 
-      // 마지막 업데이트 시간 기록
       this.lastUpdateTime = Date.now();
-      console.log("📊 Vehicle summaries updated at:", this.lastUpdateTime);
+      console.log("📊 Summary 업데이트 완료:", this.lastUpdateTime);
     },
-    // 정확한 드롭 위치 계산
-    calculateDropPosition(event, vehicle) {
-      event.preventDefault();
-      const tbody = event.currentTarget;
-      const dataRows = Array.from(
-        tbody.querySelectorAll("tr:not(.drop-insert-row)")
-      );
-      const mouseY = event.clientY;
 
-      this.dropIndicator.show = true;
-      this.dropIndicator.targetVehicle = vehicle;
+    // 알림 메서드들
+    showMessage(message, type = "info") {
+      console.log(`${this.getLogIcon(type)} ${message}`);
 
-      let insertIndex = 0;
-
-      // 데이터 행이 없는 경우 (빈 vehicle)
-      if (dataRows.length === 0) {
-        insertIndex = 0;
-      } else {
-        // 각 행의 위치를 확인하여 마우스 위치에 따른 삽입 인덱스 계산
-        let found = false;
-        for (let i = 0; i < dataRows.length; i++) {
-          const rect = dataRows[i].getBoundingClientRect();
-          const rowTop = rect.top;
-          const rowBottom = rect.bottom;
-
-          // 마우스가 현재 행의 상반부에 있으면 이 행 앞에 삽입
-          if (mouseY >= rowTop && mouseY <= rowTop + rect.height / 2) {
-            insertIndex = i;
-            found = true;
-            break;
-          }
-          // 마우스가 현재 행의 하반부에 있으면 이 행 뒤에 삽입
-          else if (mouseY > rowTop + rect.height / 2 && mouseY <= rowBottom) {
-            insertIndex = i + 1;
-            found = true;
-            break;
-          }
-        }
-
-        // 모든 행 위에 있으면 맨 처음에
-        if (!found && mouseY < dataRows[0].getBoundingClientRect().top) {
-          insertIndex = 0;
-        }
-        // 모든 행 아래에 있으면 맨 마지막에
-        else if (!found) {
-          insertIndex = dataRows.length;
-        }
-      }
-
-      this.dropIndicator.insertIndex = insertIndex;
-      console.log(
-        "🎯 Drop position calculated:",
-        insertIndex,
-        "/ total rows:",
-        dataRows.length,
-        "mouseY:",
-        mouseY,
-        "for vehicle:",
-        vehicle.id
-      );
-    },
-    hideDropIndicator() {
-      this.dropIndicator.show = false;
-      this.dropIndicator.targetVehicle = null;
-      this.dropIndicator.insertIndex = -1;
-    },
-    // 특정 위치에 드롭 인서트 라인 표시 여부
-    shouldShowDropLine(vehicle, afterIndex) {
-      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
-        return false;
-      }
-      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
-        return false;
-      }
-
-      // afterIndex 처리
-      let targetIndex;
-      if (afterIndex === -1) {
-        // 첫 번째 위치 (맨 위)
-        targetIndex = 0;
-      } else if (afterIndex === null) {
-        // 마지막 위치
-        targetIndex = vehicle.detailList ? vehicle.detailList.length : 0;
-      } else {
-        // 특정 인덱스 뒤
-        targetIndex = afterIndex + 1;
-      }
-
-      return this.dropIndicator.insertIndex === targetIndex;
-    },
-    // 드롭 라인 위치 배열 반환
-    getDropLines(vehicle) {
-      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
-        return [];
-      }
-      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
-        return [];
-      }
-
-      // 정확히 insertIndex 위치에만 라인 표시
-      return [this.dropIndicator.insertIndex];
-    },
-    // 모든 가능한 드롭 위치 반환
-    getAllDropPositions(vehicle) {
-      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
-        return [];
-      }
-      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
-        return [];
-      }
-
-      // 현재 계산된 insertIndex 위치만 반환
-      return [this.dropIndicator.insertIndex];
-    },
-    // 특정 위치에 드롭 라인 표시 여부
-    showDropLineAt(vehicle, position) {
-      if (!this.dropIndicator.show || !this.dropIndicator.targetVehicle) {
-        return false;
-      }
-      if (this.dropIndicator.targetVehicle.id !== vehicle.id) {
-        return false;
-      }
-
-      return this.dropIndicator.insertIndex === position;
-    },
-    // 행별 드롭 이벤트 처리
-    onRowDrop(event, targetVehicle, dropIndex) {
-      event.preventDefault();
-      event.stopPropagation();
-
-      try {
-        const dragDataText = event.dataTransfer.getData("text/plain");
-        if (!dragDataText) {
-          throw new Error("드래그 데이터를 찾을 수 없습니다.");
-        }
-
-        const dragData = JSON.parse(dragDataText);
-        const { detail, sourceVehicleId, sourceZoneId } = dragData;
-
-        if (!detail || !sourceVehicleId || !sourceZoneId) {
-          throw new Error("필수 드래그 데이터가 누락되었습니다.");
-        }
-
-        // Validation
-        if (!this.validateDrop(sourceZoneId, targetVehicle.zone)) {
-          this.showErrorMessage("다른 Zone으로는 주문을 이동할 수 없습니다!");
-          return;
-        }
-
-        console.log("🎯 Moving order to specific position:", dropIndex);
-        // 정확한 위치로 이동
-        this.moveOrder(detail, sourceVehicleId, targetVehicle.id, dropIndex);
-        this.showSuccessMessage("주문이 성공적으로 이동되었습니다.");
-      } catch (error) {
-        console.error("🔴 Row drop failed:", error);
-        this.showErrorMessage(
-          `드롭 처리 중 오류가 발생했습니다: ${error.message}`
-        );
-      } finally {
-        this.hideDropIndicator();
-        this.cleanupDragStyles();
-      }
-    },
-    showErrorMessage(message) {
       // 실제 구현에서는 toast나 notification 라이브러리 사용
-      alert(message);
-    },
-    showSuccessMessage(message) {
-      // 실제 구현에서는 toast나 notification 라이브러리 사용
-      console.log("✅ Success:", message);
-    },
-    cleanupDragStyles() {
-      // 모든 드래그 관련 스타일 정리
-      const draggedElements = document.querySelectorAll('[dragging="true"]');
-      draggedElements.forEach((el) => {
-        el.style.opacity = "";
-        el.style.cursor = "";
-        el.removeAttribute("dragging");
-      });
-    },
-    onRowKeyDown(event, detail) {
-      if (event.key === "Enter" && this.isDragable(detail)) {
-        console.log("🟢 onRowKeyDown - Enter pressed for draggable item");
-        event.preventDefault();
-        // 키보드로 드롭 기능은 단순화
-        // 실제 구현에서는 더 복잡한 키보드 네비게이션 구현 가능
+      // 임시로 console과 간단한 alert 사용
+      if (type === "error" || type === "warning") {
+        // 중요한 메시지는 alert로 표시
+        alert(message);
       }
+    },
+
+    getLogIcon(type) {
+      const icons = {
+        info: "ℹ️",
+        success: "✅",
+        warning: "⚠️",
+        error: "❌",
+      };
+      return icons[type] || "ℹ️";
     },
   },
 };
@@ -1066,6 +820,117 @@ export default {
   font-size: 0.75rem;
 }
 
+/* 드래그 핸들 스타일 */
+.drag-handle-header {
+  width: 40px;
+  text-align: center;
+  padding: 0.5rem 0.25rem !important;
+}
+
+.drag-handle-cell {
+  width: 40px;
+  text-align: center;
+  padding: 0.5rem 0.25rem !important;
+  vertical-align: middle;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: #6c757d;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.drag-handle:hover {
+  color: #0d6efd;
+  background-color: rgba(13, 110, 253, 0.1);
+  cursor: grab;
+  transform: scale(1.1);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+.drag-disabled {
+  cursor: not-allowed;
+  color: #dc3545;
+  padding: 0.25rem;
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+/* 드래그 가능한 행 스타일 */
+.draggable-row {
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.draggable-row:hover {
+  background-color: rgba(13, 110, 253, 0.05) !important;
+}
+
+.non-draggable-row {
+  opacity: 0.8;
+  background-color: rgba(220, 53, 69, 0.02) !important;
+}
+
+.non-draggable-row:hover {
+  background-color: rgba(220, 53, 69, 0.05) !important;
+}
+
+/* Vue.Draggable 전용 스타일 */
+.draggable-tbody {
+  min-height: 50px;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  transform: rotate(1deg);
+}
+
+.sortable-chosen {
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+  transform: scale(1.02);
+}
+
+.sortable-drag {
+  background-color: rgba(13, 110, 253, 0.2) !important;
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000 !important;
+  border: 2px solid #0d6efd;
+}
+
+.sortable-fallback {
+  background-color: rgba(13, 110, 253, 0.25) !important;
+  opacity: 0.8;
+}
+
+/* 기타 유틸리티 스타일들 */
+.seq-number {
+  color: #6c757d;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
 /* Bootstrap Icons */
 .bi {
   font-family: bootstrap-icons !important;
@@ -1075,99 +940,76 @@ export default {
 .text-muted {
   color: #6c757d !important;
 }
-
 .text-primary {
   color: #0d6efd !important;
 }
-
 .text-center {
   text-align: center !important;
 }
-
 .text-dark {
   color: #212529 !important;
 }
-
+.text-light {
+  color: #f8f9fa !important;
+}
 .display-4 {
   font-size: 3.5rem !important;
 }
-
 .py-4 {
   padding-top: 1.5rem !important;
   padding-bottom: 1.5rem !important;
 }
-
 .mt-3 {
   margin-top: 1rem !important;
 }
-
 .mb-0 {
   margin-bottom: 0 !important;
 }
-
 .mb-3 {
   margin-bottom: 1rem !important;
 }
-
 .mb-4 {
   margin-bottom: 1.5rem !important;
 }
-
 .ms-1 {
   margin-left: 0.25rem !important;
 }
-
 .ms-2 {
   margin-left: 0.5rem !important;
 }
-
 .small {
   font-size: 0.875em !important;
 }
-
-/* Bootstrap Card Styles */
+.fw-bold {
+  font-weight: 700 !important;
+}
 .bg-primary {
   background-color: #0d6efd !important;
   color: white !important;
 }
-
 .bg-secondary {
   background-color: #6c757d !important;
   color: white !important;
 }
-
 .bg-info {
   background-color: #0dcaf0 !important;
   color: black !important;
 }
-
 .bg-success {
   background-color: #198754 !important;
   color: white !important;
 }
-
 .text-success {
   color: #198754 !important;
 }
-
-.text-warning {
-  color: #ffc107 !important;
+.d-flex {
+  display: flex !important;
 }
-
-.text-danger {
-  color: #dc3545 !important;
+.align-items-center {
+  align-items: center !important;
 }
-
-.text-info {
-  color: #0dcaf0 !important;
-}
-
-.fw-bold {
-  font-weight: 700 !important;
-}
-
-.bg-light {
-  background-color: #f8f9fa !important;
+.justify-content-between {
+  justify-content: space-between !important;
 }
 
 /* Bootstrap Table Styles */
