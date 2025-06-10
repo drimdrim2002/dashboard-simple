@@ -207,10 +207,7 @@
                             </span>
                           </div>
                         </td>
-                        <td colspan="3" class="text-muted small">
-                          Max: {{ vehicle.maxWt || 0 }}kg,
-                          {{ vehicle.maxVol }}m³
-                        </td>
+                        <td colspan="4" class="text-muted small"></td>
                         <td class="text-end fw-bold">
                           {{
                             formatDecimal(
