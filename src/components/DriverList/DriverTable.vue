@@ -187,31 +187,29 @@ export default {
         let aValue = a[this.sortColumn];
         let bValue = b[this.sortColumn];
 
-        // Special sorting for different types
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          aValue = aValue.localeCompare(bValue);
+        // Handle null/undefined values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Convert values based on column type
+        if (
+          this.sortColumn === "stopCount" ||
+          this.sortColumn === "cost" ||
+          this.sortColumn === "loadWeight" ||
+          this.sortColumn === "distance" ||
+          this.sortColumn === "travelTime"
+        ) {
+          // Numeric columns
+          aValue = parseFloat(aValue) || 0;
+          bValue = parseFloat(bValue) || 0;
         } else {
-          if (
-            this.sortColumn === "stopCount" ||
-            this.sortColumn === "cost" ||
-            this.sortColumn === "loadWeight" ||
-            this.sortColumn === "travelTime"
-          ) {
-            aValue = parseFloat(aValue) || 0;
-            bValue = parseFloat(bValue) || 0;
-          } else if (this.sortColumn === "distance") {
-            aValue = parseFloat(aValue) || 0;
-            bValue = parseFloat(bValue) || 0;
-          } else if (
-            this.sortColumn === "name" ||
-            this.sortColumn === "type" ||
-            this.sortColumn === "zone"
-          ) {
-            aValue = (aValue || "").toLowerCase();
-            bValue = (bValue || "").toLowerCase();
-          }
+          // String columns (name, type, zone)
+          aValue = String(aValue || "").toLowerCase();
+          bValue = String(bValue || "").toLowerCase();
         }
 
+        // Compare values
         let result = 0;
         if (aValue < bValue) {
           result = -1;
@@ -268,6 +266,8 @@ export default {
         // Sort ascending if different column is clicked
         this.sortColumn = column;
         this.sortDirection = "asc";
+        // Reset to first page when changing sort column
+        this.currentPage = 1;
       }
     },
     getSortIcon(column) {
