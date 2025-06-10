@@ -69,7 +69,7 @@
               </div>
 
               <!-- 상세 Zone 합계 정보 (접기/펼치기) -->
-              <div v-if="isZoneExpanded(zoneId)" class="zone-summary mt-3">
+              <!-- <div v-if="isZoneExpanded(zoneId)" class="zone-summary mt-3">
                 <div class="row g-2">
                   <div class="col-md-2">
                     <div class="summary-card">
@@ -133,7 +133,7 @@
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> -->
             </div>
 
             <template v-if="isZoneExpanded(zoneId)">
