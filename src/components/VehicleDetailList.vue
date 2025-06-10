@@ -163,6 +163,10 @@
                         >
                           {{ vehicle.detailList.length }} orders
                         </span>
+                        <span v-if="isDragging" class="badge bg-success ms-1">
+                          <i class="bi bi-arrow-down-circle"></i>
+                          Drop Zone
+                        </span>
                         <span class="text-muted ms-2 small">
                           Loaded Weight:
                           {{
@@ -215,7 +219,10 @@
                   v-else-if="isVehicleExpanded(vehicle.id)"
                   class="table-responsive"
                 >
-                  <table class="table table-striped table-hover table-sm">
+                  <table
+                    class="table table-striped table-hover table-sm vehicle-table"
+                    :class="{ 'dragging-active': isDragging }"
+                  >
                     <thead class="table-dark">
                       <tr>
                         <th scope="col" class="drag-handle-header">
@@ -234,9 +241,14 @@
                         <th scope="col">Departure Time</th>
                       </tr>
                     </thead>
-                    <!-- Vue.Draggable을 사용한 안정적인 드래그 앤 드롭 -->
+                    <!-- Vue.Draggable을 사용한 안정적인 드래그 앤 드롭 (Vehicle 간 이동 가능) -->
                     <draggable
                       :list="vehicle.detailList"
+                      :group="{
+                        name: `zone-${vehicle.zone}`,
+                        pull: true,
+                        put: true,
+                      }"
                       :disabled="false"
                       :animation="200"
                       :ghost-class="'sortable-ghost'"
@@ -255,8 +267,11 @@
                       @update="onUpdate"
                       @sort="onSort"
                       @remove="onRemove"
+                      @change="onChange"
                       tag="tbody"
                       class="draggable-tbody"
+                      :data-vehicle-id="vehicle.id"
+                      :data-zone-id="vehicle.zone"
                     >
                       <tr
                         v-for="(detail, detailIndex) in vehicle.detailList"
@@ -594,13 +609,25 @@ export default {
       const draggedItem = evt.draggedContext.element;
       const relatedItem = evt.relatedContext.element;
 
+      // 소스와 타겟 정보 추출
+      const fromElement = evt.from;
+      const toElement = evt.to;
+      const fromZoneId = fromElement?.dataset?.zoneId;
+      const toZoneId = toElement?.dataset?.zoneId;
+      const fromVehicleId = fromElement?.dataset?.vehicleId;
+      const toVehicleId = toElement?.dataset?.vehicleId;
+
       console.log("🔍 onMove 검증:", {
         draggedItem: draggedItem?.orderId || draggedItem?.locId,
         isDragable: this.isDragable(draggedItem),
+        fromZone: fromZoneId,
+        toZone: toZoneId,
+        fromVehicle: fromVehicleId,
+        toVehicle: toVehicleId,
         relatedItem: relatedItem?.orderId || relatedItem?.locId,
       });
 
-      // 드래그 가능한 항목만 이동 허용
+      // 1. 드래그 가능한 항목인지 확인 (첫 번째 위치는 이동 불가)
       if (!this.isDragable(draggedItem)) {
         console.log(
           "🚫 드래그 불가능한 항목:",
@@ -611,6 +638,28 @@ export default {
           "warning"
         );
         return false;
+      }
+
+      // 2. Zone 간 이동 제한 (같은 zone 내에서만 이동 가능)
+      if (fromZoneId && toZoneId && fromZoneId !== toZoneId) {
+        console.log("🚫 다른 Zone으로 이동 시도:", fromZoneId, "→", toZoneId);
+        this.showMessage(
+          "같은 Zone 내의 Vehicle로만 이동할 수 있습니다.",
+          "warning"
+        );
+        return false;
+      }
+
+      // 3. 이동 허용
+      if (fromVehicleId !== toVehicleId) {
+        console.log(
+          "✅ Vehicle 간 이동 허용:",
+          fromVehicleId,
+          "→",
+          toVehicleId
+        );
+      } else {
+        console.log("✅ 같은 Vehicle 내 순서 변경 허용");
       }
 
       return true;
@@ -675,6 +724,41 @@ export default {
     onRemove(evt) {
       console.log("🗑️ 항목 제거:", evt);
       // 다른 vehicle로 항목이 이동된 경우
+      this.updateVehicleSummaries();
+    },
+
+    onChange(evt) {
+      console.log("🔄 변경 이벤트:", evt);
+
+      if (evt.added) {
+        console.log(
+          "➕ 항목 추가됨:",
+          evt.added.element?.orderId || evt.added.element?.locId
+        );
+        this.showMessage(
+          `주문 ${
+            evt.added.element?.orderId || evt.added.element?.locId
+          }이(가) 이동되었습니다.`,
+          "success"
+        );
+      }
+
+      if (evt.removed) {
+        console.log(
+          "➖ 항목 제거됨:",
+          evt.removed.element?.orderId || evt.removed.element?.locId
+        );
+      }
+
+      if (evt.moved) {
+        console.log(
+          "🔀 항목 이동됨:",
+          evt.moved.element?.orderId || evt.moved.element?.locId
+        );
+        this.showMessage(`주문 순서가 변경되었습니다.`, "info");
+      }
+
+      // Vehicle summary 업데이트
       this.updateVehicleSummaries();
     },
     // 업데이트 메서드
@@ -891,6 +975,7 @@ export default {
 /* Vue.Draggable 전용 스타일 */
 .draggable-tbody {
   min-height: 50px;
+  transition: all 0.3s ease;
 }
 
 .sortable-ghost {
@@ -916,6 +1001,33 @@ export default {
 .sortable-fallback {
   background-color: rgba(13, 110, 253, 0.25) !important;
   opacity: 0.8;
+}
+
+/* Vehicle 테이블 드래그 피드백 */
+.vehicle-table {
+  transition: all 0.3s ease;
+}
+
+.vehicle-table.dragging-active {
+  border: 2px dashed rgba(13, 110, 253, 0.5);
+  background-color: rgba(13, 110, 253, 0.02);
+}
+
+.vehicle-table.dragging-active .draggable-tbody {
+  border: 1px dashed rgba(13, 110, 253, 0.3);
+  background-color: rgba(13, 110, 253, 0.05);
+  min-height: 80px;
+}
+
+.vehicle-table.dragging-active .draggable-tbody:empty::before {
+  content: "여기에 드롭하세요";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 /* 기타 유틸리티 스타일들 */
