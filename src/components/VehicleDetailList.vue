@@ -163,9 +163,11 @@
                         >
                           {{ vehicle.detailList.length }} orders
                         </span>
-                        <span v-if="isDragging" class="badge bg-success ms-1">
-                          <i class="bi bi-arrow-down-circle"></i>
-                          Drop Zone
+                        <span
+                          v-if="isDragging"
+                          class="badge bg-light text-muted ms-1"
+                        >
+                          드롭 가능
                         </span>
                         <span class="text-muted ms-2 small">
                           Loaded Weight:
@@ -932,14 +934,11 @@ export default {
 
 .drag-handle:hover {
   color: #0d6efd;
-  background-color: rgba(13, 110, 253, 0.1);
   cursor: grab;
-  transform: scale(1.1);
 }
 
 .drag-handle:active {
   cursor: grabbing;
-  transform: scale(0.95);
 }
 
 .drag-disabled {
@@ -955,79 +954,66 @@ export default {
 
 /* 드래그 가능한 행 스타일 */
 .draggable-row {
-  transition: all 0.2s ease;
   cursor: default;
 }
 
 .draggable-row:hover {
-  background-color: rgba(13, 110, 253, 0.05) !important;
+  background-color: rgba(13, 110, 253, 0.03) !important;
 }
 
 .non-draggable-row {
-  opacity: 0.8;
-  background-color: rgba(220, 53, 69, 0.02) !important;
+  opacity: 0.7;
+  background-color: rgba(220, 53, 69, 0.01) !important;
 }
 
 .non-draggable-row:hover {
-  background-color: rgba(220, 53, 69, 0.05) !important;
+  background-color: rgba(220, 53, 69, 0.02) !important;
 }
 
-/* Vue.Draggable 전용 스타일 */
+/* Vue.Draggable 전용 스타일 (단순화) */
 .draggable-tbody {
   min-height: 50px;
-  transition: all 0.3s ease;
 }
 
 .sortable-ghost {
-  opacity: 0.4;
-  background-color: rgba(13, 110, 253, 0.1) !important;
-  transform: rotate(1deg);
+  opacity: 0.5;
+  background-color: rgba(13, 110, 253, 0.08) !important;
 }
 
 .sortable-chosen {
-  background-color: rgba(13, 110, 253, 0.15) !important;
-  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
-  transform: scale(1.02);
+  background-color: rgba(13, 110, 253, 0.1) !important;
 }
 
 .sortable-drag {
-  background-color: rgba(13, 110, 253, 0.2) !important;
-  transform: scale(1.05) rotate(2deg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000 !important;
-  border: 2px solid #0d6efd;
+  border: 1px solid #0d6efd;
 }
 
 .sortable-fallback {
-  background-color: rgba(13, 110, 253, 0.25) !important;
-  opacity: 0.8;
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  opacity: 0.7;
 }
 
-/* Vehicle 테이블 드래그 피드백 */
-.vehicle-table {
-  transition: all 0.3s ease;
-}
-
+/* Vehicle 테이블 드래그 피드백 (단순화) */
 .vehicle-table.dragging-active {
-  border: 2px dashed rgba(13, 110, 253, 0.5);
-  background-color: rgba(13, 110, 253, 0.02);
+  border: 1px dashed rgba(13, 110, 253, 0.4);
 }
 
 .vehicle-table.dragging-active .draggable-tbody {
-  border: 1px dashed rgba(13, 110, 253, 0.3);
-  background-color: rgba(13, 110, 253, 0.05);
-  min-height: 80px;
+  background-color: rgba(13, 110, 253, 0.02);
+  min-height: 60px;
 }
 
 .vehicle-table.dragging-active .draggable-tbody:empty::before {
-  content: "여기에 드롭하세요";
+  content: "드롭 가능";
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 60px;
+  height: 40px;
   color: #6c757d;
-  font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 /* 기타 유틸리티 스타일들 */
