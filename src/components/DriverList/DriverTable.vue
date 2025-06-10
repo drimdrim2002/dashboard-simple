@@ -92,39 +92,39 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="pagination-container">
-      <div class="pagination-info">
+    <div class="pagination-container">
+      <div class="entries-info">
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ sortedDrivers.length }} entries
       </div>
       <div class="pagination-controls">
         <button
           @click="goToFirstPage"
-          :disabled="currentPage === 1"
+          :disabled="currentPage === 1 || sortedDrivers.length === 0"
           class="pagination-btn"
         >
           First
         </button>
         <button
           @click="prevPage"
-          :disabled="currentPage === 1"
+          :disabled="currentPage === 1 || sortedDrivers.length === 0"
           class="pagination-btn"
         >
           Previous
         </button>
-        <span class="pagination-info">
+        <span class="page-info">
           Page {{ currentPage }} of {{ totalPages }}
         </span>
         <button
           @click="nextPage"
-          :disabled="currentPage === totalPages"
+          :disabled="currentPage === totalPages || sortedDrivers.length === 0"
           class="pagination-btn"
         >
           Next
         </button>
         <button
           @click="goToLastPage"
-          :disabled="currentPage === totalPages"
+          :disabled="currentPage === totalPages || sortedDrivers.length === 0"
           class="pagination-btn"
         >
           Last
@@ -228,7 +228,10 @@ export default {
       return this.sortedDrivers.slice(start, end);
     },
     totalPages() {
-      return Math.ceil(this.sortedDrivers.length / this.itemsPerPage);
+      return Math.max(
+        1,
+        Math.ceil(this.sortedDrivers.length / this.itemsPerPage)
+      );
     },
     showingStart() {
       return this.sortedDrivers.length === 0
@@ -347,18 +350,20 @@ export default {
   background-color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  height: 100%;
+  height: calc(100vh - 150px);
+  max-height: 800px;
   display: flex;
   flex-direction: column;
 }
 
 .table-responsive {
-  height: calc(100vh - 400px);
-  min-height: 250px;
-  max-height: calc(100% - 180px);
-  overflow-y: scroll;
+  height: calc(100vh - 150px);
+  min-height: 300px;
+  max-height: 560px;
+  overflow-y: auto;
   overflow-x: auto;
   border: 1px solid #dee2e6;
+  flex: 1;
 }
 
 /* 스크롤바 스타일 */
@@ -616,11 +621,21 @@ export default {
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 8px 8px;
 }
 
-.pagination-info {
+.entries-info {
   font-size: 0.75rem;
   color: #6c757d;
+}
+
+.page-info {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-weight: 500;
 }
 
 .pagination-controls {

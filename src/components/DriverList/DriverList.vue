@@ -140,6 +140,5 @@ export default {
   overflow: hidden;
   padding: 6px;
   min-height: 0;
-  height: 98%;
 }
 </style>
