@@ -39,9 +39,9 @@ export default {
         }),
       });
 
-      // Disable default mouse wheel interaction
-      this.map.getViewport().style.pointerEvents = "none";
-      this.map.getViewport().style.cursor = "default";
+      // 클릭은 허용하고 기본 휠 동작만 비활성화
+      this.map.getViewport().style.cursor = "pointer";
+      // 지도 전체 이벤트 비활성화 제거
     },
     handleWheel(event) {
       // Disable default mouse wheel behavior

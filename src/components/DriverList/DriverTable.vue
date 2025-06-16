@@ -315,9 +315,10 @@ export default {
 
         this.emitSelectedDrivers();
       } finally {
-        this.$nextTick(() => {
+        // 처리 시간 단축으로 클릭 응답성 개선
+        setTimeout(() => {
           this.isProcessingSelection = false;
-        });
+        }, 30);
       }
     },
 
