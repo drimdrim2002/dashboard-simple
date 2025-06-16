@@ -56,14 +56,17 @@
             :key="driver.id"
             :data-driver-id="driver.id"
             class="align-middle"
+            :class="{ selected: selectedDrivers.includes(driver.id) }"
+            @click="toggleDriverSelection(driver.id)"
           >
-            <td class="checkbox-column">
+            <td class="checkbox-column" @click.stop>
               <div class="form-check">
                 <input
                   type="checkbox"
                   class="form-check-input"
                   v-model="selectedDrivers"
                   :value="driver.id"
+                  @click.stop
                 />
               </div>
             </td>
@@ -332,6 +335,15 @@ export default {
       );
       this.$emit("drivers-selected", selectedDriversInfo);
     },
+    toggleDriverSelection(driverId) {
+      const index = this.selectedDrivers.indexOf(driverId);
+      if (index === -1) {
+        this.selectedDrivers.push(driverId);
+      } else {
+        this.selectedDrivers.splice(index, 1);
+      }
+      this.emitSelectedDrivers();
+    },
   },
   watch: {
     selectedDrivers: {
@@ -410,11 +422,23 @@ export default {
 .table tbody tr {
   border-bottom: 1px solid #f2f2f2;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .table tbody tr:hover {
   background-color: #f8f9fa;
+}
+
+.table tbody tr:hover .form-check-input {
+  border-color: #0d6efd;
+}
+
+.table tbody tr.selected {
+  background-color: #e7f1ff;
+}
+
+.table tbody tr.selected:hover {
+  background-color: #d4e5ff;
 }
 
 .table td {
@@ -431,8 +455,9 @@ export default {
 }
 
 .checkbox-column {
-  width: 30px;
+  width: 40px;
   text-align: center;
+  padding: 0.5rem;
 }
 
 .driver-type-badge {
@@ -525,17 +550,35 @@ export default {
 }
 
 .form-check {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 1.5rem;
-  padding-left: 1.5em;
-  margin-bottom: 0.125rem;
+  margin: 0;
+  padding: 0;
 }
 .form-check-input {
-  width: 1em;
-  height: 1em;
-  margin-top: 0.25em;
-  margin-left: -1.5em;
+  width: 1.25em;
+  height: 1.25em;
+  margin: 0;
   cursor: pointer;
+  border: 2px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.form-check-input:hover {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.form-check-input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 .btn {
