@@ -11,6 +11,7 @@
                   class="form-check-input"
                   :checked="allSelected"
                   @change="toggleAllDrivers"
+                  @click.stop
                 />
               </div>
             </th>
@@ -53,19 +54,22 @@
         <tbody>
           <tr
             v-for="(driver, index) in paginatedDrivers"
-            :key="driver.id"
+            :key="`driver-${driver.id}-${currentPage}`"
             :data-driver-id="driver.id"
             class="align-middle"
-            :class="{ selected: selectedDrivers.includes(driver.id) }"
-            @click="toggleDriverSelection(driver.id)"
+            :class="{ selected: isDriverSelected(driver.id) }"
+            @click="handleRowClick(driver.id, $event)"
           >
-            <td class="checkbox-column" @click.stop>
+            <td
+              class="checkbox-column"
+              @click.stop="handleCheckboxClick(driver.id, $event)"
+            >
               <div class="form-check">
                 <input
                   type="checkbox"
                   class="form-check-input"
-                  v-model="selectedDrivers"
-                  :value="driver.id"
+                  :checked="isDriverSelected(driver.id)"
+                  @change="handleCheckboxChange(driver.id, $event)"
                   @click.stop
                 />
               </div>
@@ -99,6 +103,9 @@
       <div class="entries-info">
         Showing {{ showingStart }} to {{ showingEnd }} of
         {{ sortedDrivers.length }} entries
+        <span v-if="selectedDrivers.length > 0" class="selected-info">
+          ({{ selectedDrivers.length }} selected)
+        </span>
       </div>
       <div class="pagination-controls">
         <button
@@ -172,13 +179,16 @@ export default {
       sortDirection: "asc", // 'asc' or 'desc'
       currentPage: 1,
       itemsPerPage: 10,
+      isProcessingSelection: false, // 중복 처리 방지
     };
   },
   computed: {
     allSelected() {
       return (
-        this.drivers.length > 0 &&
-        this.selectedDrivers.length === this.drivers.length
+        this.paginatedDrivers.length > 0 &&
+        this.paginatedDrivers.every((driver) =>
+          this.selectedDrivers.includes(driver.id)
+        )
       );
     },
     sortedDrivers() {
@@ -245,12 +255,92 @@ export default {
     },
   },
   methods: {
-    toggleAllDrivers(event) {
-      this.selectedDrivers = event.target.checked
-        ? this.drivers.map((driver) => driver.id)
-        : [];
-      this.emitSelectedDrivers();
+    // 개선된 이벤트 핸들러들
+    isDriverSelected(driverId) {
+      return this.selectedDrivers.includes(driverId);
     },
+
+    handleRowClick(driverId, event) {
+      // 다른 요소에서 이벤트가 발생한 경우 무시
+      if (
+        event.target.closest(".checkbox-column") ||
+        event.target.closest(".sortable") ||
+        event.target.closest("button")
+      ) {
+        return;
+      }
+
+      this.toggleDriverSelection(driverId);
+    },
+
+    handleCheckboxClick(driverId, event) {
+      event.stopPropagation();
+      this.toggleDriverSelection(driverId);
+    },
+
+    handleCheckboxChange(driverId, event) {
+      event.stopPropagation();
+      // 체크박스 상태와 실제 선택 상태가 다른 경우에만 처리
+      const isChecked = event.target.checked;
+      const isSelected = this.isDriverSelected(driverId);
+
+      if (isChecked !== isSelected) {
+        this.toggleDriverSelection(driverId);
+      }
+    },
+
+    toggleAllDrivers(event) {
+      if (this.isProcessingSelection) return;
+      this.isProcessingSelection = true;
+
+      try {
+        const isChecked = event.target.checked;
+
+        if (isChecked) {
+          // 현재 페이지의 모든 드라이버를 선택에 추가
+          this.paginatedDrivers.forEach((driver) => {
+            if (!this.selectedDrivers.includes(driver.id)) {
+              this.selectedDrivers.push(driver.id);
+            }
+          });
+        } else {
+          // 현재 페이지의 모든 드라이버를 선택에서 제거
+          const currentPageIds = this.paginatedDrivers.map(
+            (driver) => driver.id
+          );
+          this.selectedDrivers = this.selectedDrivers.filter(
+            (id) => !currentPageIds.includes(id)
+          );
+        }
+
+        this.emitSelectedDrivers();
+      } finally {
+        this.$nextTick(() => {
+          this.isProcessingSelection = false;
+        });
+      }
+    },
+
+    toggleDriverSelection(driverId) {
+      if (this.isProcessingSelection) return;
+      this.isProcessingSelection = true;
+
+      try {
+        const index = this.selectedDrivers.indexOf(driverId);
+        if (index === -1) {
+          this.selectedDrivers.push(driverId);
+        } else {
+          this.selectedDrivers.splice(index, 1);
+        }
+
+        this.emitSelectedDrivers();
+      } finally {
+        this.$nextTick(() => {
+          this.isProcessingSelection = false;
+        });
+      }
+    },
+
     getDriverTypeClass(type) {
       // Return class based on driver type
       const typeMap = {
@@ -335,22 +425,15 @@ export default {
       );
       this.$emit("drivers-selected", selectedDriversInfo);
     },
-    toggleDriverSelection(driverId) {
-      const index = this.selectedDrivers.indexOf(driverId);
-      if (index === -1) {
-        this.selectedDrivers.push(driverId);
-      } else {
-        this.selectedDrivers.splice(index, 1);
-      }
-      this.emitSelectedDrivers();
-    },
   },
   watch: {
-    selectedDrivers: {
+    // watch 제거 - 중복 호출 방지
+    drivers: {
       handler() {
-        this.emitSelectedDrivers();
+        // 드라이버 목록이 변경되면 선택 상태 초기화
+        this.selectedDrivers = [];
       },
-      deep: true,
+      immediate: false,
     },
   },
 };
@@ -673,6 +756,12 @@ export default {
 .entries-info {
   font-size: 0.75rem;
   color: #6c757d;
+}
+
+.selected-info {
+  color: #0d6efd;
+  font-weight: 600;
+  margin-left: 0.5rem;
 }
 
 .page-info {
