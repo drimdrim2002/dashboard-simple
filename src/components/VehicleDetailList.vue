@@ -116,8 +116,8 @@ export default {
   },
   methods: {
     // 포맷팅 메서드들 - formatUtils에서 import한 함수들 사용
-    formatWeight,
-    formatVolume,
+    formatWeight: formatWeight,
+    formatVolume: formatVolume,
     toggleZoneDetails(zoneId) {
       // 드래그 중일 때는 클릭 이벤트 무시
       if (this.isDragging) {
