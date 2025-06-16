@@ -143,7 +143,7 @@
             >
               <div class="table-responsive">
                 <table
-                  class="table table-striped table-hover table-sm unified-vehicle-table"
+                  class="table table-hover table-sm unified-vehicle-table"
                   :class="{ 'dragging-active': isDragging }"
                 >
                   <thead class="table-dark sticky-top">
@@ -1338,20 +1338,62 @@ export default {
 .table-responsive {
   max-height: 400px;
   overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background-color: #fff;
 }
 
-.table th {
-  font-size: 0.875rem;
+/* 스크롤바 스타일 */
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.table thead th {
+  border-top: none;
+  border-bottom: 1px solid #dee2e6;
   font-weight: 600;
-  white-space: nowrap;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+  background-color: #f8f9fa;
+  color: #000000;
   position: sticky;
   top: 0;
   z-index: 10;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #f2f2f2;
+  transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
 .table td {
-  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
   vertical-align: middle;
+  border-top: none;
+  font-size: 0.8rem;
 }
 
 .text-truncate {
@@ -1573,7 +1615,7 @@ export default {
   --bs-table-bg: transparent;
   --bs-table-accent-bg: transparent;
   --bs-table-striped-bg: rgba(0, 0, 0, 0.05);
-  --bs-table-hover-bg: rgba(0, 0, 0, 0.075);
+  --bs-table-hover-bg: #f8f9fa;
   width: 100%;
   margin-bottom: 1rem;
   color: #212529;
@@ -1603,11 +1645,11 @@ export default {
 }
 
 .table-dark {
-  --bs-table-bg: #212529;
-  --bs-table-striped-bg: #2c3034;
-  --bs-table-hover-bg: #373b3e;
-  color: #fff;
-  border-color: #373b3e;
+  --bs-table-bg: #f8f9fa;
+  --bs-table-striped-bg: #f8f9fa;
+  --bs-table-hover-bg: #e9ecef;
+  color: #212529;
+  border-color: #dee2e6;
 }
 
 .table-secondary {
@@ -1772,7 +1814,7 @@ export default {
 /* Vehicle 헤더 행 스타일 */
 .vehicle-header-row {
   background-color: #f8f9fa !important;
-  border-top: 2px solid #0d6efd;
+  border-top: 1px solid #dee2e6;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -1823,6 +1865,7 @@ export default {
 /* Detail 행 스타일 */
 .detail-row {
   background-color: #fff;
+  transition: background-color 0.2s ease;
 }
 
 .detail-row:hover {
@@ -1861,7 +1904,7 @@ export default {
 }
 
 .unified-vehicle-table .vehicle-header-row td {
-  border-top: 2px solid #0d6efd;
+  border-top: 1px solid #dee2e6;
   border-bottom: 1px solid #dee2e6;
 }
 
