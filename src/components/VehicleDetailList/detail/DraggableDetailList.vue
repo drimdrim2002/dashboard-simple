@@ -30,7 +30,7 @@
     :data-vehicle-id="vehicle.id"
     :data-zone-id="vehicle.zone"
   >
-    <DetailRow
+    <VehicleDetailItem
       v-for="(detail, detailIndex) in vehicle.detailList"
       :key="`${vehicle.id}-${detail.orderId || detail.locId}-${detailIndex}`"
       :detail="detail"
@@ -43,16 +43,16 @@
 
 <script>
 import draggable from "vuedraggable";
-import DetailRow from "./DetailRow.vue";
+import VehicleDetailItem from "./VehicleDetailItem.vue";
 import { dragMixin } from "../shared/mixins/dragMixin";
 import { notificationMixin } from "../shared/mixins/notificationMixin";
 
 export default {
-  name: "DetailRows",
+  name: "DraggableDetailList",
   mixins: [dragMixin, notificationMixin],
   components: {
     draggable,
-    DetailRow,
+    VehicleDetailItem,
   },
   props: {
     vehicle: {
@@ -73,7 +73,7 @@ export default {
     // dragMixin에서 호출하는 updateVehicleSummaries를 빈 함수로 정의
     // 실제 계산은 부모 컴포넌트에서 담당
     updateVehicleSummaries() {
-      console.log("📊 DetailRows에서 Vehicle summary 업데이트 요청");
+      console.log("📊 DraggableDetailList에서 Vehicle summary 업데이트 요청");
       // 부모 컴포넌트에 계산 업데이트 요청
       this.$emit("update-vehicle-summary", this.vehicle.id);
     },

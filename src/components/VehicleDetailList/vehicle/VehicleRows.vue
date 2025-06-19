@@ -77,7 +77,7 @@
     </tr>
 
     <!-- Vehicle Details (Vue.Draggable 사용) -->
-    <DetailRows
+    <DraggableDetailList
       v-if="isExpanded && vehicle.detailList && vehicle.detailList.length > 0"
       :vehicle="vehicle"
       :zone-id="zoneId"
@@ -87,7 +87,7 @@
 </template>
 
 <script>
-import DetailRows from "../detail/DetailRows.vue";
+import DraggableDetailList from "../detail/DraggableDetailList.vue";
 import {
   formatDecimal,
   formatDistanceKM,
@@ -100,7 +100,7 @@ export default {
   name: "VehicleRows",
   mixins: [calculationMixin],
   components: {
-    DetailRows,
+    DraggableDetailList,
   },
   props: {
     vehicle: {

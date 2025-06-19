@@ -426,13 +426,26 @@ export default {
       );
       this.$emit("drivers-selected", selectedDriversInfo);
     },
+
+    isSameDriverList(newList, oldList) {
+      // 길이가 다르면 다른 리스트
+      if (newList.length !== oldList.length) return false;
+
+      // 모든 드라이버의 ID가 같은 순서로 있는지 확인
+      return newList.every((driver, index) => driver.id === oldList[index].id);
+    },
   },
   watch: {
-    // watch 제거 - 중복 호출 방지
     drivers: {
-      handler() {
-        // 드라이버 목록이 변경되면 선택 상태 초기화
-        this.selectedDrivers = [];
+      handler(newDrivers, oldDrivers) {
+        // 배열의 길이나 ID 구성이 실제로 변경된 경우에만 초기화
+        if (
+          !oldDrivers ||
+          newDrivers.length !== oldDrivers.length ||
+          !this.isSameDriverList(newDrivers, oldDrivers)
+        ) {
+          this.selectedDrivers = [];
+        }
       },
       immediate: false,
     },

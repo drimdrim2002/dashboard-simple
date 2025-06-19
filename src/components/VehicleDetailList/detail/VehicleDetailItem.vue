@@ -87,7 +87,7 @@ import {
 } from "../shared/utils/formatUtils";
 
 export default {
-  name: "DetailRow",
+  name: "VehicleDetailItem",
   props: {
     detail: {
       type: Object,
