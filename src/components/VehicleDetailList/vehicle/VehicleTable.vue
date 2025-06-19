@@ -7,22 +7,16 @@
       >
         <thead class="table-dark sticky-top">
           <tr>
-            <th scope="col" class="drag-handle-header">
-              <i class="bi bi-arrows-move text-light"></i>
+            <th
+              v-for="column in headerColumns"
+              :key="column.key"
+              scope="col"
+              :class="column.className"
+              :style="{ width: column.width, textAlign: column.align }"
+            >
+              <i v-if="column.icon" :class="column.icon + ' text-light'"></i>
+              <span v-else>{{ column.title }}</span>
             </th>
-            <th scope="col" class="tree-col">Tree</th>
-            <th scope="col">#</th>
-            <th scope="col">Vehicle ID</th>
-            <th scope="col">Order ID</th>
-            <th scope="col">Location ID</th>
-            <th scope="col">Weight(KG)</th>
-            <th scope="col">Volume(CBM)</th>
-            <th scope="col">Distance(KM)</th>
-            <th scope="col">Duration</th>
-            <th scope="col">Request Time</th>
-            <th scope="col">Customer Time</th>
-            <th scope="col">Arrival Time</th>
-            <th scope="col">Departure Time</th>
           </tr>
         </thead>
         <tbody>
@@ -44,11 +38,17 @@
 
 <script>
 import VehicleRows from "./VehicleRows.vue";
+import { getHeaderColumns } from "../shared/config/tableColumns";
 
 export default {
   name: "VehicleTable",
   components: {
     VehicleRows,
+  },
+  computed: {
+    headerColumns() {
+      return getHeaderColumns();
+    },
   },
   props: {
     zoneId: {
