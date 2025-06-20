@@ -1,6 +1,6 @@
 <template>
   <draggable
-    :list="filteredDetailList"
+    v-model="mutableDetailList"
     :group="{
       name: `zone-${vehicle.zone}`,
       pull: true,
@@ -31,7 +31,7 @@
     :data-zone-id="vehicle.zone"
   >
     <VehicleDetailItem
-      v-for="(detail, detailIndex) in filteredDetailList"
+      v-for="(detail, detailIndex) in mutableDetailList"
       :key="`${vehicle.id}-${detail.orderId || detail.locId}-${detailIndex}`"
       :detail="detail"
       :detail-index="detailIndex"
@@ -64,6 +64,11 @@ export default {
       required: true,
     },
   },
+  data() {
+    return {
+      mutableDetailList: [], // 드래그 가능한 변경 가능한 배열
+    };
+  },
   computed: {
     filteredDetailList() {
       if (!this.vehicle.detailList || !Array.isArray(this.vehicle.detailList)) {
@@ -76,13 +81,62 @@ export default {
       });
     },
   },
+  watch: {
+    // props 변경 시 로컬 데이터 업데이트
+    filteredDetailList: {
+      handler(newList) {
+        this.mutableDetailList = [...newList];
+      },
+      immediate: true,
+      deep: true,
+    },
+  },
   methods: {
-    // dragMixin에서 호출하는 updateVehicleSummaries를 빈 함수로 정의
-    // 실제 계산은 부모 컴포넌트에서 담당
+    // 부모 컴포넌트의 실제 데이터와 동기화
+    syncToParent() {
+      if (!this.vehicle.detailList) return;
+
+      console.log("🔄 부모 데이터와 동기화 시작");
+      console.log(
+        "🔄 현재 mutableDetailList:",
+        this.mutableDetailList.map((d) => d.orderId || d.locId)
+      );
+
+      // DEPOT 항목은 유지하고 나머지만 업데이트
+      const depotItems = this.vehicle.detailList.filter(
+        (detail) => detail.locTcd === "DEPOT"
+      );
+      const updatedDetailList = [...depotItems, ...this.mutableDetailList];
+
+      // stopSeqNo 재조정 (0부터 시작)
+      updatedDetailList.forEach((detail, index) => {
+        detail.stopSeqNo = index.toString();
+      });
+
+      // Vue 2의 반응성을 위해 배열을 완전히 교체
+      this.vehicle.detailList.splice(
+        0,
+        this.vehicle.detailList.length,
+        ...updatedDetailList
+      );
+
+      console.log("🔄 동기화 완료:", updatedDetailList.length, "개 항목");
+      console.log(
+        "🔄 업데이트된 순서:",
+        updatedDetailList.map((d) => `${d.orderId || d.locId}(${d.stopSeqNo})`)
+      );
+    },
+
+    // dragMixin에서 호출하는 updateVehicleSummaries
     updateVehicleSummaries() {
       console.log("📊 DraggableDetailList에서 Vehicle summary 업데이트 요청");
-      // 부모 컴포넌트에 계산 업데이트 요청
-      this.$emit("update-vehicle-summary", this.vehicle.id);
+
+      // 먼저 부모 데이터와 동기화
+      this.$nextTick(() => {
+        this.syncToParent();
+        // 그 다음 부모 컴포넌트에 계산 업데이트 요청
+        this.$emit("update-vehicle-summary", this.vehicle.id);
+      });
     },
   },
 };
