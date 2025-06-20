@@ -171,8 +171,10 @@ export default {
   },
   watch: {
     selectedVehicles: {
-      handler(newValue) {
-        console.log("🔄 selectedVehicles 변경 감지:", newValue);
+      handler(newValue, oldValue) {
+        console.log("🔄 selectedVehicles 변경 감지(newValue):", newValue);
+        console.log("🔄 selectedVehicles 변경 감지(oldValue):", oldValue);
+
         if (this.originalData) {
           this.checkForChanges();
         } else {
@@ -391,6 +393,7 @@ export default {
 
     onResetSuccess() {
       this.hasUnsavedChanges = false;
+      this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
       this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
       console.log("✅ Reset Success 메서드 호출됨");
 

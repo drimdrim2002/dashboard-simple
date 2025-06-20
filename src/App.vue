@@ -417,8 +417,20 @@ export default {
         "개 차량"
       );
 
+      this.selectedVehicles.forEach((selectedVehicle) => {
+        const vhclId = selectedVehicle.vhclId;
+        ``;
+        const originalVehicle = payload.originalData.find(
+          (vehicle) => vehicle.vhclId === vhclId
+        );
+
+        if (originalVehicle) {
+          selectedVehicle.detailList = originalVehicle.detailList;
+        }
+      });
+
       // 원본 데이터로 복원
-      this.selectedVehicles = JSON.parse(JSON.stringify(payload.originalData));
+      // this.selectedVehicles = JSON.parse(JSON.stringify(payload.originalData));
 
       // VehicleDetailList 컴포넌트에 리셋 성공 알림
       this.$refs.vehicleDetailList?.onResetSuccess();
