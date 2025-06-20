@@ -356,6 +356,24 @@ export default {
         // 실제 API 호출이나 로컬스토리지 저장 로직
         // 예시: await this.$api.saveVehicleData(payload.data);
 
+        // 변경된 차량 데이터 상세 정보 출력
+        payload.data.forEach((vehicle) => {
+          console.log(
+            `📋 차량 ID: ${vehicle.vhclId || vehicle.vhclId} 상세정보:`
+          );
+          console.log(`  - 상세 목록 수: ${vehicle.detailList?.length || 0}개`);
+
+          if (vehicle.detailList?.length > 0) {
+            console.log("  - 상세 목록:");
+            vehicle.detailList.forEach((detail, idx) => {
+              console.log(
+                `    ${idx + 1}. ${detail.orderId || detail.locId} (${
+                  detail.locTcd
+                })`
+              );
+            });
+          }
+        });
         // 시뮬레이션용 딜레이
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
