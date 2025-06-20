@@ -63,9 +63,9 @@ export function formatVolume(value) {
  * @returns {string} 킬로미터 단위의 포맷팅된 거리 문자열 (예: "1.5 km")
  */
 export function formatDistanceKM(meters) {
-  if (!meters || meters === 0) return "0.0 km";
+  if (!meters || meters === 0) return "0.0";
   const kmValue = (Number(meters) / 1000).toFixed(1);
-  return `${kmValue} km`;
+  return `${kmValue}`;
 }
 
 /**
