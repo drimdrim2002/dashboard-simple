@@ -219,18 +219,18 @@ export default {
     // 상위 컴포넌트에서 호출할 수 있는 공개 메서드들
     onSaveSuccess() {
       this.backupOriginalData();
-      this.showNotification("변경사항이 성공적으로 저장되었습니다.", "success");
+      this.showMessage("변경사항이 성공적으로 저장되었습니다.", "success");
       console.log("✅ 저장 성공 처리 완료");
     },
 
     onSaveError(error) {
       console.error("❌ 저장 실패:", error);
-      this.showNotification("저장 중 오류가 발생했습니다.", "error");
+      this.showMessage("저장 중 오류가 발생했습니다.", "error");
     },
 
     onResetSuccess() {
       this.hasUnsavedChanges = false;
-      this.showNotification("변경사항이 리셋되었습니다.", "info");
+      this.showMessage("변경사항이 리셋되었습니다.", "info");
       console.log("✅ 리셋 성공 처리 완료");
     },
 
