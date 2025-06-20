@@ -68,6 +68,14 @@ export default {
 </script>
 
 <style scoped>
+.detail-row {
+  font-size: 0.75rem; /* 세부 항목 글자 크기 축소 */
+}
+
+.detail-row td {
+  padding: 0.4rem 0.5rem; /* 세부 항목 행 높이 축소 */
+}
+
 .detail-row:hover {
   background-color: #f8f9fa;
 }

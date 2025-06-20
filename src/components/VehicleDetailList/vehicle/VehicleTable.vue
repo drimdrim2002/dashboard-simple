@@ -105,7 +105,7 @@ export default {
   border-top: none;
   border-bottom: 1px solid #dee2e6;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   /* text-transform: uppercase; */ /* 헤더 대문자 변환 비활성화 */
   letter-spacing: 0.5px;
   padding: 0.5rem 0.75rem;
@@ -133,7 +133,7 @@ export default {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   border-top: none;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 /* 드래그 핸들 스타일 */

@@ -132,20 +132,20 @@ export default {
 .drag-handle-cell {
   width: 40px;
   text-align: center;
-  padding: 0.5rem 0.25rem !important;
+  padding: 0.4rem 0.25rem !important; /* 드래그 핸들 패딩 축소 */
   vertical-align: middle;
 }
 
 .drag-handle {
   cursor: grab;
   color: #6c757d;
-  padding: 0.25rem;
+  padding: 0.2rem; /* 드래그 핸들 내부 패딩 축소 */
   border-radius: 0.25rem;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.85rem; /* 드래그 핸들 아이콘 크기 축소 */
 }
 
 .drag-handle:hover {
@@ -160,12 +160,12 @@ export default {
 .drag-disabled {
   cursor: not-allowed;
   color: #dc3545;
-  padding: 0.25rem;
+  padding: 0.2rem; /* 드래그 비활성화 패딩 축소 */
   opacity: 0.6;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  font-size: 0.8rem; /* 드래그 비활성화 아이콘 크기 축소 */
 }
 
 .tree-cell {
@@ -173,17 +173,18 @@ export default {
 }
 
 .tree-item {
-  font-size: 0.85rem;
+  font-size: 0.75rem; /* 트리 항목 글자 크기 축소 */
 }
 
 .seq-number {
   font-weight: 600;
   text-align: center;
+  font-size: 0.75rem; /* 순번 글자 크기 축소 */
 }
 
 .vhcl-id {
   font-family: "Courier New", monospace;
-  font-size: 0.85rem;
+  font-size: 0.75rem; /* Vehicle ID 글자 크기 축소 */
 }
 
 .text-end {

@@ -19,12 +19,7 @@
             :style="{ color: vehicle.colorCode || '#0d6efd' }"
             >{{ vehicle.name }} ({{ vehicle.type }})</span
           >
-          <span
-            v-if="vehicle.detailList && vehicle.detailList.length > 0"
-            class="badge bg-info ms-2"
-          >
-            {{ vehicle.detailList.length }}
-          </span>
+
           <span v-if="isDragging" class="badge bg-light text-muted ms-2">
             드롭 가능
           </span>
@@ -174,6 +169,10 @@ export default {
   font-weight: 600;
 }
 
+.vehicle-header-row td {
+  padding: 1.2rem 1rem; /* Vehicle 헤더 행의 높이를 더 크게 */
+}
+
 .vehicle-header-row:hover {
   background-color: #e9ecef !important;
 }
@@ -198,5 +197,11 @@ export default {
 .vehicle-id-text {
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+/* VehicleSummary 행의 모든 td 요소 글자 크기 및 높이 조정 */
+.vehicle-rows td {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.5rem; /* 기본보다 더 높게 설정 */
 }
 </style>
