@@ -68,6 +68,10 @@ export default {
       type: Object,
       default: null,
     },
+    isRowDragable: {
+      type: Boolean,
+      default: false,
+    },
   },
   computed: {
     cellClasses() {
@@ -80,6 +84,12 @@ export default {
       // 특별한 타입별 클래스 추가
       if (this.column.type === "action") {
         classes.push("drag-handle-cell");
+        // 드래그 핸들 컬럼에서만 조건부 커서 적용
+        if (this.isRowDragable) {
+          classes.push("drag-cell-active");
+        } else {
+          classes.push("drag-cell-disabled");
+        }
       } else if (this.column.type === "tree") {
         classes.push("tree-cell");
       } else if (this.column.type === "sequence") {
@@ -104,7 +114,7 @@ export default {
     },
 
     isOrderColumn() {
-      return this.column.key === "orderId" || this.column.key === "locId";
+      return this.column.key === "orderId";
     },
   },
   methods: {
@@ -279,5 +289,18 @@ export default {
   background-color: #e7f1ff;
   padding: 2px 4px;
   border-radius: 3px;
+}
+
+/* 드래그 핸들 컬럼 전용 커서 스타일 */
+.drag-cell-active {
+  cursor: grab;
+}
+
+.drag-cell-active:active {
+  cursor: grabbing;
+}
+
+.drag-cell-disabled {
+  cursor: default;
 }
 </style>

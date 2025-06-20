@@ -1,8 +1,8 @@
 <template>
   <tr
     :class="{
-      'draggable-row': isDragable(detail),
-      'non-draggable-row': !isDragable(detail),
+      'row-dragable': isDragable(detail),
+      'row-non-dragable': !isDragable(detail),
       'detail-row': true,
     }"
     :data-order-id="detail.orderId || detail.locId"
@@ -16,6 +16,7 @@
       :data="detail"
       :row-index="detailIndex"
       :is-dragable="isDragable(detail)"
+      :is-row-dragable="isDragable(detail)"
       :vehicle="vehicle"
       @order-clicked="$emit('order-clicked', $event)"
     />
@@ -82,15 +83,12 @@ export default {
   background-color: #f8f9fa;
 }
 
-.draggable-row {
-  cursor: grab;
+/* 기존 전체 row에 적용되던 커서 스타일을 제거 */
+.row-dragable {
+  /* 드래그 가능한 row 표시용 스타일 (필요 시 추가) */
 }
 
-.draggable-row:active {
-  cursor: grabbing;
-}
-
-.non-draggable-row {
+.row-non-dragable {
   background-color: #f9f9f9;
 }
 </style>
