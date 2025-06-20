@@ -231,6 +231,7 @@ export default {
         totTrvlPeridVal: route.totTrvlPeridVal || 0,
         maxWt: route.maxWt || 0,
         maxVol: route.maxVol || 0,
+        maxStopRcnt: route.maxStopRcnt || 0,
         detailList: route.detailList || [],
         colorCode: route.colorCode || "#000000",
       }));

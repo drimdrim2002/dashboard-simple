@@ -33,27 +33,24 @@
       <td style="display: none"></td>
       <!-- Order ID 컬럼 -->
       <td class="text-center">
-        {{ getOrderIdCount(vehicle.detailList) }}
+        {{ getOrderIdCount(vehicle.detailList) - 1 }}
       </td>
       <!-- Location ID 컬럼 -->
       <td class="text-center">
-        {{ getLocIdCount(vehicle.detailList) }}
+        {{ getLocIdCount(vehicle.detailList) - 1 }}
       </td>
-      <td class="text-end fw-bold">
-        {{
-          formatDecimal(
-            calculateVehicleSummary(vehicle.detailList).totalLoadWt,
-            1
-          )
-        }}
+      <td
+        class="text-end fw-bold"
+        :class="{ 'text-danger': isWeightOverLimit }"
+      >
+        {{ formatDecimal(vehicleSummary.totalLoadWt, 1) }} / {{ vehicle.maxWt }}
       </td>
-      <td class="text-end fw-bold">
-        {{
-          formatDecimal(
-            calculateVehicleSummary(vehicle.detailList).totalLoadVol,
-            1
-          )
-        }}
+      <td
+        class="text-end fw-bold"
+        :class="{ 'text-danger': isVolumeOverLimit }"
+      >
+        {{ formatDecimal(vehicleSummary.totalLoadVol, 1) }}
+        / {{ vehicle.maxVol }}
       </td>
     </tr>
 
@@ -117,6 +114,41 @@ export default {
     },
   },
   emits: ["toggle-vehicle-details", "update-vehicle-summary", "data-changed"],
+  computed: {
+    vehicleSummary() {
+      return this.calculateVehicleSummary(this.vehicle.detailList);
+    },
+    isWeightOverLimit() {
+      const totalWeight = this.vehicleSummary.totalLoadWt;
+      const maxWeight = this.vehicle.maxWt || 0;
+      const isOver = totalWeight > maxWeight;
+
+      if (isOver) {
+        console.log(`⚠️ Weight limit exceeded for ${this.vehicle.vhclId}:`, {
+          totalWeight,
+          maxWeight,
+          vehicle: this.vehicle,
+        });
+      }
+
+      return isOver;
+    },
+    isVolumeOverLimit() {
+      const totalVolume = this.vehicleSummary.totalLoadVol;
+      const maxVolume = this.vehicle.maxVol || 0;
+      const isOver = totalVolume > maxVolume;
+
+      if (isOver) {
+        console.log(`⚠️ Volume limit exceeded for ${this.vehicle.vhclId}:`, {
+          totalVolume,
+          maxVolume,
+          vehicle: this.vehicle,
+        });
+      }
+
+      return isOver;
+    },
+  },
   methods: {
     formatDecimal,
     formatDistanceKM,
@@ -189,5 +221,28 @@ export default {
 .vehicle-rows td {
   font-size: 0.9rem;
   padding: 0.5rem 0.5rem; /* 기본보다 더 높게 설정 */
+}
+
+/* 한계값 초과 시 강조 표시 */
+.text-danger {
+  color: #dc3545 !important;
+  font-weight: 700 !important;
+}
+
+/* 한계값 초과 애니메이션 효과 (선택사항) */
+.text-danger {
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 </style>

@@ -150,6 +150,7 @@ export function calculateZoneSummary(vehicles) {
     totCostAmt: 0,
     maxWt: 0,
     maxVol: 0,
+    maxStopRcnt: 0,
     vhclIds: [],
     vhclTcds: [],
   };
@@ -162,6 +163,7 @@ export function calculateZoneSummary(vehicles) {
     summary.totCostAmt += Number(vehicle.totCostAmt || 0);
     summary.maxWt += Number(vehicle.maxWt || 0);
     summary.maxVol += Number(vehicle.maxVol || 0);
+    summary.maxStopRcnt += Number(vehicle.maxStopRcnt || 0);
 
     // ID와 타입 수집
     if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
