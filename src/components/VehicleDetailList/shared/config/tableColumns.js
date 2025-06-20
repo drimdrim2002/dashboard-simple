@@ -7,7 +7,7 @@ import {
   formatDistanceKM,
   formatSecondsToTime,
   // formatTime24,
-} from "../utils/formatUtils";
+} from "@/utils/formatUtils";
 
 /**
  * 테이블 컬럼 정의

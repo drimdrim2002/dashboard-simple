@@ -70,6 +70,8 @@
 </template>
 
 <script>
+import { formatNumber, formatCurrency } from "@/utils/formatUtils";
+
 export default {
   name: "DashboardCard",
   props: {
@@ -190,14 +192,8 @@ export default {
     },
   },
   methods: {
-    formatNumber(num) {
-      if (typeof num === "string") return num;
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    },
-    formatCurrency(num) {
-      if (typeof num === "string") return num;
-      return this.formatNumber(num);
-    },
+    formatNumber,
+    formatCurrency,
   },
 };
 </script>

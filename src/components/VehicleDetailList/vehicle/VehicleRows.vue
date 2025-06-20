@@ -92,7 +92,7 @@ import {
   formatDecimal,
   formatDistanceKM,
   formatSecondsToTime,
-} from "../shared/utils/formatUtils";
+} from "@/utils/formatUtils";
 import { calculateVehicleTotal } from "../shared/utils/calculationUtils";
 import { calculationMixin } from "../shared/mixins/calculationMixin";
 

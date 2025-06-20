@@ -152,6 +152,13 @@
 </template>
 
 <script>
+import {
+  formatNumberWithCommas,
+  formatWeight,
+  formatDistanceKM,
+  formatSecondsToTime,
+} from "@/utils/formatUtils";
+
 export default {
   name: "DriverTable",
   props: {
@@ -372,38 +379,10 @@ export default {
         ? "bi bi-arrow-up"
         : "bi bi-arrow-down";
     },
-    formatCurrency(value) {
-      // Implement currency formatting logic
-      return value.toLocaleString();
-    },
-    formatWeight(value) {
-      // Implement weight formatting logic
-      return value.toLocaleString() + " kg";
-    },
-    formatDistance(value) {
-      // 1000으로 나누고 소수점 첫째자리까지 표시
-      if (!value || value === 0) return "0.0 km";
-      const kmValue = (Number(value) / 1000).toFixed(1);
-      return `${kmValue} km`;
-    },
-    formatTime(value) {
-      // 분을 hh:mm:ss 형태로 변환
-      if (!value || value === 0) return "00:00:00";
-
-      const totalMinutes = Number(value);
-      if (isNaN(totalMinutes)) return "00:00:00";
-
-      // 분을 초로 변환 (분 단위 데이터라고 가정)
-      const totalSeconds = totalMinutes;
-
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      return `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    },
+    formatCurrency: formatNumberWithCommas,
+    formatWeight,
+    formatDistance: formatDistanceKM,
+    formatTime: formatSecondsToTime,
     goToFirstPage() {
       this.currentPage = 1;
     },

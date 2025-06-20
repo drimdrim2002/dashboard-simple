@@ -41,10 +41,7 @@
 
 <script>
 import ZoneSection from "./VehicleDetailList/zone/ZoneSection.vue";
-import {
-  formatWeight,
-  formatVolume,
-} from "./VehicleDetailList/shared/utils/formatUtils";
+import { formatWeight, formatVolume } from "@/utils/formatUtils";
 import { DEFAULT_CONFIG } from "./VehicleDetailList/shared/utils/constants";
 
 import { notificationMixin } from "./VehicleDetailList/shared/mixins/notificationMixin";

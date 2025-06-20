@@ -85,6 +85,12 @@
 </template>
 
 <script>
+import {
+  formatCurrency,
+  formatDate,
+  formatDateRange,
+} from "@/utils/formatUtils";
+
 export default {
   name: "DashboardStats",
   props: {
@@ -120,45 +126,9 @@ export default {
     },
   },
   methods: {
-    formatDate(dateString) {
-      if (!dateString) return "N/A";
-
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        });
-      } catch (error) {
-        return dateString;
-      }
-    },
-    formatDateRange(startDate, endDate) {
-      if (!startDate || !endDate) return "N/A";
-
-      try {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        return `${start.toLocaleDateString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        })} - ${end.toLocaleDateString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        })}`;
-      } catch (error) {
-        return "N/A";
-      }
-    },
-    formatCurrency(amount) {
-      return new Intl.NumberFormat("ko-KR", {
-        style: "currency",
-        currency: "KRW",
-      }).format(amount);
-    },
+    formatDate,
+    formatDateRange,
+    formatCurrency,
   },
 };
 </script>

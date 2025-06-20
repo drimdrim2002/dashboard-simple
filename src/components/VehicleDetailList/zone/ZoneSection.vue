@@ -51,7 +51,7 @@
 
 <script>
 import VehicleTable from "../vehicle/VehicleTable.vue";
-import { formatWeight, formatVolume } from "../shared/utils/formatUtils";
+import { formatWeight, formatVolume } from "@/utils/formatUtils";
 
 export default {
   name: "ZoneSection",

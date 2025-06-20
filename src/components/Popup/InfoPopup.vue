@@ -8,6 +8,8 @@
 </template>
 
 <script>
+import { formatNumber } from "@/utils/formatUtils";
+
 export default {
   name: "InfoPopup",
   data() {
@@ -24,9 +26,7 @@ export default {
     closePopup() {
       this.show = false;
     },
-    formatNumber(num) {
-      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    },
+    formatNumber,
   },
 };
 </script>
