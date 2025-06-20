@@ -16,6 +16,7 @@
       :data="detail"
       :row-index="detailIndex"
       :is-dragable="isDragable(detail)"
+      :vehicle="vehicle"
     />
   </tr>
 </template>

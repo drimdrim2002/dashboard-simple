@@ -20,7 +20,11 @@
     </div>
 
     <!-- 순번 -->
-    <span v-else-if="column.type === 'sequence'" class="seq-number">
+    <span
+      v-else-if="column.type === 'sequence'"
+      class="seq-number seq-badge"
+      :style="getSequenceStyle()"
+    >
       {{ data.stopSeqNo }}
     </span>
 
@@ -55,6 +59,10 @@ export default {
     isDragable: {
       type: Boolean,
       default: false,
+    },
+    vehicle: {
+      type: Object,
+      default: null,
     },
   },
   computed: {
@@ -124,6 +132,19 @@ export default {
       const values = this.column.fields.map((field) => this.data[field]);
       return this.column.formatter(...values);
     },
+
+    getSequenceStyle() {
+      const colorCode = this.vehicle?.colorCode || "#6c757d";
+
+      // 색상을 약간 투명하게 만들어서 배경색으로 사용
+      const backgroundColor = colorCode + "20"; // 20은 12.5% 투명도
+
+      return {
+        color: colorCode,
+        backgroundColor: backgroundColor,
+        borderColor: colorCode,
+      };
+    },
   },
 };
 </script>
@@ -186,6 +207,21 @@ export default {
   font-weight: 600;
   text-align: center;
   font-size: 0.75rem; /* 순번 글자 크기 축소 */
+}
+
+.seq-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  min-width: 20px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.seq-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .vhcl-id {
