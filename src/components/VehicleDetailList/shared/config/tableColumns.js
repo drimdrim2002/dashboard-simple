@@ -45,7 +45,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
     type: "tree",
   },
   {
-    key: "sequence",
+    key: "stopSeqNo",
     title: "Seq",
     width: "50px",
     align: "center",

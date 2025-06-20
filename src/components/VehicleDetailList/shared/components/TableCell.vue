@@ -21,7 +21,7 @@
 
     <!-- 순번 -->
     <span v-else-if="column.type === 'sequence'" class="seq-number">
-      {{ rowIndex + 1 }}
+      {{ data.stopSeqNo }}
     </span>
 
     <!-- 복합 데이터 (Customer Time 등) -->

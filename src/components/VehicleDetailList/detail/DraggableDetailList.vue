@@ -108,10 +108,7 @@ export default {
       );
       const updatedDetailList = [...depotItems, ...this.mutableDetailList];
 
-      // stopSeqNo 재조정 (0부터 시작)
-      updatedDetailList.forEach((detail, index) => {
-        detail.stopSeqNo = index.toString();
-      });
+      // stopSeqNo는 원래 값 유지 (재조정하지 않음)
 
       // Vue 2의 반응성을 위해 배열을 완전히 교체
       this.vehicle.detailList.splice(
