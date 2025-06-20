@@ -69,7 +69,6 @@
           )
         }}
       </td>
-      <td colspan="2"></td>
     </tr>
 
     <!-- Vehicle Details - 빈 데이터 경우 -->
