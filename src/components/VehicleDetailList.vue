@@ -106,6 +106,7 @@ export default {
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
       originalData: null, // 원본 데이터 백업
       hasUnsavedChanges: false, // 변경사항 추적
+      changedVehiclesData: {}, // 변경된 vehicles 데이터 (vhclId: detailList)
     };
   },
   computed: {
@@ -129,6 +130,7 @@ export default {
               totCostAmt: 0,
               maxWt: 0,
               maxVol: 0,
+              maxStopRcnt: 0,
               vhclIds: [],
               vhclTcds: [],
             },
@@ -146,6 +148,7 @@ export default {
         summary.totCostAmt += Number(vehicle.totCostAmt || 0);
         summary.maxWt += Number(vehicle.maxWt || 0);
         summary.maxVol += Number(vehicle.maxVol || 0);
+        summary.maxStopRcnt += Number(vehicle.maxStopRcnt || 0);
         // vhclId와 vhclTcd 수집
         if (vehicle.vhclId) summary.vhclIds.push(vehicle.vhclId);
         if (vehicle.vhclTcd) summary.vhclTcds.push(vehicle.vhclTcd);
@@ -173,30 +176,173 @@ export default {
     backupOriginalData() {
       this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
       this.hasUnsavedChanges = false;
+      this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
       console.log("📦 원본 데이터 백업 완료");
+    },
+
+    compareDetailLists(current, original) {
+      console.log("🔄 compareDetailLists 호출");
+
+      if (!current || !original) {
+        console.log("⚠️ current 또는 original이 없음");
+        return {};
+      }
+
+      // 1. current와 original을 vhclId를 key로 하는 object 형태로 변환
+      const currentMap = {};
+      const originalMap = {};
+
+      current.forEach((vehicle) => {
+        if (vehicle.vhclId) {
+          currentMap[vehicle.vhclId] = vehicle.detailList || [];
+        }
+      });
+
+      original.forEach((vehicle) => {
+        if (vehicle.vhclId) {
+          originalMap[vehicle.vhclId] = vehicle.detailList || [];
+        }
+      });
+
+      console.log("📋 Current vehicles:", Object.keys(currentMap));
+      console.log("📋 Original vehicles:", Object.keys(originalMap));
+
+      // 2. changed object 초기화
+      const changed = {};
+
+      // 3. current에 있는 vhclId 기준으로 iteration
+      Object.keys(currentMap).forEach((vhclId) => {
+        // current에 있는 vhclId가 original에 없으면 continue
+        if (!originalMap[vhclId]) {
+          console.log(`⚠️ vhclId ${vhclId}가 original에 없음 - continue`);
+          return;
+        }
+
+        // current의 detailList 가져오기
+        const currentDetailList = currentMap[vhclId];
+        // original의 detailList 가져오기
+        const originalDetailList = originalMap[vhclId];
+
+        // current와 original의 detailList 비교하기
+        const isChanged = this.isDetailListChanged(
+          currentDetailList,
+          originalDetailList
+        );
+
+        if (isChanged) {
+          console.log(`🔄 vhclId ${vhclId}의 detailList가 변경됨`);
+          // 다르면 changed object에 vhclId를 key로 하고 current의 detailList를 value로 저장
+          changed[vhclId] = currentDetailList;
+        }
+      });
+
+      console.log("🔄 변경된 vehicles:", Object.keys(changed));
+
+      // 4. changed object를 return
+      return changed;
+    },
+
+    isDetailListChanged(currentDetailList, originalDetailList) {
+      if (currentDetailList.length !== originalDetailList.length) {
+        return true;
+      }
+
+      // detailList 내 각 항목의 순서와 핵심 데이터 비교
+      for (let i = 0; i < currentDetailList.length; i++) {
+        const currentDetail = currentDetailList[i];
+        const originalDetail = originalDetailList[i];
+
+        if (
+          currentDetail.stopSeqNo !== originalDetail.stopSeqNo ||
+          currentDetail.orderId !== originalDetail.orderId ||
+          currentDetail.locId !== originalDetail.locId
+        ) {
+          return true;
+        }
+      }
+
+      return false;
     },
 
     checkForChanges() {
       if (!this.originalData) return;
 
-      const currentData = JSON.stringify(this.selectedVehicles);
-      const originalData = JSON.stringify(this.originalData);
-      const hasChanges = currentData !== originalData;
+      const changedVehicles = this.compareDetailLists(
+        this.selectedVehicles,
+        this.originalData
+      );
+
+      // changed object가 비어있지 않으면 변경된 것으로 간주
+      const hasChanges = Object.keys(changedVehicles).length > 0;
 
       if (this.hasUnsavedChanges !== hasChanges) {
         this.hasUnsavedChanges = hasChanges;
-        console.log("🔄 변경사항 감지:", hasChanges ? "있음" : "없음");
+        console.log(
+          "🔄 detailList 변경사항 감지:",
+          hasChanges
+            ? `있음 (${Object.keys(changedVehicles).length}개 vehicle)`
+            : "없음"
+        );
       }
+
+      // 변경된 vehicles 정보를 data에 저장
+      this.changedVehiclesData = changedVehicles;
+    },
+
+    getChangedVehicles() {
+      if (
+        !this.changedVehiclesData ||
+        Object.keys(this.changedVehiclesData).length === 0
+      ) {
+        console.log("🔄 변경된 vehicle 없음");
+        return [];
+      }
+
+      // changedVehiclesData에서 vhclId를 기준으로 전체 vehicle 객체 찾기
+      const changedVehicles = [];
+      const changedVhclIds = Object.keys(this.changedVehiclesData);
+
+      changedVhclIds.forEach((vhclId) => {
+        const vehicle = this.selectedVehicles.find((v) => v.vhclId === vhclId);
+        if (vehicle) {
+          changedVehicles.push(vehicle);
+        }
+      });
+
+      console.log(
+        `🔄 변경된 vehicle 감지: ${changedVehicles.length}개`,
+        changedVehicles.map((v) => v.vhclId)
+      );
+
+      return changedVehicles;
     },
 
     async saveChanges() {
       console.log("💾 Save 버튼 클릭 - 상위 컴포넌트에 저장 요청");
 
-      // 상위 컴포넌트에 저장 요청 이벤트 발생
+      // 변경된 vehicle만 추출
+      const changedVehicles = this.getChangedVehicles();
+
+      if (changedVehicles.length === 0) {
+        console.log("⚠️ 변경된 vehicle이 없습니다.");
+        this.showToast("저장할 변경사항이 없습니다.", "warning");
+        return;
+      }
+
+      // 상위 컴포넌트에 저장 요청 이벤트 발생 (변경된 vehicle만 전달)
       this.$emit("save-requested", {
-        data: this.selectedVehicles,
+        data: this.selectedVehicles, // 전체 데이터 (참고용)
+        changedVehicles: changedVehicles, // 변경된 vehicle만
+        changedVehiclesData: this.changedVehiclesData, // vhclId: detailList 매핑
         originalData: this.originalData,
+        totalCount: this.selectedVehicles.length,
+        changedCount: changedVehicles.length,
       });
+
+      console.log(
+        `💾 저장 요청: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`
+      );
+      console.log("📋 변경된 detailList 정보:", this.changedVehiclesData);
     },
 
     resetChanges() {
@@ -232,6 +378,7 @@ export default {
 
     onResetSuccess() {
       this.hasUnsavedChanges = false;
+      this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
       console.log("✅ Reset Success 메서드 호출됨");
 
       this.showToast("변경사항이 리셋되었습니다.", "info");
