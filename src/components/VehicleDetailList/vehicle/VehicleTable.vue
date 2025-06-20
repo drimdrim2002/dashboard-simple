@@ -15,7 +15,7 @@
               :style="{ width: column.width, textAlign: column.align }"
             >
               <i v-if="column.icon" :class="column.icon + ' text-light'"></i>
-              <span v-else>{{ column.title }}</span>
+              <span v-else v-html="column.title"></span>
             </th>
           </tr>
         </thead>
@@ -106,7 +106,7 @@ export default {
   border-bottom: 1px solid #dee2e6;
   font-weight: 600;
   font-size: 0.85rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */ /* 헤더 대문자 변환 비활성화 */
   letter-spacing: 0.5px;
   padding: 0.5rem 0.75rem;
   vertical-align: middle;
@@ -115,7 +115,8 @@ export default {
   position: sticky;
   top: 0;
   z-index: 10;
-  white-space: nowrap;
+  white-space: normal; /* 줄바꿈 허용 */
+  line-height: 1.2; /* 줄 간격 조정 */
 }
 
 .table tbody tr {

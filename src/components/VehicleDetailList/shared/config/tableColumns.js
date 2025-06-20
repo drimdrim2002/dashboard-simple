@@ -6,7 +6,7 @@
 import {
   formatDistanceKM,
   formatSecondsToTime,
-  formatTime24,
+  // formatTime24,
 } from "../utils/formatUtils";
 
 /**
@@ -36,7 +36,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "tree",
-    title: "Tree",
+    title: "Vehicle ID",
     width: "60px",
     align: "left",
     className: "tree-col",
@@ -46,7 +46,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "sequence",
-    title: "#",
+    title: "Seq",
     width: "50px",
     align: "center",
     className: "seq-number",
@@ -85,7 +85,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "loadWt",
-    title: "Weight(KG)",
+    title: "Weight<br/>(KG)",
     width: "100px",
     align: "right",
     className: "text-end",
@@ -95,7 +95,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "loadVol",
-    title: "Volume(CBM)",
+    title: "Volume<br/>(CBM)",
     width: "100px",
     align: "right",
     className: "text-end",
@@ -105,7 +105,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "distcVal",
-    title: "Distance(KM)",
+    title: "Distance<br/>(KM)",
     width: "100px",
     align: "right",
     className: "text-end",
@@ -116,7 +116,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   },
   {
     key: "trnsPeridVal",
-    title: "Duration",
+    title: "Duration<br/>(HH:MM:SS)",
     width: "100px",
     align: "center",
     sortable: true,
@@ -124,45 +124,45 @@ export const VEHICLE_DETAIL_COLUMNS = [
     type: "data",
     formatter: formatSecondsToTime,
   },
-  {
-    key: "reqDate",
-    title: "Request Time",
-    width: "120px",
-    align: "center",
-    sortable: true,
-    visible: true,
-    type: "data",
-  },
-  {
-    key: "customerTime",
-    title: "Customer Time",
-    width: "150px",
-    align: "center",
-    sortable: false,
-    visible: true,
-    type: "composite", // 두 개의 데이터를 조합
-    fields: ["custOpenTime", "custCloseTime"],
-    formatter: (openTime, closeTime) =>
-      `${formatTime24(openTime)} ~ ${formatTime24(closeTime)}`,
-  },
-  {
-    key: "arrDtm",
-    title: "Arrival Time",
-    width: "120px",
-    align: "center",
-    sortable: true,
-    visible: true,
-    type: "data",
-  },
-  {
-    key: "depDtm",
-    title: "Departure Time",
-    width: "120px",
-    align: "center",
-    sortable: true,
-    visible: true,
-    type: "data",
-  },
+  // {
+  //   key: "reqDate",
+  //   title: "Request Time",
+  //   width: "120px",
+  //   align: "center",
+  //   sortable: true,
+  //   visible: true,
+  //   type: "data",
+  // },
+  // {
+  //   key: "customerTime",
+  //   title: "Customer Time",
+  //   width: "150px",
+  //   align: "center",
+  //   sortable: false,
+  //   visible: true,
+  //   type: "composite", // 두 개의 데이터를 조합
+  //   fields: ["custOpenTime", "custCloseTime"],
+  //   formatter: (openTime, closeTime) =>
+  //     `${formatTime24(openTime)} ~ ${formatTime24(closeTime)}`,
+  // },
+  // {
+  //   key: "arrDtm",
+  //   title: "Arrival Time",
+  //   width: "120px",
+  //   align: "center",
+  //   sortable: true,
+  //   visible: true,
+  //   type: "data",
+  // },
+  // {
+  //   key: "depDtm",
+  //   title: "Departure Time",
+  //   width: "120px",
+  //   align: "center",
+  //   sortable: true,
+  //   visible: true,
+  //   type: "data",
+  // },
 ];
 
 /**
