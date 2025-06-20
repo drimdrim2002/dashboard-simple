@@ -55,20 +55,6 @@
           )
         }}
       </td>
-      <td class="text-end fw-bold">
-        {{
-          formatDistanceKM(
-            calculateVehicleTotal(vehicle.detailList, "distcVal")
-          )
-        }}
-      </td>
-      <td class="text-end fw-bold">
-        {{
-          formatSecondsToTime(
-            calculateVehicleTotal(vehicle.detailList, "trnsPeridVal")
-          )
-        }}
-      </td>
     </tr>
 
     <!-- Vehicle Details - 빈 데이터 경우 -->
@@ -82,7 +68,7 @@
         <i class="bi bi-dash text-muted me-1"></i>
         이 vehicle에 대한 detail 정보가 없습니다.
       </td>
-      <td colspan="9"></td>
+      <td colspan="7"></td>
     </tr>
 
     <!-- Vehicle Details (Vue.Draggable 사용) -->
