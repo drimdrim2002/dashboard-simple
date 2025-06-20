@@ -17,9 +17,9 @@
               {{ zoneData.vehicles.length }} vehicles
             </span>
             <span class="text-muted ms-2 small">
-              Weight: {{ formatWeight(zoneData.summary.totLoadWt) }} | Volume:
+              <!-- Weight: {{ formatWeight(zoneData.summary.totLoadWt) }} | Volume:
               {{ formatVolume(zoneData.summary.totLoadCbm) }} | Cost:
-              {{ Number(zoneData.summary.totCostAmt).toLocaleString() }}
+              {{ Number(zoneData.summary.totCostAmt).toLocaleString() }} -->
               <span class="expand-hint ms-1"
                 >({{
                   isExpanded ? "Click to collapse" : "Click to expand"
