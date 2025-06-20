@@ -89,8 +89,12 @@
               :class="{ active: activeTab === 'vehicles' }"
             >
               <vehicle-detail-list
+                ref="vehicleDetailList"
                 :selected-vehicles="selectedVehicles"
+                :is-saving="isSavingVehicles"
                 @update:selected-vehicles="selectedVehicles = $event"
+                @save-requested="handleSaveVehicles"
+                @reset-requested="handleResetVehicles"
               />
             </div>
 
@@ -175,6 +179,7 @@ export default {
       // Selected vehicles management
       selectedVehicles: [],
       activeTab: "vehicles",
+      isSavingVehicles: false,
     };
   },
   created() {
@@ -337,6 +342,55 @@ export default {
 
       // You can add additional logic here to handle the selected vehicles
       // For example: update dashboard stats, send to map component, etc.
+    },
+    async handleSaveVehicles(payload) {
+      this.isSavingVehicles = true;
+
+      try {
+        console.log(
+          "🏢 App.vue에서 차량 데이터 저장 시작:",
+          payload.data.length,
+          "개 차량"
+        );
+
+        // 실제 API 호출이나 로컬스토리지 저장 로직
+        // 예시: await this.$api.saveVehicleData(payload.data);
+
+        // 시뮬레이션용 딜레이
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        console.log("✅ App.vue에서 차량 데이터 저장 완료");
+
+        // VehicleDetailList 컴포넌트에 저장 성공 알림
+        this.$refs.vehicleDetailList?.onSaveSuccess();
+      } catch (error) {
+        console.error("❌ App.vue에서 차량 데이터 저장 실패:", error);
+
+        // VehicleDetailList 컴포넌트에 저장 실패 알림
+        this.$refs.vehicleDetailList?.onSaveError(error);
+      } finally {
+        this.isSavingVehicles = false;
+      }
+    },
+    handleResetVehicles(payload) {
+      if (!payload.originalData) {
+        console.warn("⚠️ 원본 데이터가 없어서 리셋할 수 없습니다.");
+        return;
+      }
+
+      console.log(
+        "🔄 App.vue에서 차량 데이터 리셋:",
+        payload.originalData.length,
+        "개 차량"
+      );
+
+      // 원본 데이터로 복원
+      this.selectedVehicles = JSON.parse(JSON.stringify(payload.originalData));
+
+      // VehicleDetailList 컴포넌트에 리셋 성공 알림
+      this.$refs.vehicleDetailList?.onResetSuccess();
+
+      console.log("✅ App.vue에서 차량 데이터 리셋 완료");
     },
   },
 };

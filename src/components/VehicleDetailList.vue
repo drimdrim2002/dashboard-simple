@@ -94,15 +94,18 @@ export default {
       type: Array,
       default: () => [],
     },
+    isSaving: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ["update:selected-vehicles"],
+  emits: ["update:selected-vehicles", "save-requested", "reset-requested"],
   data() {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
       originalData: null, // 원본 데이터 백업
       hasUnsavedChanges: false, // 변경사항 추적
-      isSaving: false, // 저장 중 상태
     };
   },
   computed: {
@@ -187,50 +190,22 @@ export default {
     },
 
     async saveChanges() {
-      this.isSaving = true;
+      console.log("💾 Save 버튼 클릭 - 상위 컴포넌트에 저장 요청");
 
-      try {
-        console.log("💾 변경사항 저장 시작...");
-
-        // 여기에 실제 API 호출 또는 로컬스토리지 저장 로직 추가
-        // 예시: await this.$api.saveVehicleData(this.selectedVehicles);
-
-        // 시뮬레이션용 딜레이
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        // 저장 성공 후 원본 데이터 업데이트
-        this.backupOriginalData();
-
-        // 성공 알림
-        this.showNotification(
-          "변경사항이 성공적으로 저장되었습니다.",
-          "success"
-        );
-
-        console.log("✅ 저장 완료");
-      } catch (error) {
-        console.error("❌ 저장 실패:", error);
-        this.showNotification("저장 중 오류가 발생했습니다.", "error");
-      } finally {
-        this.isSaving = false;
-      }
+      // 상위 컴포넌트에 저장 요청 이벤트 발생
+      this.$emit("save-requested", {
+        data: this.selectedVehicles,
+        originalData: this.originalData,
+      });
     },
 
     resetChanges() {
-      if (!this.originalData) return;
+      console.log("🔄 Reset 버튼 클릭 - 상위 컴포넌트에 리셋 요청");
 
-      console.log("🔄 변경사항 리셋 시작...");
-
-      // 원본 데이터로 복원
-      this.$emit(
-        "update:selected-vehicles",
-        JSON.parse(JSON.stringify(this.originalData))
-      );
-
-      this.hasUnsavedChanges = false;
-      this.showNotification("변경사항이 리셋되었습니다.", "info");
-
-      console.log("✅ 리셋 완료");
+      // 상위 컴포넌트에 리셋 요청 이벤트 발생
+      this.$emit("reset-requested", {
+        originalData: this.originalData,
+      });
     },
 
     // 드래그 앤 드롭이나 기타 변경사항이 발생했을 때 호출할 메서드
@@ -239,6 +214,24 @@ export default {
         this.hasUnsavedChanges = true;
         console.log("📝 변경사항 마크됨");
       }
+    },
+
+    // 상위 컴포넌트에서 호출할 수 있는 공개 메서드들
+    onSaveSuccess() {
+      this.backupOriginalData();
+      this.showNotification("변경사항이 성공적으로 저장되었습니다.", "success");
+      console.log("✅ 저장 성공 처리 완료");
+    },
+
+    onSaveError(error) {
+      console.error("❌ 저장 실패:", error);
+      this.showNotification("저장 중 오류가 발생했습니다.", "error");
+    },
+
+    onResetSuccess() {
+      this.hasUnsavedChanges = false;
+      this.showNotification("변경사항이 리셋되었습니다.", "info");
+      console.log("✅ 리셋 성공 처리 완료");
     },
 
     // 포맷팅 메서드들 - formatUtils에서 import한 함수들 사용
