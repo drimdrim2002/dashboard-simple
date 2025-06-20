@@ -264,18 +264,24 @@ export default {
       if (typeof value === "string" && value.includes(":")) {
         return value;
       }
-      // 숫자인 경우 시:분 형태로 변환
-      const hours = Math.floor(value / 100);
-      const minutes = value % 100;
-      return `${hours.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}`;
+      // 숫자인 경우 시:분:초 형태로 변환 (예: 600 -> 06:00:00, 103030 -> 10:30:30)
+      const valueStr = value.toString().padStart(6, "0");
+      const hours = valueStr.substring(0, 2);
+      const minutes = valueStr.substring(2, 4);
+      const seconds = valueStr.substring(4, 6);
+      return `${hours}:${minutes}:${seconds}`;
     },
     formatDate(value) {
       if (!value) return "-";
       try {
         const date = new Date(value);
-        return date.toLocaleDateString("ko-KR");
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+        const hours = date.getHours().toString().padStart(2, "0");
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+        const seconds = date.getSeconds().toString().padStart(2, "0");
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
       } catch (e) {
         return value;
       }
@@ -284,7 +290,13 @@ export default {
       if (!value) return "-";
       try {
         const date = new Date(value);
-        return date.toLocaleString("ko-KR");
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+        const hours = date.getHours().toString().padStart(2, "0");
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+        const seconds = date.getSeconds().toString().padStart(2, "0");
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
       } catch (e) {
         return value;
       }
