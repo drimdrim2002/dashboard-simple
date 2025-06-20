@@ -12,7 +12,7 @@
           <div class="modal-header bg-primary text-white">
             <h5 class="modal-title">
               <i class="bi bi-box-seam me-2"></i>
-              Order 상세 정보
+              Order Detail
             </h5>
             <button
               type="button"
@@ -28,7 +28,7 @@
                 <div class="card-header bg-light">
                   <h6 class="mb-0">
                     <i class="bi bi-truck me-2"></i>
-                    Vehicle 정보
+                    Vehicle Info
                   </h6>
                 </div>
                 <div class="card-body">
@@ -37,7 +37,7 @@
                       <div class="info-item">
                         <label>Vehicle ID:</label>
                         <span class="value">{{
-                          orderData.vehicleId || "-"
+                          orderData.vhclId || orderData.vehicleId
                         }}</span>
                       </div>
                     </div>
@@ -45,7 +45,7 @@
                       <div class="info-item">
                         <label>Vehicle Name:</label>
                         <span class="value">{{
-                          orderData.vehicleName || "-"
+                          orderData.vhclNm || orderData.vehicleName
                         }}</span>
                       </div>
                     </div>
@@ -58,7 +58,7 @@
                 <div class="card-header bg-light">
                   <h6 class="mb-0">
                     <i class="bi bi-clipboard-data me-2"></i>
-                    Order 기본 정보
+                    Order Info
                   </h6>
                 </div>
                 <div class="card-body">
@@ -86,7 +86,7 @@
                 <div class="card-header bg-light">
                   <h6 class="mb-0">
                     <i class="bi bi-boxes me-2"></i>
-                    물량 정보
+                    Item Info
                   </h6>
                 </div>
                 <div class="card-body">
@@ -116,7 +116,7 @@
                 <div class="card-header bg-light">
                   <h6 class="mb-0">
                     <i class="bi bi-geo-alt me-2"></i>
-                    운송 정보
+                    Transport Info
                   </h6>
                 </div>
                 <div class="card-body">
@@ -125,13 +125,13 @@
                       <div class="info-item">
                         <label>Distance (KM):</label>
                         <span class="value text-end">{{
-                          formatNumber(orderData.distcVal)
+                          formatDistance(orderData.distcVal)
                         }}</span>
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="info-item">
-                        <label>Transport Period:</label>
+                        <label>Duration:</label>
                         <span class="value">{{
                           formatTime(orderData.trnsPeridVal)
                         }}</span>
@@ -146,14 +146,14 @@
                 <div class="card-header bg-light">
                   <h6 class="mb-0">
                     <i class="bi bi-clock me-2"></i>
-                    시간 정보
+                    Timewindow
                   </h6>
                 </div>
                 <div class="card-body">
                   <div class="row">
                     <div class="col-md-6">
                       <div class="info-item">
-                        <label>Request Date:</label>
+                        <label>Request DateTime:</label>
                         <span class="value">{{
                           formatDate(orderData.reqDate)
                         }}</span>
@@ -161,25 +161,7 @@
                     </div>
                     <div class="col-md-6">
                       <div class="info-item">
-                        <label>Customer Open Time:</label>
-                        <span class="value">{{
-                          formatTime24(orderData.custOpenTime)
-                        }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-6">
-                      <div class="info-item">
-                        <label>Customer Close Time:</label>
-                        <span class="value">{{
-                          formatTime24(orderData.custCloseTime)
-                        }}</span>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="info-item">
-                        <label>Arrival Time:</label>
+                        <label>Arrival DateTime:</label>
                         <span class="value">{{
                           formatDateTime(orderData.arrDtm)
                         }}</span>
@@ -189,7 +171,25 @@
                   <div class="row">
                     <div class="col-md-6">
                       <div class="info-item">
-                        <label>Departure Time:</label>
+                        <label>Open Time:</label>
+                        <span class="value">{{
+                          formatCustomerTime(orderData.custOpenTime)
+                        }}</span>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="info-item">
+                        <label>Close Time:</label>
+                        <span class="value">{{
+                          formatCustomerTime(orderData.custCloseTime)
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="info-item">
+                        <label>Departure DateTime:</label>
                         <span class="value">{{
                           formatDateTime(orderData.depDtm)
                         }}</span>
@@ -204,7 +204,7 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="closeModal">
               <i class="bi bi-x-lg me-1"></i>
-              닫기
+              Close
             </button>
           </div>
         </div>
@@ -217,6 +217,8 @@
 </template>
 
 <script>
+import { formatDistanceKM, formatTime24 } from "@/utils/formatUtils";
+
 export default {
   name: "OrderDetailModal",
   props: {
@@ -259,17 +261,13 @@ export default {
         .toString()
         .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
     },
-    formatTime24(value) {
+    formatDistance(value) {
+      if (!value && value !== 0) return "-";
+      return formatDistanceKM(value);
+    },
+    formatCustomerTime(value) {
       if (!value) return "-";
-      if (typeof value === "string" && value.includes(":")) {
-        return value;
-      }
-      // 숫자인 경우 시:분:초 형태로 변환 (예: 600 -> 06:00:00, 103030 -> 10:30:30)
-      const valueStr = value.toString().padStart(6, "0");
-      const hours = valueStr.substring(0, 2);
-      const minutes = valueStr.substring(2, 4);
-      const seconds = valueStr.substring(4, 6);
-      return `${hours}:${minutes}:${seconds}`;
+      return formatTime24(value);
     },
     formatDate(value) {
       if (!value) return "-";
