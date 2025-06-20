@@ -36,8 +36,9 @@
         {{ getOrderIdCount(vehicle.detailList) - 1 }}
       </td>
       <!-- Location ID 컬럼 -->
-      <td class="text-center">
+      <td class="text-center" :class="{ 'text-danger': isLocationOverLimit }">
         {{ getLocIdCount(vehicle.detailList) - 1 }}
+        / {{ vehicle.maxStopRcnt || 99 }}
       </td>
       <td
         class="text-end fw-bold"
@@ -142,6 +143,22 @@ export default {
         console.log(`⚠️ Volume limit exceeded for ${this.vehicle.vhclId}:`, {
           totalVolume,
           maxVolume,
+          vehicle: this.vehicle,
+        });
+      }
+
+      return isOver;
+    },
+    isLocationOverLimit() {
+      const currentLocationCount =
+        this.getLocIdCount(this.vehicle.detailList) - 1;
+      const maxLocationCount = this.vehicle.maxStopRcnt || 99;
+      const isOver = currentLocationCount > maxLocationCount;
+
+      if (isOver) {
+        console.log(`⚠️ Location limit exceeded for ${this.vehicle.vhclId}:`, {
+          currentLocationCount,
+          maxLocationCount,
           vehicle: this.vehicle,
         });
       }
