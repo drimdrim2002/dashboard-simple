@@ -14,8 +14,10 @@
             class="tree-toggle me-2 text-primary"
           ></i>
           <i class="bi bi-truck text-primary me-2"></i>
-          <strong class="text-primary"
-            >{{ vehicle.name }} ({{ vehicle.type }})</strong
+          <span
+            class="vehicle-id-text"
+            :style="{ color: vehicle.colorCode || '#0d6efd' }"
+            >{{ vehicle.name }} ({{ vehicle.type }})</span
           >
           <span
             v-if="vehicle.detailList && vehicle.detailList.length > 0"
@@ -28,7 +30,20 @@
           </span>
         </div>
       </td>
-      <td colspan="4" class="text-muted small"></td>
+      <!-- Seq 컬럼 -->
+      <td class="text-center">
+        {{ (vehicle.detailList ? vehicle.detailList.length : 0) - 1 }}
+      </td>
+      <!-- Vehicle ID 컬럼 -->
+      <td class="text-muted small">{{ vehicle.vhclId || vehicle.id }}</td>
+      <!-- Order ID 컬럼 -->
+      <td class="text-center">
+        {{ getOrderIdCount(vehicle.detailList) }}
+      </td>
+      <!-- Location ID 컬럼 -->
+      <td class="text-center">
+        {{ getLocIdCount(vehicle.detailList) }}
+      </td>
       <td class="text-end fw-bold">
         {{
           formatDecimal(
@@ -52,14 +67,14 @@
           )
         }}
       </td>
-      <td class="fw-bold">
+      <td class="text-end fw-bold">
         {{
           formatSecondsToTime(
             calculateVehicleTotal(vehicle.detailList, "trnsPeridVal")
           )
         }}
       </td>
-      <td colspan="4"></td>
+      <td></td>
     </tr>
 
     <!-- Vehicle Details - 빈 데이터 경우 -->
@@ -73,7 +88,7 @@
         <i class="bi bi-dash text-muted me-1"></i>
         이 vehicle에 대한 detail 정보가 없습니다.
       </td>
-      <td colspan="11"></td>
+      <td colspan="8"></td>
     </tr>
 
     <!-- Vehicle Details (Vue.Draggable 사용) -->
@@ -126,6 +141,14 @@ export default {
     formatDistanceKM,
     formatSecondsToTime,
     calculateVehicleTotal,
+    getOrderIdCount(detailList) {
+      if (!detailList || !Array.isArray(detailList)) return 0;
+      return detailList.filter((detail) => detail.orderId).length;
+    },
+    getLocIdCount(detailList) {
+      if (!detailList || !Array.isArray(detailList)) return 0;
+      return detailList.filter((detail) => detail.locId).length;
+    },
     toggleVehicleDetails() {
       // 드래그 중일 때는 클릭 이벤트 무시
       if (this.isDragging) {
@@ -170,5 +193,10 @@ export default {
 
 .badge {
   font-size: 0.75rem;
+}
+
+.vehicle-id-text {
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 </style>

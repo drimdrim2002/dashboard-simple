@@ -241,6 +241,7 @@ export default {
         maxWt: route.maxWt || 0,
         maxVol: route.maxVol || 0,
         detailList: route.detailList || [],
+        colorCode: route.colorCode || "#000000",
       }));
     },
   },
