@@ -287,7 +287,7 @@ export default {
       this.error = null;
 
       try {
-        const response = await fetch("/merged_simple_input.json");
+        const response = await fetch("/merged_simple_input_modified.json");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
