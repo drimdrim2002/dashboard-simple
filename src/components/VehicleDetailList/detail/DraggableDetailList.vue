@@ -1,6 +1,6 @@
 <template>
   <draggable
-    :list="vehicle.detailList"
+    :list="filteredDetailList"
     :group="{
       name: `zone-${vehicle.zone}`,
       pull: true,
@@ -31,7 +31,7 @@
     :data-zone-id="vehicle.zone"
   >
     <VehicleDetailItem
-      v-for="(detail, detailIndex) in vehicle.detailList"
+      v-for="(detail, detailIndex) in filteredDetailList"
       :key="`${vehicle.id}-${detail.orderId || detail.locId}-${detailIndex}`"
       :detail="detail"
       :detail-index="detailIndex"
@@ -62,6 +62,18 @@ export default {
     zoneId: {
       type: String,
       required: true,
+    },
+  },
+  computed: {
+    filteredDetailList() {
+      if (!this.vehicle.detailList || !Array.isArray(this.vehicle.detailList)) {
+        return [];
+      }
+
+      // locTcd가 "DEPOT"인 항목 제외
+      return this.vehicle.detailList.filter((detail) => {
+        return detail.locTcd !== "DEPOT";
+      });
     },
   },
   methods: {
