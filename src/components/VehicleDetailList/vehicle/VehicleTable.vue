@@ -20,7 +20,7 @@
           </tr>
         </thead>
         <tbody>
-          <VehicleRows
+          <VehicleSummary
             v-for="vehicle in zoneData.vehicles"
             :key="`vehicle-${vehicle.id}`"
             :vehicle="vehicle"
@@ -37,13 +37,13 @@
 </template>
 
 <script>
-import VehicleRows from "./VehicleRows.vue";
+import VehicleSummary from "./VehicleSummary.vue";
 import { getHeaderColumns } from "../shared/config/tableColumns";
 
 export default {
   name: "VehicleTable",
   components: {
-    VehicleRows,
+    VehicleSummary,
   },
   computed: {
     headerColumns() {

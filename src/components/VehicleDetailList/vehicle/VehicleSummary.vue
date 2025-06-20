@@ -97,7 +97,7 @@ import { calculateVehicleTotal } from "../shared/utils/calculationUtils";
 import { calculationMixin } from "../shared/mixins/calculationMixin";
 
 export default {
-  name: "VehicleRows",
+  name: "VehicleSummary",
   mixins: [calculationMixin],
   components: {
     DraggableDetailList,
@@ -133,7 +133,7 @@ export default {
         return;
       }
 
-      console.log("🚛 VehicleRows에서 토글 클릭:", this.vehicle.id);
+      console.log("🚛 VehicleSummary에서 토글 클릭:", this.vehicle.id);
       console.log("현재 isExpanded 상태:", this.isExpanded);
       this.$emit("toggle-vehicle-details", this.vehicle.id);
     },
