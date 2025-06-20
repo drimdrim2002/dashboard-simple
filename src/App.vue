@@ -56,86 +56,84 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <!-- Tab Navigation -->
-          <ul class="nav nav-tabs mb-3">
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                :class="{ active: activeTab === 'vehicles' }"
-                @click="activeTab = 'vehicles'"
-              >
-                <i class="bi bi-truck"></i>
-                Selected Vehicles ({{ selectedVehicles.length }})
-              </button>
-            </li>
-            <li class="nav-item">
-              <button
-                class="nav-link"
-                :class="{ active: activeTab === 'json' }"
-                @click="activeTab = 'json'"
-              >
-                <i class="bi bi-file-earmark-code"></i>
-                JSON Data Information
-              </button>
-            </li>
-          </ul>
-
-          <!-- Tab Content -->
-          <div class="tab-content">
-            <!-- Selected Vehicles Tab -->
+          <!-- 좌우 분할 레이아웃 -->
+          <div class="split-layout">
+            <!-- 좌측: Selected Vehicles -->
             <div
-              v-show="activeTab === 'vehicles'"
-              class="tab-pane"
-              :class="{ active: activeTab === 'vehicles' }"
+              class="left-panel"
+              ref="leftPanel"
+              :style="{ width: leftPanelWidth + 'px' }"
             >
-              <vehicle-detail-list
-                ref="vehicleDetailList"
-                :selected-vehicles="selectedVehicles"
-                :is-saving="isSavingVehicles"
-                @update:selected-vehicles="selectedVehicles = $event"
-                @save-requested="handleSaveVehicles"
-                @reset-requested="handleResetVehicles"
-              />
+              <div class="panel-header">
+                <h4 class="panel-title">
+                  <i class="bi bi-truck"></i>
+                  Selected Vehicles ({{ selectedVehicles.length }})
+                </h4>
+              </div>
+              <div class="panel-content">
+                <vehicle-detail-list
+                  ref="vehicleDetailList"
+                  :selected-vehicles="selectedVehicles"
+                  :is-saving="isSavingVehicles"
+                  @update:selected-vehicles="selectedVehicles = $event"
+                  @save-requested="handleSaveVehicles"
+                  @reset-requested="handleResetVehicles"
+                />
+              </div>
             </div>
 
-            <!-- JSON Data Tab -->
+            <!-- 가운데: 리사이즈 핸들 -->
             <div
-              v-show="activeTab === 'json'"
-              class="tab-pane"
-              :class="{ active: activeTab === 'json' }"
+              class="vertical-resize-handle"
+              @mousedown="startVerticalResize"
             >
-              <h3>JSON Data Information</h3>
+              <div class="resize-grip"></div>
+            </div>
 
-              <!-- Loading status -->
-              <div v-if="isLoading" class="loading">
-                <p>Loading JSON file...</p>
+            <!-- 우측: JSON Data Information -->
+            <div
+              class="right-panel"
+              ref="rightPanel"
+              :style="{ width: rightPanelWidth + 'px' }"
+            >
+              <div class="panel-header">
+                <h4 class="panel-title">
+                  <i class="bi bi-file-earmark-code"></i>
+                  JSON Data Information
+                </h4>
               </div>
+              <div class="panel-content">
+                <!-- Loading status -->
+                <div v-if="isLoading" class="loading">
+                  <p>Loading JSON file...</p>
+                </div>
 
-              <!-- Error status -->
-              <div v-else-if="error" class="error">
-                <p>Error: {{ error }}</p>
-              </div>
+                <!-- Error status -->
+                <div v-else-if="error" class="error">
+                  <p>Error: {{ error }}</p>
+                </div>
 
-              <!-- JSON keys list -->
-              <div v-else-if="jsonKeys.length > 0" class="json-info">
-                <h4>JSON File Keys ({{ jsonKeys.length }} items):</h4>
-                <div class="keys-container">
-                  <div
-                    v-for="(key, index) in jsonKeys"
-                    :key="index"
-                    class="key-item"
-                  >
-                    <span class="key-name">{{ key }}</span>
-                    <span v-if="jsonData && jsonData[key]" class="key-type">
-                      {{ getDataType(jsonData[key]) }}
-                    </span>
+                <!-- JSON keys list -->
+                <div v-else-if="jsonKeys.length > 0" class="json-info">
+                  <h5>JSON File Keys ({{ jsonKeys.length }} items):</h5>
+                  <div class="keys-container">
+                    <div
+                      v-for="(key, index) in jsonKeys"
+                      :key="index"
+                      class="key-item"
+                    >
+                      <span class="key-name">{{ key }}</span>
+                      <span v-if="jsonData && jsonData[key]" class="key-type">
+                        {{ getDataType(jsonData[key]) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Initial state -->
-              <div v-else>
-                <p>Failed to load JSON data.</p>
+                <!-- Initial state -->
+                <div v-else>
+                  <p>Failed to load JSON data.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -178,8 +176,12 @@ export default {
       isBottomSectionVisible: false,
       // Selected vehicles management
       selectedVehicles: [],
-      activeTab: "vehicles",
       isSavingVehicles: false,
+      // 좌우 분할 레이아웃 관련
+      leftPanelWidth: 0, // 동적으로 계산됨
+      isVerticalResizing: false,
+      verticalStartX: 0,
+      verticalStartWidth: 0,
     };
   },
   created() {
@@ -188,11 +190,16 @@ export default {
   mounted() {
     // Window size change detection
     window.addEventListener("resize", this.handleResize);
+
+    // 초기 좌측 패널 너비 설정 (전체 너비의 60%)
+    this.leftPanelWidth = Math.floor(this.bottomSectionWidth * 0.6);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
     document.removeEventListener("mousemove", this.onHorizontalResize);
     document.removeEventListener("mouseup", this.stopHorizontalResize);
+    document.removeEventListener("mousemove", this.onVerticalResize);
+    document.removeEventListener("mouseup", this.stopVerticalResize);
   },
   computed: {
     mapViewWidth() {
@@ -208,6 +215,12 @@ export default {
       return (
         this.windowHeight - this.dashboardHeight - this.topSectionHeight - 82
       );
+    },
+    bottomSectionWidth() {
+      return this.windowWidth - 40; // padding 고려
+    },
+    rightPanelWidth() {
+      return this.bottomSectionWidth - this.leftPanelWidth - 8; // 리사이즈 핸들 너비(8px) 제외
     },
     planData() {
       if (!this.jsonData || !this.jsonData.planVo) {
@@ -255,8 +268,23 @@ export default {
   },
   methods: {
     handleResize() {
+      const oldWidth = this.windowWidth;
       this.windowHeight = window.innerHeight;
       this.windowWidth = window.innerWidth;
+
+      // 창 크기 변경 시 좌측 패널 너비 비율 유지
+      if (oldWidth > 0 && this.leftPanelWidth > 0) {
+        const ratio = this.leftPanelWidth / (oldWidth - 40);
+        this.leftPanelWidth = Math.floor(this.bottomSectionWidth * ratio);
+
+        // 최소/최대 너비 제한
+        const minWidth = 300;
+        const maxWidth = this.bottomSectionWidth - 300 - 8;
+        this.leftPanelWidth = Math.max(
+          minWidth,
+          Math.min(maxWidth, this.leftPanelWidth)
+        );
+      }
     },
     startHorizontalResize(e) {
       this.isHorizontalResizing = true;
@@ -291,6 +319,41 @@ export default {
       document.removeEventListener("mousemove", this.onHorizontalResize);
       document.removeEventListener("mouseup", this.stopHorizontalResize);
     },
+
+    // 수직 리사이즈 (좌우 분할) 관련 메서드들
+    startVerticalResize(e) {
+      this.isVerticalResizing = true;
+      this.verticalStartX = e.clientX;
+      this.verticalStartWidth = this.leftPanelWidth;
+      document.body.style.cursor = "ew-resize";
+
+      document.addEventListener("mousemove", this.onVerticalResize);
+      document.addEventListener("mouseup", this.stopVerticalResize);
+    },
+
+    onVerticalResize(e) {
+      if (!this.isVerticalResizing) return;
+
+      const delta = e.clientX - this.verticalStartX;
+      const newWidth = this.verticalStartWidth + delta;
+
+      // 최소/최대 너비 제한
+      const minWidth = 300;
+      const maxWidth = this.bottomSectionWidth - 300 - 8; // 우측 패널 최소 300px + 핸들 8px
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        this.leftPanelWidth = newWidth;
+      }
+    },
+
+    stopVerticalResize() {
+      this.isVerticalResizing = false;
+      document.body.style.cursor = "default";
+
+      document.removeEventListener("mousemove", this.onVerticalResize);
+      document.removeEventListener("mouseup", this.stopVerticalResize);
+    },
+
     async loadJsonData() {
       this.isLoading = true;
       this.error = null;
@@ -650,5 +713,130 @@ html {
 
 .tab-pane.active {
   display: block;
+}
+
+/* 좌우 분할 레이아웃 스타일 */
+.split-layout {
+  display: flex;
+  height: 100%;
+  gap: 0;
+}
+
+.left-panel,
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.left-panel {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.right-panel {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.panel-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title i {
+  font-size: 18px;
+  color: #6c757d;
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* 좌측 패널은 padding 없음 (VehicleDetailList가 자체 패딩 가짐) */
+.left-panel .panel-content {
+  padding: 0;
+}
+
+/* 우측 패널은 패딩 추가 */
+.right-panel .panel-content {
+  padding: 16px;
+}
+
+/* 수직 리사이즈 핸들 */
+.vertical-resize-handle {
+  width: 8px;
+  background-color: #e9ecef;
+  cursor: ew-resize;
+  transition: background-color 0.2s;
+  user-select: none;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.vertical-resize-handle:hover {
+  background-color: #ced4da;
+}
+
+.resize-grip {
+  width: 3px;
+  height: 40px;
+  background-color: #adb5bd;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.vertical-resize-handle:hover .resize-grip {
+  background-color: #6c757d;
+}
+
+/* JSON 정보 섹션 스타일 조정 */
+.right-panel .json-info h5 {
+  color: #495057;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.right-panel .keys-container {
+  max-height: none; /* 높이 제한 제거 */
+  gap: 8px;
+  grid-template-columns: 1fr; /* 단일 컬럼으로 변경 */
+}
+
+.right-panel .key-item {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.right-panel .key-name {
+  font-size: 13px;
+}
+
+.right-panel .key-type {
+  font-size: 11px;
 }
 </style>
