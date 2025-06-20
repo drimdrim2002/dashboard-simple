@@ -12,7 +12,7 @@
               :key="column.key"
               scope="col"
               :class="column.className"
-              :style="{ width: column.width, textAlign: column.align }"
+              :style="{ width: column.width }"
             >
               <i v-if="column.icon" :class="column.icon + ' text-light'"></i>
               <span v-else v-html="column.title"></span>
@@ -110,6 +110,7 @@ export default {
   letter-spacing: 0.5px;
   padding: 0.5rem 0.75rem;
   vertical-align: middle;
+  text-align: center !important; /* 헤더 텍스트 가운데 정렬 (우선순위 높임) */
   background-color: #f8f9fa;
   color: #000000;
   position: sticky;
