@@ -61,7 +61,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
     align: "left",
     className: "vhcl-id",
     sortable: true,
-    visible: true,
+    visible: false, // 일단 숨김으로 설정
     type: "data",
   },
   {

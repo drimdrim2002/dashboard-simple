@@ -34,8 +34,8 @@
       <td class="text-center">
         {{ (vehicle.detailList ? vehicle.detailList.length : 0) - 1 }}
       </td>
-      <!-- Vehicle ID 컬럼 -->
-      <td class="text-muted small">{{ vehicle.vhclId || vehicle.id }}</td>
+      <!-- Vehicle ID 컬럼 (숨김 처리) -->
+      <td style="display: none"></td>
       <!-- Order ID 컬럼 -->
       <td class="text-center">
         {{ getOrderIdCount(vehicle.detailList) }}
@@ -74,7 +74,7 @@
           )
         }}
       </td>
-      <td></td>
+      <td colspan="2"></td>
     </tr>
 
     <!-- Vehicle Details - 빈 데이터 경우 -->
@@ -88,7 +88,7 @@
         <i class="bi bi-dash text-muted me-1"></i>
         이 vehicle에 대한 detail 정보가 없습니다.
       </td>
-      <td colspan="8"></td>
+      <td colspan="9"></td>
     </tr>
 
     <!-- Vehicle Details (Vue.Draggable 사용) -->
