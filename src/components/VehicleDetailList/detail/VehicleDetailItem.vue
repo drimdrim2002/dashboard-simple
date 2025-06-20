@@ -23,9 +23,11 @@
 <script>
 import TableCell from "../shared/components/TableCell.vue";
 import { getDataColumns } from "../shared/config/tableColumns";
+import { dragMixin } from "../shared/mixins/dragMixin";
 
 export default {
   name: "VehicleDetailItem",
+  mixins: [dragMixin],
   components: {
     TableCell,
   },
@@ -53,9 +55,13 @@ export default {
     },
   },
   methods: {
-    isDragable(detail) {
-      // stopSeqNo가 1보다 크면 드래그 가능 (첫 번째 위치는 고정)
-      return Number(detail.stopSeqNo || 0) > 1;
+    // isDragable은 dragMixin에서 제공됩니다
+    // dragMixin에서 요구하는 updateVehicleSummaries 메서드를 빈 함수로 정의
+    updateVehicleSummaries() {
+      // VehicleDetailItem에서는 직접 계산 업데이트를 하지 않음
+      console.log(
+        "📊 VehicleDetailItem에서 Vehicle summary 업데이트 요청 무시"
+      );
     },
   },
 };

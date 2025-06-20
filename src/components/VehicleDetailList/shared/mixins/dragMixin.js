@@ -21,8 +21,8 @@ export const dragMixin = {
      * @returns {boolean} 드래그 가능 여부
      */
     isDragable(detail) {
-      // stopSeqNo가 1보다 크면 드래그 가능 (첫 번째 위치는 고정)
-      return Number(detail.stopSeqNo || 0) > 1;
+      // stopSeqNo가 0보다 크면 드래그 가능 (첫 번째 위치는 고정)
+      return Number(detail.stopSeqNo || 0) > 0;
     },
 
     /**

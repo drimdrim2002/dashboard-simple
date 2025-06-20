@@ -65,11 +65,6 @@ export default {
     },
   },
   methods: {
-    isDragable(detail) {
-      // stopSeqNo가 1보다 크면 드래그 가능 (첫 번째 위치는 고정)
-      return Number(detail.stopSeqNo || 0) > 1;
-    },
-
     // dragMixin에서 호출하는 updateVehicleSummaries를 빈 함수로 정의
     // 실제 계산은 부모 컴포넌트에서 담당
     updateVehicleSummaries() {
