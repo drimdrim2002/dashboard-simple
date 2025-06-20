@@ -219,19 +219,129 @@ export default {
     // 상위 컴포넌트에서 호출할 수 있는 공개 메서드들
     onSaveSuccess() {
       this.backupOriginalData();
-      this.showMessage("변경사항이 성공적으로 저장되었습니다.", "success");
+      console.log("✅ Save Success 메서드 호출됨");
+
+      this.showToast("변경사항이 성공적으로 저장되었습니다.", "success");
       console.log("✅ 저장 성공 처리 완료");
     },
 
     onSaveError(error) {
       console.error("❌ 저장 실패:", error);
-      this.showMessage("저장 중 오류가 발생했습니다.", "error");
+      this.showToast("저장 중 오류가 발생했습니다.", "error");
     },
 
     onResetSuccess() {
       this.hasUnsavedChanges = false;
-      this.showMessage("변경사항이 리셋되었습니다.", "info");
+      console.log("✅ Reset Success 메서드 호출됨");
+
+      this.showToast("변경사항이 리셋되었습니다.", "info");
       console.log("✅ 리셋 성공 처리 완료");
+    },
+
+    // 간단하고 확실한 Toast 알림 구현
+    showToast(message, type = "info") {
+      console.log(`🔔 Toast 알림: ${message} (${type})`);
+
+      // 기존 Toast 제거
+      const existingToast = document.querySelector(".vehicle-detail-toast");
+      if (existingToast) {
+        existingToast.remove();
+      }
+
+      // Toast 색상 설정
+      const colors = {
+        success: {
+          bg: "#d4edda",
+          border: "#c3e6cb",
+          text: "#155724",
+          icon: "✅",
+        },
+        error: {
+          bg: "#f8d7da",
+          border: "#f5c6cb",
+          text: "#721c24",
+          icon: "❌",
+        },
+        info: { bg: "#d1ecf1", border: "#bee5eb", text: "#0c5460", icon: "ℹ️" },
+        warning: {
+          bg: "#fff3cd",
+          border: "#ffeaa7",
+          text: "#856404",
+          icon: "⚠️",
+        },
+      };
+
+      const color = colors[type] || colors.info;
+
+      // Toast HTML 생성
+      const toast = document.createElement("div");
+      toast.className = "vehicle-detail-toast";
+      toast.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        min-width: 280px;
+        max-width: 400px;
+        background-color: ${color.bg};
+        color: ${color.text};
+        border: 1px solid ${color.border};
+        border-radius: 8px;
+        padding: 10px 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1050;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        font-size: 13px;
+        line-height: 1.4;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0.95;
+      `;
+
+      toast.innerHTML = `
+        <span style="font-size: 14px; flex-shrink: 0;">${color.icon}</span>
+        <span style="flex: 1;">${message}</span>
+        <button onclick="this.parentElement.remove()" style="
+          background: none;
+          border: none;
+          color: ${color.text};
+          font-size: 16px;
+          cursor: pointer;
+          padding: 0;
+          line-height: 1;
+          opacity: 0.7;
+          flex-shrink: 0;
+          margin-left: 8px;
+        " title="닫기">&times;</button>
+      `;
+
+      // VehicleDetailList 컨테이너에 상대 위치 설정
+      const vehicleDetailListEl = this.$el;
+      if (vehicleDetailListEl.style.position !== "relative") {
+        vehicleDetailListEl.style.position = "relative";
+      }
+
+      // VehicleDetailList 컴포넌트에 직접 추가
+      vehicleDetailListEl.appendChild(toast);
+
+      // 애니메이션으로 표시
+      setTimeout(() => {
+        toast.style.transform = "translateX(0)";
+      }, 10);
+
+      // 자동 제거
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.style.transform = "translateX(100%)";
+          setTimeout(() => {
+            if (toast.parentElement) {
+              toast.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
     },
 
     // 포맷팅 메서드들 - formatUtils에서 import한 함수들 사용
@@ -291,6 +401,7 @@ export default {
 .vehicle-detail-list {
   height: 100%;
   overflow: hidden;
+  position: relative; /* Toast 위치 기준점 */
 }
 
 .card {
@@ -776,6 +887,22 @@ export default {
 
   .tree-cell {
     padding-left: 1rem !important;
+  }
+}
+
+/* Toast 알림 스타일 */
+.vehicle-detail-toast {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 0.95;
   }
 }
 </style>
