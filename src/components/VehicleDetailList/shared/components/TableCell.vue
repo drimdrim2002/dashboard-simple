@@ -16,7 +16,7 @@
 
     <!-- 트리 구조 -->
     <div v-else-if="column.type === 'tree'" class="tree-item ps-4">
-      <i class="bi bi-dash text-muted me-1"></i>
+      <span class="tree-connector text-muted me-1">└</span>
     </div>
 
     <!-- 순번 -->
@@ -132,7 +132,7 @@ export default {
 .drag-handle-cell {
   width: 40px;
   text-align: center;
-  padding: 0.4rem 0.25rem !important; /* 드래그 핸들 패딩 축소 */
+  padding: 0.1rem 0.25rem !important; /* tree-cell과 동일한 상하 패딩으로 통일 */
   vertical-align: middle;
 }
 
@@ -169,11 +169,17 @@ export default {
 }
 
 .tree-cell {
-  padding-left: 1rem;
+  padding: 0.1rem 0.5rem 0.1rem 1rem !important; /* 상하패딩 축소, 좌우패딩 조정 */
 }
 
 .tree-item {
   font-size: 0.75rem; /* 트리 항목 글자 크기 축소 */
+}
+
+.tree-connector {
+  font-family: monospace; /* 트리 기호를 균등한 폭으로 표시 */
+  font-size: 0.8rem;
+  font-weight: normal;
 }
 
 .seq-number {

@@ -73,7 +73,7 @@ export default {
 }
 
 .detail-row td {
-  padding: 0.4rem 0.5rem; /* 세부 항목 행 높이 축소 */
+  padding: 0.3rem 0.4rem; /* 세부 항목 행 높이 더욱 축소 */
 }
 
 .detail-row:hover {
