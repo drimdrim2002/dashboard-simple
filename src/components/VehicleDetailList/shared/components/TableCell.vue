@@ -34,7 +34,11 @@
     </span>
 
     <!-- 일반 데이터 -->
-    <span v-else>
+    <span
+      v-else
+      :class="{ 'clickable-order': isOrderColumn }"
+      @click="handleOrderClick"
+    >
       {{ renderValue() }}
     </span>
   </td>
@@ -98,6 +102,10 @@ export default {
 
       return styles;
     },
+
+    isOrderColumn() {
+      return this.column.key === "orderId" || this.column.key === "locId";
+    },
   },
   methods: {
     renderValue() {
@@ -131,6 +139,28 @@ export default {
 
       const values = this.column.fields.map((field) => this.data[field]);
       return this.column.formatter(...values);
+    },
+
+    handleOrderClick() {
+      if (this.isOrderColumn) {
+        const orderInfo = {
+          orderId: this.data.orderId,
+          locId: this.data.locId,
+          loadWt: this.data.loadWt,
+          loadVol: this.data.loadVol,
+          distcVal: this.data.distcVal,
+          trnsPeridVal: this.data.trnsPeridVal,
+          reqDate: this.data.reqDate,
+          custOpenTime: this.data.custOpenTime,
+          custCloseTime: this.data.custCloseTime,
+          arrDtm: this.data.arrDtm,
+          depDtm: this.data.depDtm,
+          vehicleId: this.vehicle?.id,
+          vehicleName: this.vehicle?.name,
+        };
+
+        this.$emit("order-clicked", orderInfo);
+      }
     },
 
     getSequenceStyle() {
@@ -235,5 +265,19 @@ export default {
 
 .text-end {
   text-align: right;
+}
+
+.clickable-order {
+  cursor: pointer;
+  color: #0d6efd;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+}
+
+.clickable-order:hover {
+  color: #0a58ca;
+  background-color: #e7f1ff;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 </style>

@@ -76,6 +76,7 @@
       :zone-id="zoneId"
       @update-vehicle-summary="$emit('update-vehicle-summary', $event)"
       @data-changed="$emit('data-changed')"
+      @order-clicked="$emit('order-clicked', $event)"
     />
   </tbody>
 </template>

@@ -17,6 +17,7 @@
       :row-index="detailIndex"
       :is-dragable="isDragable(detail)"
       :vehicle="vehicle"
+      @order-clicked="$emit('order-clicked', $event)"
     />
   </tr>
 </template>

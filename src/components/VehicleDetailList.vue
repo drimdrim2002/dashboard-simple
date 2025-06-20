@@ -67,15 +67,24 @@
             @toggle-vehicle-details="toggleVehicleDetails"
             @update-vehicle-summary="handleVehicleSummaryUpdate"
             @data-changed="markAsChanged"
+            @order-clicked="handleOrderClick"
           />
         </div>
       </div>
     </div>
+
+    <!-- Order Detail Modal -->
+    <order-detail-modal
+      :is-visible="isOrderModalVisible"
+      :order-data="selectedOrderData"
+      @close="closeOrderModal"
+    />
   </div>
 </template>
 
 <script>
 import ZoneSection from "./VehicleDetailList/zone/ZoneSection.vue";
+import OrderDetailModal from "./OrderDetailModal.vue";
 import { formatWeight, formatVolume } from "@/utils/formatUtils";
 import { DEFAULT_CONFIG } from "./VehicleDetailList/shared/utils/constants";
 
@@ -88,6 +97,7 @@ export default {
   mixins: [notificationMixin, dragMixin, calculationMixin],
   components: {
     ZoneSection,
+    OrderDetailModal,
   },
   props: {
     selectedVehicles: {
@@ -107,6 +117,9 @@ export default {
       originalData: null, // 원본 데이터 백업
       hasUnsavedChanges: false, // 변경사항 추적
       changedVehiclesData: {}, // 변경된 vehicles 데이터 (vhclId: detailList)
+      // Order modal management
+      isOrderModalVisible: false,
+      selectedOrderData: null,
     };
   },
   computed: {
@@ -540,6 +553,20 @@ export default {
     // 계산 관련 메서드들은 calculationMixin에서 제공됩니다.
     // 드래그 관련 메서드들은 dragMixin에서 제공됩니다.
     // 알림 메서드들은 notificationMixin에서 제공됩니다.
+
+    handleOrderClick(orderInfo) {
+      console.log(
+        "📦 VehicleDetailList에서 Order 클릭 이벤트 수신:",
+        orderInfo
+      );
+      this.selectedOrderData = orderInfo;
+      this.isOrderModalVisible = true;
+    },
+
+    closeOrderModal() {
+      this.isOrderModalVisible = false;
+      this.selectedOrderData = null;
+    },
   },
 };
 </script>

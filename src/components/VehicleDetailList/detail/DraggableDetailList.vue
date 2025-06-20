@@ -37,6 +37,7 @@
       :detail-index="detailIndex"
       :vehicle="vehicle"
       :zone-id="zoneId"
+      @order-clicked="$emit('order-clicked', $event)"
     />
   </draggable>
 </template>
