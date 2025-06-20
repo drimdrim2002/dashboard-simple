@@ -56,53 +56,34 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <!-- 좌우 분할 레이아웃 -->
-          <div class="split-layout">
-            <!-- 좌측: Selected Vehicles -->
-            <div
-              class="left-panel"
-              ref="leftPanel"
-              :style="{ width: leftPanelWidth + 'px' }"
-            >
-              <div class="panel-header">
-                <h4 class="panel-title">
-                  <i class="bi bi-truck"></i>
-                  Selected Vehicles ({{ selectedVehicles.length }})
-                </h4>
-              </div>
-              <div class="panel-content">
-                <vehicle-detail-list
-                  ref="vehicleDetailList"
-                  :selected-vehicles="selectedVehicles"
-                  :is-saving="isSavingVehicles"
-                  @update:selected-vehicles="selectedVehicles = $event"
-                  @save-requested="handleSaveVehicles"
-                  @reset-requested="handleResetVehicles"
-                />
-              </div>
-            </div>
+          <!-- SplitLayout 컴포넌트 사용 -->
+          <split-layout
+            :container-width="bottomSectionWidth"
+            left-title="Selected Vehicles"
+            left-icon="bi bi-truck"
+            :left-badge="selectedVehicles.length"
+            right-title="JSON Data Information"
+            right-icon="bi bi-file-earmark-code"
+            :right-badge="jsonKeys.length"
+            @resize-start="onSplitResizeStart"
+            @resizing="onSplitResizing"
+            @resize-end="onSplitResizeEnd"
+          >
+            <!-- 좌측 슬롯: Selected Vehicles -->
+            <template #left>
+              <vehicle-detail-list
+                ref="vehicleDetailList"
+                :selected-vehicles="selectedVehicles"
+                :is-saving="isSavingVehicles"
+                @update:selected-vehicles="selectedVehicles = $event"
+                @save-requested="handleSaveVehicles"
+                @reset-requested="handleResetVehicles"
+              />
+            </template>
 
-            <!-- 가운데: 리사이즈 핸들 -->
-            <div
-              class="vertical-resize-handle"
-              @mousedown="startVerticalResize"
-            >
-              <div class="resize-grip"></div>
-            </div>
-
-            <!-- 우측: JSON Data Information -->
-            <div
-              class="right-panel"
-              ref="rightPanel"
-              :style="{ width: rightPanelWidth + 'px' }"
-            >
-              <div class="panel-header">
-                <h4 class="panel-title">
-                  <i class="bi bi-file-earmark-code"></i>
-                  JSON Data Information
-                </h4>
-              </div>
-              <div class="panel-content">
+            <!-- 우측 슬롯: JSON Data Information -->
+            <template #right>
+              <div class="json-data-content">
                 <!-- Loading status -->
                 <div v-if="isLoading" class="loading">
                   <p>Loading JSON file...</p>
@@ -135,8 +116,8 @@
                   <p>Failed to load JSON data.</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </split-layout>
         </div>
       </div>
     </div>
@@ -148,6 +129,7 @@ import DashboardStats from "./components/Dashboard/DashboardStats.vue";
 import DriverList from "./components/DriverList/DriverList.vue";
 import MapView from "./components/Map/MapView.vue";
 import VehicleDetailList from "./components/VehicleDetailList.vue";
+import SplitLayout from "./components/SplitLayout.vue";
 
 export default {
   name: "App",
@@ -156,6 +138,7 @@ export default {
     DriverList,
     MapView,
     VehicleDetailList,
+    SplitLayout,
   },
   data() {
     return {
@@ -177,11 +160,6 @@ export default {
       // Selected vehicles management
       selectedVehicles: [],
       isSavingVehicles: false,
-      // 좌우 분할 레이아웃 관련
-      leftPanelWidth: 0, // 동적으로 계산됨
-      isVerticalResizing: false,
-      verticalStartX: 0,
-      verticalStartWidth: 0,
     };
   },
   created() {
@@ -190,16 +168,11 @@ export default {
   mounted() {
     // Window size change detection
     window.addEventListener("resize", this.handleResize);
-
-    // 초기 좌측 패널 너비 설정 (전체 너비의 60%)
-    this.leftPanelWidth = Math.floor(this.bottomSectionWidth * 0.6);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
     document.removeEventListener("mousemove", this.onHorizontalResize);
     document.removeEventListener("mouseup", this.stopHorizontalResize);
-    document.removeEventListener("mousemove", this.onVerticalResize);
-    document.removeEventListener("mouseup", this.stopVerticalResize);
   },
   computed: {
     mapViewWidth() {
@@ -218,9 +191,6 @@ export default {
     },
     bottomSectionWidth() {
       return this.windowWidth - 40; // padding 고려
-    },
-    rightPanelWidth() {
-      return this.bottomSectionWidth - this.leftPanelWidth - 8; // 리사이즈 핸들 너비(8px) 제외
     },
     planData() {
       if (!this.jsonData || !this.jsonData.planVo) {
@@ -268,23 +238,8 @@ export default {
   },
   methods: {
     handleResize() {
-      const oldWidth = this.windowWidth;
       this.windowHeight = window.innerHeight;
       this.windowWidth = window.innerWidth;
-
-      // 창 크기 변경 시 좌측 패널 너비 비율 유지
-      if (oldWidth > 0 && this.leftPanelWidth > 0) {
-        const ratio = this.leftPanelWidth / (oldWidth - 40);
-        this.leftPanelWidth = Math.floor(this.bottomSectionWidth * ratio);
-
-        // 최소/최대 너비 제한
-        const minWidth = 300;
-        const maxWidth = this.bottomSectionWidth - 300 - 8;
-        this.leftPanelWidth = Math.max(
-          minWidth,
-          Math.min(maxWidth, this.leftPanelWidth)
-        );
-      }
     },
     startHorizontalResize(e) {
       this.isHorizontalResizing = true;
@@ -320,38 +275,17 @@ export default {
       document.removeEventListener("mouseup", this.stopHorizontalResize);
     },
 
-    // 수직 리사이즈 (좌우 분할) 관련 메서드들
-    startVerticalResize(e) {
-      this.isVerticalResizing = true;
-      this.verticalStartX = e.clientX;
-      this.verticalStartWidth = this.leftPanelWidth;
-      document.body.style.cursor = "ew-resize";
-
-      document.addEventListener("mousemove", this.onVerticalResize);
-      document.addEventListener("mouseup", this.stopVerticalResize);
+    // SplitLayout 이벤트 핸들러들
+    onSplitResizeStart() {
+      console.log("Split layout resize started");
     },
 
-    onVerticalResize(e) {
-      if (!this.isVerticalResizing) return;
-
-      const delta = e.clientX - this.verticalStartX;
-      const newWidth = this.verticalStartWidth + delta;
-
-      // 최소/최대 너비 제한
-      const minWidth = 300;
-      const maxWidth = this.bottomSectionWidth - 300 - 8; // 우측 패널 최소 300px + 핸들 8px
-
-      if (newWidth >= minWidth && newWidth <= maxWidth) {
-        this.leftPanelWidth = newWidth;
-      }
+    onSplitResizing(event) {
+      console.log("Split layout resizing:", event);
     },
 
-    stopVerticalResize() {
-      this.isVerticalResizing = false;
-      document.body.style.cursor = "default";
-
-      document.removeEventListener("mousemove", this.onVerticalResize);
-      document.removeEventListener("mouseup", this.stopVerticalResize);
+    onSplitResizeEnd(event) {
+      console.log("Split layout resize ended:", event);
     },
 
     async loadJsonData() {
@@ -715,128 +649,34 @@ html {
   display: block;
 }
 
-/* 좌우 분할 레이아웃 스타일 */
-.split-layout {
-  display: flex;
-  height: 100%;
-  gap: 0;
-}
-
-.left-panel,
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-}
-
-.left-panel {
-  border-right: none;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.right-panel {
-  border-left: none;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.panel-header {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-  padding: 12px 16px;
-  flex-shrink: 0;
-}
-
-.panel-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #495057;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.panel-title i {
-  font-size: 18px;
-  color: #6c757d;
-}
-
-.panel-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-}
-
-/* 좌측 패널은 padding 없음 (VehicleDetailList가 자체 패딩 가짐) */
-.left-panel .panel-content {
-  padding: 0;
-}
-
-/* 우측 패널은 패딩 추가 */
-.right-panel .panel-content {
+/* JSON 데이터 콘텐츠 스타일 */
+.json-data-content {
   padding: 16px;
 }
 
-/* 수직 리사이즈 핸들 */
-.vertical-resize-handle {
-  width: 8px;
-  background-color: #e9ecef;
-  cursor: ew-resize;
-  transition: background-color 0.2s;
-  user-select: none;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.vertical-resize-handle:hover {
-  background-color: #ced4da;
-}
-
-.resize-grip {
-  width: 3px;
-  height: 40px;
-  background-color: #adb5bd;
-  border-radius: 2px;
-  transition: background-color 0.2s;
-}
-
-.vertical-resize-handle:hover .resize-grip {
-  background-color: #6c757d;
-}
-
-/* JSON 정보 섹션 스타일 조정 */
-.right-panel .json-info h5 {
+.json-data-content .json-info h5 {
   color: #495057;
   margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
 }
 
-.right-panel .keys-container {
+.json-data-content .keys-container {
   max-height: none; /* 높이 제한 제거 */
   gap: 8px;
   grid-template-columns: 1fr; /* 단일 컬럼으로 변경 */
 }
 
-.right-panel .key-item {
+.json-data-content .key-item {
   padding: 6px 10px;
   font-size: 13px;
 }
 
-.right-panel .key-name {
+.json-data-content .key-name {
   font-size: 13px;
 }
 
-.right-panel .key-type {
+.json-data-content .key-type {
   font-size: 11px;
 }
 </style>
