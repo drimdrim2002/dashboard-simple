@@ -37,7 +37,7 @@ export const VEHICLE_DETAIL_COLUMNS = [
   {
     key: "tree",
     title: "Vehicle ID",
-    width: "150px",
+    width: "100px",
     align: "left",
     className: "tree-col",
     sortable: false,
