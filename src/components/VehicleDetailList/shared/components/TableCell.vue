@@ -134,7 +134,9 @@ export default {
     },
 
     getSequenceStyle() {
-      const colorCode = this.vehicle?.colorCode || "#6c757d";
+      // detail의 originalColorCode를 우선 사용, 없으면 현재 vehicle의 colorCode 사용
+      const colorCode =
+        this.data.originalColorCode || this.vehicle?.colorCode || "#6c757d";
 
       // 색상을 약간 투명하게 만들어서 배경색으로 사용
       const backgroundColor = colorCode + "20"; // 20은 12.5% 투명도
@@ -210,11 +212,13 @@ export default {
 }
 
 .seq-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   border: 1px solid;
-  min-width: 20px;
   font-weight: 700;
   transition: all 0.2s ease;
 }

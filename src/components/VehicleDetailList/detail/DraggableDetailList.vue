@@ -85,7 +85,11 @@ export default {
     // props 변경 시 로컬 데이터 업데이트
     filteredDetailList: {
       handler(newList) {
-        this.mutableDetailList = [...newList];
+        // 각 detail에 원래 차량의 colorCode 저장
+        this.mutableDetailList = newList.map((detail) => ({
+          ...detail,
+          originalColorCode: detail.originalColorCode || this.vehicle.colorCode,
+        }));
       },
       immediate: true,
       deep: true,
@@ -99,14 +103,23 @@ export default {
       console.log("🔄 부모 데이터와 동기화 시작");
       console.log(
         "🔄 현재 mutableDetailList:",
-        this.mutableDetailList.map((d) => d.orderId || d.locId)
+        this.mutableDetailList.map(
+          (d) => `${d.orderId || d.locId}(${d.originalColorCode})`
+        )
       );
 
       // DEPOT 항목은 유지하고 나머지만 업데이트
       const depotItems = this.vehicle.detailList.filter(
         (detail) => detail.locTcd === "DEPOT"
       );
-      const updatedDetailList = [...depotItems, ...this.mutableDetailList];
+
+      // mutableDetailList의 각 항목에 originalColorCode가 없으면 현재 차량의 colorCode로 설정
+      const processedDetailList = this.mutableDetailList.map((detail) => ({
+        ...detail,
+        originalColorCode: detail.originalColorCode || this.vehicle.colorCode,
+      }));
+
+      const updatedDetailList = [...depotItems, ...processedDetailList];
 
       // stopSeqNo는 원래 값 유지 (재조정하지 않음)
 
@@ -122,6 +135,9 @@ export default {
         "🔄 업데이트된 순서:",
         updatedDetailList.map((d) => `${d.orderId || d.locId}(${d.stopSeqNo})`)
       );
+
+      // 데이터 변경을 상위 컴포넌트에 알림
+      this.$emit("data-changed");
     },
 
     // dragMixin에서 호출하는 updateVehicleSummaries
@@ -136,6 +152,7 @@ export default {
       });
     },
   },
+  emits: ["update-vehicle-summary", "data-changed"],
 };
 </script>
 

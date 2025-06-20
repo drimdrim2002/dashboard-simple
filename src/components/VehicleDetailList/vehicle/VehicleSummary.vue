@@ -91,6 +91,7 @@
       :vehicle="vehicle"
       :zone-id="zoneId"
       @update-vehicle-summary="$emit('update-vehicle-summary', $event)"
+      @data-changed="$emit('data-changed')"
     />
   </tbody>
 </template>
@@ -129,7 +130,7 @@ export default {
       default: false,
     },
   },
-  emits: ["toggle-vehicle-details", "update-vehicle-summary"],
+  emits: ["toggle-vehicle-details", "update-vehicle-summary", "data-changed"],
   methods: {
     formatDecimal,
     formatDistanceKM,

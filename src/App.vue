@@ -88,7 +88,10 @@
               class="tab-pane"
               :class="{ active: activeTab === 'vehicles' }"
             >
-              <vehicle-detail-list :selected-vehicles="selectedVehicles" />
+              <vehicle-detail-list
+                :selected-vehicles="selectedVehicles"
+                @update:selected-vehicles="selectedVehicles = $event"
+              />
             </div>
 
             <!-- JSON Data Tab -->

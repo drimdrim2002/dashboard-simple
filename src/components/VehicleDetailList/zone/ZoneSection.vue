@@ -45,6 +45,7 @@
       :is-vehicle-expanded="isVehicleExpanded"
       @toggle-vehicle-details="$emit('toggle-vehicle-details', $event)"
       @update-vehicle-summary="$emit('update-vehicle-summary', $event)"
+      @data-changed="$emit('data-changed')"
     />
   </div>
 </template>
@@ -84,6 +85,7 @@ export default {
     "toggle-zone-details",
     "toggle-vehicle-details",
     "update-vehicle-summary",
+    "data-changed",
   ],
   methods: {
     formatWeight,

@@ -2,13 +2,47 @@
   <div class="vehicle-detail-list">
     <div class="card">
       <div class="card-header">
-        <h5 class="mb-0">
-          <i class="bi bi-list-ul"></i>
-          Vehicle Detail Information
-          <span v-if="totalDetailCount > 0" class="badge bg-primary ms-2">
-            {{ totalDetailCount }} items
-          </span>
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-0">
+              <i class="bi bi-list-ul"></i>
+              Vehicle Detail Information
+              <span v-if="totalDetailCount > 0" class="badge bg-primary ms-2">
+                {{ totalDetailCount }} items
+              </span>
+              <span v-if="hasUnsavedChanges" class="badge bg-warning ms-2">
+                <i class="bi bi-exclamation-triangle"></i>
+                Unsaved Changes
+              </span>
+            </h5>
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              v-if="hasUnsavedChanges"
+              @click="resetChanges"
+              class="btn btn-outline-secondary btn-sm"
+              :disabled="isSaving"
+            >
+              <i class="bi bi-arrow-clockwise"></i>
+              Reset
+            </button>
+            <button
+              @click="saveChanges"
+              class="btn btn-success btn-sm"
+              :disabled="!hasUnsavedChanges || isSaving"
+              :class="{ 'btn-outline-success': !hasUnsavedChanges }"
+            >
+              <span
+                v-if="isSaving"
+                class="spinner-border spinner-border-sm me-1"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              <i v-else class="bi bi-check-circle"></i>
+              {{ isSaving ? "Saving..." : "Save Changes" }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="card-body">
@@ -32,6 +66,7 @@
             @toggle-zone-details="toggleZoneDetails"
             @toggle-vehicle-details="toggleVehicleDetails"
             @update-vehicle-summary="handleVehicleSummaryUpdate"
+            @data-changed="markAsChanged"
           />
         </div>
       </div>
@@ -60,10 +95,14 @@ export default {
       default: () => [],
     },
   },
+  emits: ["update:selected-vehicles"],
   data() {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
       expandedVehicles: {}, // vehicle별 펼침/접힘 상태 관리
+      originalData: null, // 원본 데이터 백업
+      hasUnsavedChanges: false, // 변경사항 추적
+      isSaving: false, // 저장 중 상태
     };
   },
   computed: {
@@ -111,7 +150,97 @@ export default {
       return grouped;
     },
   },
+  watch: {
+    selectedVehicles: {
+      handler(newValue) {
+        console.log("🔄 selectedVehicles 변경 감지:", newValue);
+        if (this.originalData) {
+          this.checkForChanges();
+        } else {
+          // 처음 데이터가 로드될 때 원본 백업
+          this.backupOriginalData();
+        }
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   methods: {
+    // 저장 및 변경 추적 관련 메서드들
+    backupOriginalData() {
+      this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
+      this.hasUnsavedChanges = false;
+      console.log("📦 원본 데이터 백업 완료");
+    },
+
+    checkForChanges() {
+      if (!this.originalData) return;
+
+      const currentData = JSON.stringify(this.selectedVehicles);
+      const originalData = JSON.stringify(this.originalData);
+      const hasChanges = currentData !== originalData;
+
+      if (this.hasUnsavedChanges !== hasChanges) {
+        this.hasUnsavedChanges = hasChanges;
+        console.log("🔄 변경사항 감지:", hasChanges ? "있음" : "없음");
+      }
+    },
+
+    async saveChanges() {
+      this.isSaving = true;
+
+      try {
+        console.log("💾 변경사항 저장 시작...");
+
+        // 여기에 실제 API 호출 또는 로컬스토리지 저장 로직 추가
+        // 예시: await this.$api.saveVehicleData(this.selectedVehicles);
+
+        // 시뮬레이션용 딜레이
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // 저장 성공 후 원본 데이터 업데이트
+        this.backupOriginalData();
+
+        // 성공 알림
+        this.showNotification(
+          "변경사항이 성공적으로 저장되었습니다.",
+          "success"
+        );
+
+        console.log("✅ 저장 완료");
+      } catch (error) {
+        console.error("❌ 저장 실패:", error);
+        this.showNotification("저장 중 오류가 발생했습니다.", "error");
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+    resetChanges() {
+      if (!this.originalData) return;
+
+      console.log("🔄 변경사항 리셋 시작...");
+
+      // 원본 데이터로 복원
+      this.$emit(
+        "update:selected-vehicles",
+        JSON.parse(JSON.stringify(this.originalData))
+      );
+
+      this.hasUnsavedChanges = false;
+      this.showNotification("변경사항이 리셋되었습니다.", "info");
+
+      console.log("✅ 리셋 완료");
+    },
+
+    // 드래그 앤 드롭이나 기타 변경사항이 발생했을 때 호출할 메서드
+    markAsChanged() {
+      if (!this.hasUnsavedChanges) {
+        this.hasUnsavedChanges = true;
+        console.log("📝 변경사항 마크됨");
+      }
+    },
+
     // 포맷팅 메서드들 - formatUtils에서 import한 함수들 사용
     formatWeight: formatWeight,
     formatVolume: formatVolume,
@@ -153,6 +282,8 @@ export default {
       console.log("📊 Vehicle summary 업데이트 요청:", vehicleId);
       // calculationMixin의 updateVehicleSummaries 호출
       this.updateVehicleSummaries();
+      // 변경사항 마크
+      this.markAsChanged();
     },
 
     // 계산 관련 메서드들은 calculationMixin에서 제공됩니다.
