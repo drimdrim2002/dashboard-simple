@@ -109,7 +109,7 @@ export default {
       default: false,
     },
   },
-  emits: ["update:selected-vehicles", "save-requested", "reset-requested"],
+  emits: ["save-requested", "reset-requested", "save-success", "save-error", "reset-success"],
   data() {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
@@ -358,6 +358,9 @@ export default {
         `💾 저장 요청: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`
       );
       console.log("📋 변경된 detailList 정보:", this.changedVehiclesData);
+      
+      // 저장 성공 시 직접 처리
+      this.notifySaveSuccess();
     },
 
     resetChanges() {
@@ -367,6 +370,9 @@ export default {
       this.$emit("reset-requested", {
         originalData: this.originalData,
       });
+      
+      // 리셋 성공 시 직접 처리
+      this.notifyResetSuccess();
     },
 
     // 드래그 앤 드롭이나 기타 변경사항이 발생했을 때 호출할 메서드
@@ -378,27 +384,36 @@ export default {
     },
 
     // 상위 컴포넌트에서 호출할 수 있는 공개 메서드들
-    onSaveSuccess() {
+    notifySaveSuccess() {
       this.backupOriginalData();
-      console.log("✅ Save Success 메서드 호출됨");
+      console.log("✅ Save Success 알림 발생");
 
       this.showToast("변경사항이 성공적으로 저장되었습니다.", "success");
       console.log("✅ 저장 성공 처리 완료");
+      
+      // 이벤트 발생
+      this.$emit("save-success");
     },
 
-    onSaveError(error) {
+    notifySaveError(error) {
       console.error("❌ 저장 실패:", error);
       this.showToast("저장 중 오류가 발생했습니다.", "error");
+      
+      // 이벤트 발생
+      this.$emit("save-error", error);
     },
 
-    onResetSuccess() {
+    notifyResetSuccess() {
       this.hasUnsavedChanges = false;
       this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
       this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
-      console.log("✅ Reset Success 메서드 호출됨");
+      console.log("✅ Reset Success 알림 발생");
 
       this.showToast("변경사항이 리셋되었습니다.", "info");
       console.log("✅ 리셋 성공 처리 완료");
+      
+      // 이벤트 발생
+      this.$emit("reset-success");
     },
 
     // 간단하고 확실한 Toast 알림 구현
