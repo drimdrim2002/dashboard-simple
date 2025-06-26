@@ -77,6 +77,7 @@
                 :is-saving="isSavingVehicles"
                 @save-requested="handleSaveVehicles"
                 @reset-requested="handleResetVehicles"
+                @data-restore-requested="handleDataRestore"
               />
             </template>
 
@@ -151,6 +152,7 @@ export default {
       windowWidth: window.innerWidth,
       // JSON data related additions
       jsonData: null,
+      originalJsonData: null, // 원본 JSON 데이터 보관용
       jsonKeys: [],
       isLoading: false,
       error: null,
@@ -158,6 +160,7 @@ export default {
       isBottomSectionVisible: false,
       // Selected vehicles management
       selectedVehicles: [],
+      totalRouteObject: {}, // vhclId를 key로 하는 차량 객체 (불변)
       isSavingVehicles: false,
     };
   },
@@ -300,13 +303,21 @@ export default {
 
         const data = await response.json();
         this.jsonData = data;
+        this.originalJsonData = JSON.parse(JSON.stringify(data)); // 원본 데이터 보관
         this.jsonKeys = Object.keys(data);
+
+        // totalRouteObject 생성 (vhclId를 key로 하는 불변 객체)
+        this.buildTotalRouteObject();
 
         console.log("JSON keys list:", this.jsonKeys);
         console.log(
           "Total JSON data size:",
           JSON.stringify(data).length,
           "characters"
+        );
+        console.log(
+          "Total route object keys:",
+          Object.keys(this.totalRouteObject).length
         );
       } catch (err) {
         this.error = err.message;
@@ -330,15 +341,90 @@ export default {
     toggleBottomSection() {
       this.isBottomSectionVisible = !this.isBottomSectionVisible;
     },
-    handleVehiclesSelected(selectedVehicles) {
-      // Update selected vehicles in the main component
-      this.selectedVehicles = selectedVehicles;
+    // totalRouteObject 구축 메서드 (불변 데이터)
+    buildTotalRouteObject() {
+      this.totalRouteObject = {};
 
-      console.log("Selected vehicles count:", selectedVehicles.length);
-      console.log("Selected vehicles details:", selectedVehicles);
+      if (this.jsonData && this.jsonData.totalRouteList) {
+        this.jsonData.totalRouteList.forEach((route) => {
+          if (route.vhclId) {
+            // 깊은 복사로 불변 데이터 보장
+            this.totalRouteObject[route.vhclId] = JSON.parse(
+              JSON.stringify({
+                zoneId: route.zoneId || "",
+                vhclId: route.vhclId || "",
+                vhclTcd: route.vhclTcd || "",
+                stopRcnt: route.stopRcnt || 0,
+                totCostAmt: route.totCostAmt || 0,
+                totLoadWt: route.totLoadWt || 0,
+                totLoadWtRatio: route.totLoadWtRatio || 0,
+                totLoadCbm: route.totLoadCbm || 0,
+                totLoadCbmRatio: route.totLoadCbmRatio || 0,
+                totDistcVal: route.totDistcVal || 0,
+                totTrvlPeridVal: route.totTrvlPeridVal || 0,
+                maxWt: route.maxWt || 0,
+                maxVol: route.maxVol || 0,
+                maxStopRcnt: route.maxStopRcnt || 0,
+                detailList: route.detailList || [],
+                colorCode: route.colorCode || "#000000",
+              })
+            );
+          }
+        });
+      }
 
-      // You can add additional logic here to handle the selected vehicles
-      // For example: update dashboard stats, send to map component, etc.
+      console.log(
+        "📦 totalRouteObject 구축 완료:",
+        Object.keys(this.totalRouteObject).length + "개 차량"
+      );
+    },
+
+    handleVehiclesSelected(selectedDrivers) {
+      // selectedDrivers는 DriverTable에서 선택된 driver 객체들
+      console.log("🚛 차량 선택 요청:", selectedDrivers);
+
+      if (!Array.isArray(selectedDrivers)) {
+        console.warn("⚠️ selectedDrivers가 배열이 아닙니다:", selectedDrivers);
+        return;
+      }
+
+      // selectedDrivers에서 vhclId 추출
+      const selectedVehicleIds = selectedDrivers
+        .map((driver) => driver.vhclId)
+        .filter(Boolean);
+      console.log("📋 추출된 차량 ID:", selectedVehicleIds);
+
+      // totalRouteObject에서 해당 vhclId들의 원본 데이터를 깊은 복사로 가져오기
+      const newSelectedVehicles = [];
+
+      selectedVehicleIds.forEach((vhclId) => {
+        const originalVehicle = this.totalRouteObject[vhclId];
+        if (originalVehicle) {
+          // 깊은 복사로 독립적인 객체 생성
+          const vehicleCopy = JSON.parse(JSON.stringify(originalVehicle));
+          newSelectedVehicles.push(vehicleCopy);
+          console.log(`✅ 차량 ${vhclId} 원본 데이터에서 복사 완료`);
+        } else {
+          console.warn(
+            `⚠️ 차량 ${vhclId}를 totalRouteObject에서 찾을 수 없습니다.`
+          );
+        }
+      });
+
+      // selectedVehicles 업데이트
+      this.selectedVehicles = newSelectedVehicles;
+
+      console.log("Selected vehicles count:", newSelectedVehicles.length);
+      console.log(
+        "Selected vehicle IDs:",
+        newSelectedVehicles.map((v) => v.vhclId)
+      );
+
+      // totalRouteObject가 변경되지 않았는지 확인용 로그
+      console.log(
+        "📦 totalRouteObject 상태 확인:",
+        Object.keys(this.totalRouteObject).length + "개 차량 (불변)"
+      );
     },
     async handleSaveVehicles(payload) {
       this.isSavingVehicles = true;
@@ -415,24 +501,30 @@ export default {
         payload.originalData.length,
         "개 차량"
       );
-      
+
       console.log("🔄 변경된 차량 ID:", payload.changedVehicleIds);
 
       // 변경된 차량들만 원본 데이터로 복원
       if (payload.changedVehicleIds && payload.changedVehicleIds.length > 0) {
         payload.changedVehicleIds.forEach((vhclId) => {
-          const currentVehicleIndex = this.selectedVehicles.findIndex(v => v.vhclId === vhclId);
-          const originalVehicle = payload.originalData.find(v => v.vhclId === vhclId);
-          
+          const currentVehicleIndex = this.selectedVehicles.findIndex(
+            (v) => v.vhclId === vhclId
+          );
+          const originalVehicle = payload.originalData.find(
+            (v) => v.vhclId === vhclId
+          );
+
           if (currentVehicleIndex !== -1 && originalVehicle) {
             console.log(`🔄 차량 ${vhclId} 리셋 중...`);
-            
+
             // Vue.set을 사용하여 반응성 보장 (깊은 복사)
             this.$set(this.selectedVehicles, currentVehicleIndex, {
               ...this.selectedVehicles[currentVehicleIndex],
-              detailList: JSON.parse(JSON.stringify(originalVehicle.detailList))
+              detailList: JSON.parse(
+                JSON.stringify(originalVehicle.detailList)
+              ),
             });
-            
+
             console.log(`✅ 차량 ${vhclId} 리셋 완료`);
           }
         });
@@ -453,6 +545,63 @@ export default {
     },
     handleResetSuccess() {
       console.log("차량 데이터 리셋 성공");
+    },
+
+    handleDataRestore(payload) {
+      console.log("🔄 App.vue에서 차량 데이터 복원 시작");
+      console.log("📋 복원할 차량 ID:", payload.changedVehicleIds);
+
+      if (
+        !payload.changedVehicleIds ||
+        payload.changedVehicleIds.length === 0
+      ) {
+        console.log("⚠️ 복원할 차량 ID가 없습니다.");
+        return;
+      }
+
+      if (
+        !this.totalRouteObject ||
+        Object.keys(this.totalRouteObject).length === 0
+      ) {
+        console.log("⚠️ totalRouteObject가 없습니다.");
+        return;
+      }
+
+      // totalRouteObject에서 변경된 차량들을 찾아서 전체 차량 데이터를 복원
+      payload.changedVehicleIds.forEach((vhclId) => {
+        const currentVehicleIndex = this.selectedVehicles.findIndex(
+          (v) => v.vhclId === vhclId
+        );
+        const originalVehicle = this.totalRouteObject[vhclId];
+
+        if (currentVehicleIndex !== -1 && originalVehicle) {
+          console.log(`🔄 차량 ${vhclId} 데이터 복원 중...`);
+          console.log(
+            `📋 원본 detailList 길이: ${
+              originalVehicle.detailList?.length || 0
+            }`
+          );
+
+          // 차량 전체를 원본 데이터로 완전히 교체 (깊은 복사)
+          this.$set(
+            this.selectedVehicles,
+            currentVehicleIndex,
+            JSON.parse(JSON.stringify(originalVehicle))
+          );
+
+          console.log(`✅ 차량 ${vhclId} 데이터 복원 완료`);
+        } else if (currentVehicleIndex === -1) {
+          console.log(
+            `⚠️ selectedVehicles에서 차량 ${vhclId}를 찾을 수 없습니다.`
+          );
+        } else {
+          console.log(
+            `⚠️ totalRouteObject에서 차량 ${vhclId}를 찾을 수 없습니다.`
+          );
+        }
+      });
+
+      console.log("✅ App.vue에서 차량 데이터 복원 완료");
     },
   },
 };

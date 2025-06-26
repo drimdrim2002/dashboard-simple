@@ -17,7 +17,7 @@
           <span
             class="vehicle-id-text"
             :style="{ color: vehicle.colorCode || '#0d6efd' }"
-            >{{ vehicle.name }} ({{ vehicle.type }})</span
+            >{{ vehicle.vhclId }} ({{ vehicle.vhclTcd }})</span
           >
 
           <span v-if="isDragging" class="badge bg-light text-muted ms-2">

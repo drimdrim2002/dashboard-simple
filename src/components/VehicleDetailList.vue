@@ -109,7 +109,14 @@ export default {
       default: false,
     },
   },
-  emits: ["save-requested", "reset-requested", "save-success", "save-error", "reset-success"],
+  emits: [
+    "save-requested",
+    "reset-requested",
+    "data-restore-requested",
+    "save-success",
+    "save-error",
+    "reset-success",
+  ],
   data() {
     return {
       expandedZones: {}, // zone별 펼침/접힘 상태 관리
@@ -173,11 +180,39 @@ export default {
     selectedVehicles: {
       handler(newValue, oldValue) {
         console.log("🔄 selectedVehicles 변경 감지");
-        
+
         // 첫 로드이거나 차량 선택이 변경된 경우 (Driver List에서 선택 변경)
-        if (!this.originalData || this.isVehicleSelectionChanged(newValue, oldValue)) {
-          console.log("📋 차량 선택 변경 감지 - 원본 데이터 백업");
-          this.backupOriginalData();
+        if (
+          !this.originalData ||
+          this.isVehicleSelectionChanged(newValue, oldValue)
+        ) {
+          console.log("📋 차량 선택 변경 감지");
+
+          // 변경사항이 있는 경우 사용자에게 경고하고 데이터 복원 요청
+          if (this.hasUnsavedChanges && oldValue && oldValue.length > 0) {
+            console.log("⚠️ 저장되지 않은 변경사항이 있습니다.");
+            this.showToast(
+              "차량 선택이 변경되어 저장되지 않은 변경사항이 초기화됩니다.",
+              "warning"
+            );
+
+            // 상위 컴포넌트에 데이터 복원 요청
+            this.requestDataRestore(oldValue);
+          }
+
+          console.log("📋 변경사항 초기화");
+          this.resetToInitialState();
+
+          // 새로운 차량이 선택된 경우에만 백업 (차량 해제 시에는 백업하지 않음)
+          if (newValue && newValue.length > 0) {
+            console.log("📋 새로운 차량 선택됨 - 원본 데이터 백업");
+            // Vue의 다음 틱에서 백업 실행 (데이터 복원이 완료된 후)
+            this.$nextTick(() => {
+              this.backupOriginalData();
+            });
+          } else {
+            console.log("📋 차량 선택 해제됨 - 백업 스킵");
+          }
         } else {
           // 같은 차량들의 detailList만 변경된 경우 (드래그&드롭)
           console.log("🔄 detailList 변경 감지 - 변경사항 체크");
@@ -195,31 +230,63 @@ export default {
       if (!oldVehicles || oldVehicles.length === 0) {
         return true;
       }
-      
+
       // 차량 개수가 다른 경우
       if (newVehicles.length !== oldVehicles.length) {
-        console.log("📋 차량 개수 변경:", oldVehicles.length, "→", newVehicles.length);
+        console.log(
+          "📋 차량 개수 변경:",
+          oldVehicles.length,
+          "→",
+          newVehicles.length
+        );
         return true;
       }
-      
+
       // 차량 ID 목록이 다른 경우 (선택된 차량이 바뀜)
-      const newVehicleIds = newVehicles.map(v => v.vhclId).sort();
-      const oldVehicleIds = oldVehicles.map(v => v.vhclId).sort();
-      
-      const isSelectionChanged = JSON.stringify(newVehicleIds) !== JSON.stringify(oldVehicleIds);
-      
+      const newVehicleIds = newVehicles.map((v) => v.vhclId).sort();
+      const oldVehicleIds = oldVehicles.map((v) => v.vhclId).sort();
+
+      const isSelectionChanged =
+        JSON.stringify(newVehicleIds) !== JSON.stringify(oldVehicleIds);
+
       if (isSelectionChanged) {
         console.log("📋 선택된 차량 변경:", oldVehicleIds, "→", newVehicleIds);
       }
-      
+
       return isSelectionChanged;
     },
 
-    backupOriginalData() {
-      this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
+    resetToInitialState() {
+      console.log("🧹 상태 초기화 시작");
+
+      // 변경사항 관련 상태 초기화
       this.hasUnsavedChanges = false;
-      this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
-      console.log("📦 원본 데이터 백업 완료");
+      this.changedVehiclesData = {};
+      this.originalData = null;
+
+      // UI 상태 초기화 (필요한 경우)
+      // this.expandedZones = {};
+      // this.expandedVehicles = {};
+
+      console.log("✅ 상태 초기화 완료");
+    },
+
+    backupOriginalData() {
+      if (this.selectedVehicles && this.selectedVehicles.length > 0) {
+        this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
+        this.hasUnsavedChanges = false;
+        this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
+
+        console.log("📦 원본 데이터 백업 완료");
+        console.log(`📋 백업된 차량 수: ${this.selectedVehicles.length}개`);
+        console.log(
+          `📋 백업된 차량 ID: ${this.selectedVehicles
+            .map((v) => v.vhclId)
+            .join(", ")}`
+        );
+      } else {
+        console.log("⚠️ 백업할 selectedVehicles가 없습니다.");
+      }
     },
 
     compareDetailLists(current, original) {
@@ -323,7 +390,7 @@ export default {
 
       // changed object가 비어있지 않으면 변경된 것으로 간주
       const hasChanges = Object.keys(changedVehicles).length > 0;
-      
+
       console.log("🔄 변경사항 체크 결과:", hasChanges ? "변경됨" : "변경없음");
       console.log("🔄 변경된 차량 수:", Object.keys(changedVehicles).length);
 
@@ -339,7 +406,10 @@ export default {
 
       // 변경된 vehicles 정보를 data에 저장
       this.changedVehiclesData = changedVehicles;
-      console.log("🔄 changedVehiclesData 업데이트:", Object.keys(this.changedVehiclesData));
+      console.log(
+        "🔄 changedVehiclesData 업데이트:",
+        Object.keys(this.changedVehiclesData)
+      );
     },
 
     getChangedVehicles() {
@@ -382,8 +452,13 @@ export default {
         return;
       }
 
-      console.log(`💾 저장 대상: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`);
-      console.log("📋 변경된 차량 ID:", changedVehicles.map(v => v.vhclId));
+      console.log(
+        `💾 저장 대상: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`
+      );
+      console.log(
+        "📋 변경된 차량 ID:",
+        changedVehicles.map((v) => v.vhclId)
+      );
 
       // 상위 컴포넌트에 저장 요청 이벤트 발생
       this.$emit("save-requested", {
@@ -410,10 +485,13 @@ export default {
       // 상위 컴포넌트에 리셋 요청 이벤트 발생
       this.$emit("reset-requested", {
         originalData: this.originalData,
-        changedVehicleIds: Object.keys(this.changedVehiclesData)
+        changedVehicleIds: Object.keys(this.changedVehiclesData),
       });
-      
-      console.log("🔄 리셋 요청 완료 - 변경된 차량:", Object.keys(this.changedVehiclesData));
+
+      console.log(
+        "🔄 리셋 요청 완료 - 변경된 차량:",
+        Object.keys(this.changedVehiclesData)
+      );
     },
 
     // 드래그 앤 드롭이나 기타 변경사항이 발생했을 때 호출할 메서드
@@ -431,7 +509,7 @@ export default {
 
       this.showToast("변경사항이 성공적으로 저장되었습니다.", "success");
       console.log("✅ 저장 성공 처리 완료");
-      
+
       // 이벤트 발생
       this.$emit("save-success");
     },
@@ -439,21 +517,21 @@ export default {
     notifySaveError(error) {
       console.error("❌ 저장 실패:", error);
       this.showToast("저장 중 오류가 발생했습니다.", "error");
-      
+
       // 이벤트 발생
       this.$emit("save-error", error);
     },
 
     notifyResetSuccess() {
       console.log("✅ Reset Success 알림 발생");
-      
+
       // 상태 초기화
       this.hasUnsavedChanges = false;
       this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
-      
+
       // 현재 상태를 새로운 원본으로 백업 (리셋된 상태가 새로운 기준점)
       this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
-      
+
       // Vue의 다음 틱에서 변경사항 재확인 (DOM 업데이트 후)
       this.$nextTick(() => {
         this.checkForChanges();
@@ -462,7 +540,7 @@ export default {
 
       this.showToast("변경사항이 리셋되었습니다.", "info");
       console.log("✅ 리셋 성공 처리 완료");
-      
+
       // 이벤트 발생
       this.$emit("reset-success");
     },
@@ -635,6 +713,25 @@ export default {
     closeOrderModal() {
       this.isOrderModalVisible = false;
       this.selectedOrderData = null;
+    },
+
+    requestDataRestore(previousVehicles) {
+      console.log(previousVehicles);
+      if (
+        !this.changedVehiclesData ||
+        Object.keys(this.changedVehiclesData).length === 0
+      ) {
+        console.log("⚠️ 복원할 변경된 차량이 없습니다.");
+        return;
+      }
+
+      console.log("🔄 상위 컴포넌트에 데이터 복원 요청");
+      console.log("📋 변경된 차량 ID:", Object.keys(this.changedVehiclesData));
+
+      // 상위 컴포넌트에 복원 요청 이벤트 발생 (변경된 차량 ID만 전달)
+      this.$emit("data-restore-requested", {
+        changedVehicleIds: Object.keys(this.changedVehiclesData),
+      });
     },
   },
 };
