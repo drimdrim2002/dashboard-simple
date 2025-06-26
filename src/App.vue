@@ -215,28 +215,13 @@ export default {
       };
     },
     totalRouteList() {
-      if (!this.jsonData || !this.jsonData.totalRouteList) {
-        return [];
+      // totalRouteObject가 있으면 해당 데이터를 배열로 변환하여 반환 (성능 최적화)
+      if (Object.keys(this.totalRouteObject).length > 0) {
+        return Object.values(this.totalRouteObject);
       }
-
-      return this.jsonData.totalRouteList.map((route) => ({
-        zoneId: route.zoneId || "",
-        vhclId: route.vhclId || "",
-        vhclTcd: route.vhclTcd || "",
-        stopRcnt: route.stopRcnt || 0,
-        totCostAmt: route.totCostAmt || 0,
-        totLoadWt: route.totLoadWt || 0,
-        totLoadWtRatio: route.totLoadWtRatio || 0,
-        totLoadCbm: route.totLoadCbm || 0,
-        totLoadCbmRatio: route.totLoadCbmRatio || 0,
-        totDistcVal: route.totDistcVal || 0,
-        totTrvlPeridVal: route.totTrvlPeridVal || 0,
-        maxWt: route.maxWt || 0,
-        maxVol: route.maxVol || 0,
-        maxStopRcnt: route.maxStopRcnt || 0,
-        detailList: route.detailList || [],
-        colorCode: route.colorCode || "#000000",
-      }));
+      
+      // fallback: 원본 데이터 반환
+      return this.jsonData?.totalRouteList || [];
     },
   },
   methods: {
@@ -345,30 +330,28 @@ export default {
     buildTotalRouteObject() {
       this.totalRouteObject = {};
 
-      if (this.jsonData && this.jsonData.totalRouteList) {
+      if (this.jsonData?.totalRouteList) {
         this.jsonData.totalRouteList.forEach((route) => {
           if (route.vhclId) {
-            // 깊은 복사로 불변 데이터 보장
-            this.totalRouteObject[route.vhclId] = JSON.parse(
-              JSON.stringify({
-                zoneId: route.zoneId || "",
-                vhclId: route.vhclId || "",
-                vhclTcd: route.vhclTcd || "",
-                stopRcnt: route.stopRcnt || 0,
-                totCostAmt: route.totCostAmt || 0,
-                totLoadWt: route.totLoadWt || 0,
-                totLoadWtRatio: route.totLoadWtRatio || 0,
-                totLoadCbm: route.totLoadCbm || 0,
-                totLoadCbmRatio: route.totLoadCbmRatio || 0,
-                totDistcVal: route.totDistcVal || 0,
-                totTrvlPeridVal: route.totTrvlPeridVal || 0,
-                maxWt: route.maxWt || 0,
-                maxVol: route.maxVol || 0,
-                maxStopRcnt: route.maxStopRcnt || 0,
-                detailList: route.detailList || [],
-                colorCode: route.colorCode || "#000000",
-              })
-            );
+            // 필요한 속성만 선택하여 복사 (성능 최적화)
+            this.totalRouteObject[route.vhclId] = {
+              zoneId: route.zoneId || "",
+              vhclId: route.vhclId || "",
+              vhclTcd: route.vhclTcd || "",
+              stopRcnt: route.stopRcnt || 0,
+              totCostAmt: route.totCostAmt || 0,
+              totLoadWt: route.totLoadWt || 0,
+              totLoadWtRatio: route.totLoadWtRatio || 0,
+              totLoadCbm: route.totLoadCbm || 0,
+              totLoadCbmRatio: route.totLoadCbmRatio || 0,
+              totDistcVal: route.totDistcVal || 0,
+              totTrvlPeridVal: route.totTrvlPeridVal || 0,
+              maxWt: route.maxWt || 0,
+              maxVol: route.maxVol || 0,
+              maxStopRcnt: route.maxStopRcnt || 0,
+              detailList: JSON.parse(JSON.stringify(route.detailList || [])), // detailList만 깊은 복사
+              colorCode: route.colorCode || "#000000",
+            };
           }
         });
       }
@@ -380,9 +363,6 @@ export default {
     },
 
     handleVehiclesSelected(selectedDrivers) {
-      // selectedDrivers는 DriverTable에서 선택된 driver 객체들
-      console.log("🚛 차량 선택 요청:", selectedDrivers);
-
       if (!Array.isArray(selectedDrivers)) {
         console.warn("⚠️ selectedDrivers가 배열이 아닙니다:", selectedDrivers);
         return;
@@ -392,39 +372,27 @@ export default {
       const selectedVehicleIds = selectedDrivers
         .map((driver) => driver.vhclId)
         .filter(Boolean);
-      console.log("📋 추출된 차량 ID:", selectedVehicleIds);
 
       // totalRouteObject에서 해당 vhclId들의 원본 데이터를 깊은 복사로 가져오기
-      const newSelectedVehicles = [];
-
-      selectedVehicleIds.forEach((vhclId) => {
-        const originalVehicle = this.totalRouteObject[vhclId];
-        if (originalVehicle) {
-          // 깊은 복사로 독립적인 객체 생성
-          const vehicleCopy = JSON.parse(JSON.stringify(originalVehicle));
-          newSelectedVehicles.push(vehicleCopy);
-          console.log(`✅ 차량 ${vhclId} 원본 데이터에서 복사 완료`);
-        } else {
-          console.warn(
-            `⚠️ 차량 ${vhclId}를 totalRouteObject에서 찾을 수 없습니다.`
-          );
-        }
-      });
+      const newSelectedVehicles = selectedVehicleIds
+        .map((vhclId) => {
+          const originalVehicle = this.totalRouteObject[vhclId];
+          if (originalVehicle) {
+            // 깊은 복사로 독립적인 객체 생성
+            return JSON.parse(JSON.stringify(originalVehicle));
+          } else {
+            console.warn(
+              `⚠️ 차량 ${vhclId}를 totalRouteObject에서 찾을 수 없습니다.`
+            );
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       // selectedVehicles 업데이트
       this.selectedVehicles = newSelectedVehicles;
 
-      console.log("Selected vehicles count:", newSelectedVehicles.length);
-      console.log(
-        "Selected vehicle IDs:",
-        newSelectedVehicles.map((v) => v.vhclId)
-      );
-
-      // totalRouteObject가 변경되지 않았는지 확인용 로그
-      console.log(
-        "📦 totalRouteObject 상태 확인:",
-        Object.keys(this.totalRouteObject).length + "개 차량 (불변)"
-      );
+      console.log("🚛 차량 선택 완료:", newSelectedVehicles.length + "개");
     },
     async handleSaveVehicles(payload) {
       this.isSavingVehicles = true;
@@ -548,22 +516,8 @@ export default {
     },
 
     handleDataRestore(payload) {
-      console.log("🔄 App.vue에서 차량 데이터 복원 시작");
-      console.log("📋 복원할 차량 ID:", payload.changedVehicleIds);
-
-      if (
-        !payload.changedVehicleIds ||
-        payload.changedVehicleIds.length === 0
-      ) {
-        console.log("⚠️ 복원할 차량 ID가 없습니다.");
-        return;
-      }
-
-      if (
-        !this.totalRouteObject ||
-        Object.keys(this.totalRouteObject).length === 0
-      ) {
-        console.log("⚠️ totalRouteObject가 없습니다.");
+      if (!payload.changedVehicleIds?.length || !this.totalRouteObject) {
+        console.log("⚠️ 복원 조건이 충족되지 않습니다.");
         return;
       }
 
@@ -575,33 +529,16 @@ export default {
         const originalVehicle = this.totalRouteObject[vhclId];
 
         if (currentVehicleIndex !== -1 && originalVehicle) {
-          console.log(`🔄 차량 ${vhclId} 데이터 복원 중...`);
-          console.log(
-            `📋 원본 detailList 길이: ${
-              originalVehicle.detailList?.length || 0
-            }`
-          );
-
           // 차량 전체를 원본 데이터로 완전히 교체 (깊은 복사)
           this.$set(
             this.selectedVehicles,
             currentVehicleIndex,
             JSON.parse(JSON.stringify(originalVehicle))
           );
-
-          console.log(`✅ 차량 ${vhclId} 데이터 복원 완료`);
-        } else if (currentVehicleIndex === -1) {
-          console.log(
-            `⚠️ selectedVehicles에서 차량 ${vhclId}를 찾을 수 없습니다.`
-          );
-        } else {
-          console.log(
-            `⚠️ totalRouteObject에서 차량 ${vhclId}를 찾을 수 없습니다.`
-          );
         }
       });
 
-      console.log("✅ App.vue에서 차량 데이터 복원 완료");
+      console.log("✅ 차량 데이터 복원 완료:", payload.changedVehicleIds.length + "개");
     },
   },
 };

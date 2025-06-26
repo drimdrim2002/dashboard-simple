@@ -138,7 +138,7 @@ export default {
     vehiclesByZone() {
       const grouped = {};
       this.selectedVehicles.forEach((vehicle) => {
-        const zoneId = vehicle.zone || DEFAULT_CONFIG.UNKNOWN_ZONE;
+        const zoneId = vehicle.zoneId || DEFAULT_CONFIG.UNKNOWN_ZONE;
         if (!grouped[zoneId]) {
           grouped[zoneId] = {
             vehicles: [],
@@ -197,7 +197,7 @@ export default {
             );
 
             // 상위 컴포넌트에 데이터 복원 요청
-            this.requestDataRestore(oldValue);
+            this.requestDataRestore();
           }
 
           console.log("📋 변경사항 초기화");
@@ -215,7 +215,6 @@ export default {
           }
         } else {
           // 같은 차량들의 detailList만 변경된 경우 (드래그&드롭)
-          console.log("🔄 detailList 변경 감지 - 변경사항 체크");
           this.checkForChanges();
         }
       },
@@ -683,9 +682,7 @@ export default {
       console.log("변경된 상태:", this.expandedVehicles[vehicleId]);
     },
     isVehicleExpanded(vehicleId) {
-      const isExpanded = this.expandedVehicles[vehicleId] || false;
-      console.log(`🔍 Vehicle ${vehicleId} 펼쳐짐 상태:`, isExpanded);
-      return isExpanded;
+      return this.expandedVehicles[vehicleId] || false;
     },
 
     handleVehicleSummaryUpdate(vehicleId) {
@@ -696,10 +693,10 @@ export default {
       this.markAsChanged();
     },
 
-    // 계산 관련 메서드들은 calculationMixin에서 제공됩니다.
-    // 계산 관련 메서드들은 calculationMixin에서 제공됩니다.
-    // 드래그 관련 메서드들은 dragMixin에서 제공됩니다.
-    // 알림 메서드들은 notificationMixin에서 제공됩니다.
+    // Mixin에서 제공되는 메서드들:
+    // - calculationMixin: 계산 관련 메서드들
+    // - dragMixin: 드래그 관련 메서드들
+    // - notificationMixin: 알림 메서드들
 
     handleOrderClick(orderInfo) {
       console.log(
@@ -715,23 +712,21 @@ export default {
       this.selectedOrderData = null;
     },
 
-    requestDataRestore(previousVehicles) {
-      console.log(previousVehicles);
-      if (
-        !this.changedVehiclesData ||
-        Object.keys(this.changedVehiclesData).length === 0
-      ) {
+    requestDataRestore() {
+      if (!Object.keys(this.changedVehiclesData).length) {
         console.log("⚠️ 복원할 변경된 차량이 없습니다.");
         return;
       }
-
-      console.log("🔄 상위 컴포넌트에 데이터 복원 요청");
-      console.log("📋 변경된 차량 ID:", Object.keys(this.changedVehiclesData));
 
       // 상위 컴포넌트에 복원 요청 이벤트 발생 (변경된 차량 ID만 전달)
       this.$emit("data-restore-requested", {
         changedVehicleIds: Object.keys(this.changedVehiclesData),
       });
+
+      console.log(
+        "🔄 데이터 복원 요청:",
+        Object.keys(this.changedVehiclesData).length + "개"
+      );
     },
   },
 };

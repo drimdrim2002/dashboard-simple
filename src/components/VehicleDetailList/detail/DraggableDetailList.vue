@@ -28,7 +28,7 @@
     tag="div"
     style="display: contents"
     :data-vehicle-id="vehicle.id"
-    :data-zone-id="vehicle.zone"
+    :data-zone-id="vehicle.zoneId"
   >
     <VehicleDetailItem
       v-for="(detail, detailIndex) in mutableDetailList"
