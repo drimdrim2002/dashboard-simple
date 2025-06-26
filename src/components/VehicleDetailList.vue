@@ -172,14 +172,16 @@ export default {
   watch: {
     selectedVehicles: {
       handler(newValue, oldValue) {
-        console.log("🔄 selectedVehicles 변경 감지(newValue):", newValue);
-        console.log("🔄 selectedVehicles 변경 감지(oldValue):", oldValue);
-
-        if (this.originalData) {
-          this.checkForChanges();
-        } else {
-          // 처음 데이터가 로드될 때 원본 백업
+        console.log("🔄 selectedVehicles 변경 감지");
+        
+        // 첫 로드이거나 차량 선택이 변경된 경우 (Driver List에서 선택 변경)
+        if (!this.originalData || this.isVehicleSelectionChanged(newValue, oldValue)) {
+          console.log("📋 차량 선택 변경 감지 - 원본 데이터 백업");
           this.backupOriginalData();
+        } else {
+          // 같은 차량들의 detailList만 변경된 경우 (드래그&드롭)
+          console.log("🔄 detailList 변경 감지 - 변경사항 체크");
+          this.checkForChanges();
         }
       },
       deep: true,
@@ -188,6 +190,31 @@ export default {
   },
   methods: {
     // 저장 및 변경 추적 관련 메서드들
+    isVehicleSelectionChanged(newVehicles, oldVehicles) {
+      // 첫 로드인 경우
+      if (!oldVehicles || oldVehicles.length === 0) {
+        return true;
+      }
+      
+      // 차량 개수가 다른 경우
+      if (newVehicles.length !== oldVehicles.length) {
+        console.log("📋 차량 개수 변경:", oldVehicles.length, "→", newVehicles.length);
+        return true;
+      }
+      
+      // 차량 ID 목록이 다른 경우 (선택된 차량이 바뀜)
+      const newVehicleIds = newVehicles.map(v => v.vhclId).sort();
+      const oldVehicleIds = oldVehicles.map(v => v.vhclId).sort();
+      
+      const isSelectionChanged = JSON.stringify(newVehicleIds) !== JSON.stringify(oldVehicleIds);
+      
+      if (isSelectionChanged) {
+        console.log("📋 선택된 차량 변경:", oldVehicleIds, "→", newVehicleIds);
+      }
+      
+      return isSelectionChanged;
+    },
+
     backupOriginalData() {
       this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
       this.hasUnsavedChanges = false;
@@ -333,18 +360,21 @@ export default {
     },
 
     async saveChanges() {
-      console.log("💾 Save 버튼 클릭 - 상위 컴포넌트에 저장 요청");
+      console.log("💾 Save 버튼 클릭 - 변경사항 저장 시작");
 
       // 변경된 vehicle만 추출
       const changedVehicles = this.getChangedVehicles();
 
       if (changedVehicles.length === 0) {
-        console.log("⚠️ 변경된 vehicle이 없습니다.");
+        console.log("⚠️ 저장할 변경사항이 없습니다.");
         this.showToast("저장할 변경사항이 없습니다.", "warning");
         return;
       }
 
-      // 상위 컴포넌트에 저장 요청 이벤트 발생 (변경된 vehicle만 전달)
+      console.log(`💾 저장 대상: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`);
+      console.log("📋 변경된 차량 ID:", changedVehicles.map(v => v.vhclId));
+
+      // 상위 컴포넌트에 저장 요청 이벤트 발생
       this.$emit("save-requested", {
         data: this.selectedVehicles, // 전체 데이터 (참고용)
         changedVehicles: changedVehicles, // 변경된 vehicle만
@@ -354,25 +384,25 @@ export default {
         changedCount: changedVehicles.length,
       });
 
-      console.log(
-        `💾 저장 요청: 전체 ${this.selectedVehicles.length}개 중 ${changedVehicles.length}개 변경됨`
-      );
-      console.log("📋 변경된 detailList 정보:", this.changedVehiclesData);
-      
-      // 저장 성공 시 직접 처리
-      this.notifySaveSuccess();
+      console.log("💾 저장 요청 완료");
     },
 
     resetChanges() {
-      console.log("🔄 Reset 버튼 클릭 - 상위 컴포넌트에 리셋 요청");
+      console.log("🔄 Reset 버튼 클릭 - 변경사항 리셋 시작");
+
+      if (!this.originalData) {
+        console.warn("⚠️ 원본 데이터가 없어서 리셋할 수 없습니다.");
+        this.showToast("리셋할 원본 데이터가 없습니다.", "warning");
+        return;
+      }
 
       // 상위 컴포넌트에 리셋 요청 이벤트 발생
       this.$emit("reset-requested", {
         originalData: this.originalData,
+        changedVehicleIds: Object.keys(this.changedVehiclesData)
       });
       
-      // 리셋 성공 시 직접 처리
-      this.notifyResetSuccess();
+      console.log("🔄 리셋 요청 완료 - 변경된 차량:", Object.keys(this.changedVehiclesData));
     },
 
     // 드래그 앤 드롭이나 기타 변경사항이 발생했을 때 호출할 메서드

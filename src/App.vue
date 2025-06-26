@@ -393,13 +393,13 @@ export default {
           `📊 저장 요약: ${vehiclesToSave.length}개 차량의 변경사항이 저장됨`
         );
 
-        // VehicleDetailList에서 직접 이벤트 발생하도록 변경
-        // 저장 성공 시 VehicleDetailList에서 notifySaveSuccess() 호출
+        // VehicleDetailList에 저장 성공 알림
+        this.$refs.vehicleDetailList?.notifySaveSuccess();
       } catch (error) {
         console.error("❌ App.vue에서 차량 데이터 저장 실패:", error);
 
-        // VehicleDetailList에서 직접 이벤트 발생하도록 변경
-        // 저장 실패 시 VehicleDetailList에서 notifySaveError() 호출
+        // VehicleDetailList에 저장 실패 알림
+        this.$refs.vehicleDetailList?.notifySaveError(error);
       } finally {
         this.isSavingVehicles = false;
       }
@@ -431,8 +431,8 @@ export default {
       // 원본 데이터로 복원
       // this.selectedVehicles = JSON.parse(JSON.stringify(payload.originalData));
 
-      // VehicleDetailList에서 직접 이벤트 발생하도록 변경
-      // 리셋 성공 시 VehicleDetailList에서 notifyResetSuccess() 호출
+      // VehicleDetailList에 리셋 성공 알림
+      this.$refs.vehicleDetailList?.notifyResetSuccess();
 
       console.log("✅ App.vue에서 차량 데이터 리셋 완료");
     },
