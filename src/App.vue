@@ -415,21 +415,30 @@ export default {
         payload.originalData.length,
         "개 차량"
       );
+      
+      console.log("🔄 변경된 차량 ID:", payload.changedVehicleIds);
 
-      this.selectedVehicles.forEach((selectedVehicle) => {
-        const vhclId = selectedVehicle.vhclId;
-        ``;
-        const originalVehicle = payload.originalData.find(
-          (vehicle) => vehicle.vhclId === vhclId
-        );
-
-        if (originalVehicle) {
-          selectedVehicle.detailList = originalVehicle.detailList;
-        }
-      });
-
-      // 원본 데이터로 복원
-      // this.selectedVehicles = JSON.parse(JSON.stringify(payload.originalData));
+      // 변경된 차량들만 원본 데이터로 복원
+      if (payload.changedVehicleIds && payload.changedVehicleIds.length > 0) {
+        payload.changedVehicleIds.forEach((vhclId) => {
+          const currentVehicleIndex = this.selectedVehicles.findIndex(v => v.vhclId === vhclId);
+          const originalVehicle = payload.originalData.find(v => v.vhclId === vhclId);
+          
+          if (currentVehicleIndex !== -1 && originalVehicle) {
+            console.log(`🔄 차량 ${vhclId} 리셋 중...`);
+            
+            // Vue.set을 사용하여 반응성 보장 (깊은 복사)
+            this.$set(this.selectedVehicles, currentVehicleIndex, {
+              ...this.selectedVehicles[currentVehicleIndex],
+              detailList: JSON.parse(JSON.stringify(originalVehicle.detailList))
+            });
+            
+            console.log(`✅ 차량 ${vhclId} 리셋 완료`);
+          }
+        });
+      } else {
+        console.log("⚠️ 변경된 차량이 없어서 리셋할 것이 없습니다.");
+      }
 
       // VehicleDetailList에 리셋 성공 알림
       this.$refs.vehicleDetailList?.notifyResetSuccess();

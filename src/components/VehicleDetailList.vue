@@ -307,7 +307,14 @@ export default {
     },
 
     checkForChanges() {
-      if (!this.originalData) return;
+      if (!this.originalData) {
+        console.log("⚠️ originalData가 없어서 변경사항 체크를 건너뜁니다.");
+        return;
+      }
+
+      console.log("🔄 변경사항 체크 시작");
+      console.log("📋 현재 selectedVehicles 수:", this.selectedVehicles.length);
+      console.log("📋 원본 originalData 수:", this.originalData.length);
 
       const changedVehicles = this.compareDetailLists(
         this.selectedVehicles,
@@ -316,11 +323,14 @@ export default {
 
       // changed object가 비어있지 않으면 변경된 것으로 간주
       const hasChanges = Object.keys(changedVehicles).length > 0;
+      
+      console.log("🔄 변경사항 체크 결과:", hasChanges ? "변경됨" : "변경없음");
+      console.log("🔄 변경된 차량 수:", Object.keys(changedVehicles).length);
 
       if (this.hasUnsavedChanges !== hasChanges) {
         this.hasUnsavedChanges = hasChanges;
         console.log(
-          "🔄 detailList 변경사항 감지:",
+          "🔄 hasUnsavedChanges 상태 변경:",
           hasChanges
             ? `있음 (${Object.keys(changedVehicles).length}개 vehicle)`
             : "없음"
@@ -329,6 +339,7 @@ export default {
 
       // 변경된 vehicles 정보를 data에 저장
       this.changedVehiclesData = changedVehicles;
+      console.log("🔄 changedVehiclesData 업데이트:", Object.keys(this.changedVehiclesData));
     },
 
     getChangedVehicles() {
@@ -434,10 +445,20 @@ export default {
     },
 
     notifyResetSuccess() {
-      this.hasUnsavedChanges = false;
-      this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
-      this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
       console.log("✅ Reset Success 알림 발생");
+      
+      // 상태 초기화
+      this.hasUnsavedChanges = false;
+      this.changedVehiclesData = {}; // 변경된 vehicles 데이터 초기화
+      
+      // 현재 상태를 새로운 원본으로 백업 (리셋된 상태가 새로운 기준점)
+      this.originalData = JSON.parse(JSON.stringify(this.selectedVehicles));
+      
+      // Vue의 다음 틱에서 변경사항 재확인 (DOM 업데이트 후)
+      this.$nextTick(() => {
+        this.checkForChanges();
+        console.log("✅ 리셋 후 변경사항 재확인 완료");
+      });
 
       this.showToast("변경사항이 리셋되었습니다.", "info");
       console.log("✅ 리셋 성공 처리 완료");
