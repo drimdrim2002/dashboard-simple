@@ -1,0 +1,6 @@
+git pull
+git config --global --add safe.directory D:/Projects/dashboard-simple
+git pull
+git config
+git --config
+git 

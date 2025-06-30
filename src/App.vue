@@ -56,68 +56,186 @@
         :style="{ height: bottomSectionHeight + 'px' }"
       >
         <div class="bottom-content">
-          <!-- SplitLayout 컴포넌트 사용 -->
-          <split-layout
-            :container-width="bottomSectionWidth"
-            left-title="Selected Vehicles"
-            left-icon="bi bi-truck"
-            :left-badge="selectedVehicles.length"
-            right-title="JSON Data Information"
-            right-icon="bi bi-file-earmark-code"
-            :right-badge="jsonKeys.length"
-            @resize-start="onSplitResizeStart"
-            @resizing="onSplitResizing"
-            @resize-end="onSplitResizeEnd"
-          >
-            <!-- 좌측 슬롯: Selected Vehicles -->
-            <template #left>
-              <vehicle-detail-list
-                ref="vehicleDetailList"
-                :selected-vehicles="selectedVehicles"
-                :is-saving="isSavingVehicles"
-                @save-requested="handleSaveVehicles"
-                @reset-requested="handleResetVehicles"
-                @data-restore-requested="handleDataRestore"
-              />
-            </template>
+          <!-- View Mode Toggle Controls -->
+          <div class="view-mode-controls">
+            <div class="btn-group" role="group">
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="{ 'btn-primary': viewMode === 'tab', 'btn-outline-primary': viewMode !== 'tab' }"
+                @click="setViewMode('tab')"
+              >
+                <i class="bi bi-window-stack"></i>
+                Tab
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="{ 'btn-primary': viewMode === 'split', 'btn-outline-primary': viewMode !== 'split' }"
+                @click="setViewMode('split')"
+              >
+                <i class="bi bi-layout-split"></i>
+                Split
+              </button>
+            </div>
+          </div>
 
-            <!-- 우측 슬롯: JSON Data Information -->
-            <template #right>
-              <div class="json-data-content">
-                <!-- Loading status -->
-                <div v-if="isLoading" class="loading">
-                  <p>Loading JSON file...</p>
-                </div>
+          <!-- Tab Mode -->
+          <div v-if="viewMode === 'tab'" class="tab-mode-container">
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  :class="{ active: activeTab === 'vehicles' }"
+                  @click="setActiveTab('vehicles')"
+                >
+                  <i class="bi bi-truck"></i>
+                  Selected Vehicles
+                  <span v-if="selectedVehicles.length > 0" class="badge bg-primary ms-2">
+                    {{ selectedVehicles.length }}
+                  </span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  class="nav-link"
+                  :class="{ active: activeTab === 'json' }"
+                  @click="setActiveTab('json')"
+                >
+                  <i class="bi bi-file-earmark-code"></i>
+                  JSON Data Information
+                  <span v-if="jsonKeys.length > 0" class="badge bg-secondary ms-2">
+                    {{ jsonKeys.length }}
+                  </span>
+                </button>
+              </li>
+            </ul>
 
-                <!-- Error status -->
-                <div v-else-if="error" class="error">
-                  <p>Error: {{ error }}</p>
-                </div>
+            <div class="tab-content">
+              <!-- Vehicle Tab -->
+              <div
+                class="tab-pane"
+                :class="{ active: activeTab === 'vehicles' }"
+                v-show="activeTab === 'vehicles'"
+              >
+                <vehicle-detail-list
+                  ref="vehicleDetailList"
+                  :selected-vehicles="selectedVehicles"
+                  :is-saving="isSavingVehicles"
+                  @save-requested="handleSaveVehicles"
+                  @reset-requested="handleResetVehicles"
+                  @data-restore-requested="handleDataRestore"
+                />
+              </div>
 
-                <!-- JSON keys list -->
-                <div v-else-if="jsonKeys.length > 0" class="json-info">
-                  <h5>JSON File Keys ({{ jsonKeys.length }} items):</h5>
-                  <div class="keys-container">
-                    <div
-                      v-for="(key, index) in jsonKeys"
-                      :key="index"
-                      class="key-item"
-                    >
-                      <span class="key-name">{{ key }}</span>
-                      <span v-if="jsonData && jsonData[key]" class="key-type">
-                        {{ getDataType(jsonData[key]) }}
-                      </span>
+              <!-- JSON Tab -->
+              <div
+                class="tab-pane"
+                :class="{ active: activeTab === 'json' }"
+                v-show="activeTab === 'json'"
+              >
+                <div class="json-data-content">
+                  <!-- Loading status -->
+                  <div v-if="isLoading" class="loading">
+                    <p>Loading JSON file...</p>
+                  </div>
+
+                  <!-- Error status -->
+                  <div v-else-if="error" class="error">
+                    <p>Error: {{ error }}</p>
+                  </div>
+
+                  <!-- JSON keys list -->
+                  <div v-else-if="jsonKeys.length > 0" class="json-info">
+                    <h5>JSON File Keys ({{ jsonKeys.length }} items):</h5>
+                    <div class="keys-container">
+                      <div
+                        v-for="(key, index) in jsonKeys"
+                        :key="index"
+                        class="key-item"
+                      >
+                        <span class="key-name">{{ key }}</span>
+                        <span v-if="jsonData && jsonData[key]" class="key-type">
+                          {{ getDataType(jsonData[key]) }}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Initial state -->
-                <div v-else>
-                  <p>Failed to load JSON data.</p>
+                  <!-- Initial state -->
+                  <div v-else>
+                    <p>Failed to load JSON data.</p>
+                  </div>
                 </div>
               </div>
-            </template>
-          </split-layout>
+            </div>
+          </div>
+
+          <!-- Split Mode -->
+          <div v-else class="split-mode-container">
+            <!-- SplitLayout 컴포넌트 사용 -->
+            <split-layout
+              :container-width="bottomSectionWidth"
+              left-title="Selected Vehicles"
+              left-icon="bi bi-truck"
+              :left-badge="selectedVehicles.length"
+              right-title="JSON Data Information"
+              right-icon="bi bi-file-earmark-code"
+              :right-badge="jsonKeys.length"
+              @resize-start="onSplitResizeStart"
+              @resizing="onSplitResizing"
+              @resize-end="onSplitResizeEnd"
+            >
+              <!-- 좌측 슬롯: Selected Vehicles -->
+              <template #left>
+                <vehicle-detail-list
+                  ref="vehicleDetailList"
+                  :selected-vehicles="selectedVehicles"
+                  :is-saving="isSavingVehicles"
+                  @save-requested="handleSaveVehicles"
+                  @reset-requested="handleResetVehicles"
+                  @data-restore-requested="handleDataRestore"
+                />
+              </template>
+
+              <!-- 우측 슬롯: JSON Data Information -->
+              <template #right>
+                <div class="json-data-content">
+                  <!-- Loading status -->
+                  <div v-if="isLoading" class="loading">
+                    <p>Loading JSON file...</p>
+                  </div>
+
+                  <!-- Error status -->
+                  <div v-else-if="error" class="error">
+                    <p>Error: {{ error }}</p>
+                  </div>
+
+                  <!-- JSON keys list -->
+                  <div v-else-if="jsonKeys.length > 0" class="json-info">
+                    <h5>JSON File Keys ({{ jsonKeys.length }} items):</h5>
+                    <div class="keys-container">
+                      <div
+                        v-for="(key, index) in jsonKeys"
+                        :key="index"
+                        class="key-item"
+                      >
+                        <span class="key-name">{{ key }}</span>
+                        <span v-if="jsonData && jsonData[key]" class="key-type">
+                          {{ getDataType(jsonData[key]) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Initial state -->
+                  <div v-else>
+                    <p>Failed to load JSON data.</p>
+                  </div>
+                </div>
+              </template>
+            </split-layout>
+          </div>
         </div>
       </div>
     </div>
@@ -162,10 +280,14 @@ export default {
       selectedVehicles: [],
       totalRouteObject: {}, // vhclId를 key로 하는 차량 객체 (불변)
       isSavingVehicles: false,
+      // View mode management
+      viewMode: 'split', // 'tab' | 'split'
+      activeTab: 'vehicles', // 'vehicles' | 'json'
     };
   },
   created() {
     this.loadJsonData();
+    this.loadViewModeFromStorage();
   },
   mounted() {
     // Window size change detection
@@ -325,6 +447,45 @@ export default {
     },
     toggleBottomSection() {
       this.isBottomSectionVisible = !this.isBottomSectionVisible;
+    },
+    // View mode toggle methods
+    setViewMode(mode) {
+      this.viewMode = mode;
+      this.saveViewModeToStorage();
+      console.log('🔄 View mode changed to:', mode);
+    },
+    setActiveTab(tab) {
+      this.activeTab = tab;
+      this.saveViewModeToStorage();
+      console.log('📑 Active tab changed to:', tab);
+    },
+    // localStorage methods
+    loadViewModeFromStorage() {
+      try {
+        const savedViewMode = localStorage.getItem('dashboard-view-mode');
+        const savedActiveTab = localStorage.getItem('dashboard-active-tab');
+        
+        if (savedViewMode && ['tab', 'split'].includes(savedViewMode)) {
+          this.viewMode = savedViewMode;
+        }
+        
+        if (savedActiveTab && ['vehicles', 'json'].includes(savedActiveTab)) {
+          this.activeTab = savedActiveTab;
+        }
+        
+        console.log('💾 View mode loaded from storage:', { viewMode: this.viewMode, activeTab: this.activeTab });
+      } catch (error) {
+        console.warn('⚠️ Failed to load view mode from storage:', error);
+      }
+    },
+    saveViewModeToStorage() {
+      try {
+        localStorage.setItem('dashboard-view-mode', this.viewMode);
+        localStorage.setItem('dashboard-active-tab', this.activeTab);
+        console.log('💾 View mode saved to storage:', { viewMode: this.viewMode, activeTab: this.activeTab });
+      } catch (error) {
+        console.warn('⚠️ Failed to save view mode to storage:', error);
+      }
     },
     // totalRouteObject 구축 메서드 (불변 데이터)
     buildTotalRouteObject() {
@@ -811,5 +972,87 @@ html {
 
 .json-data-content .key-type {
   font-size: 11px;
+}
+
+/* View Mode Controls */
+.view-mode-controls {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.view-mode-controls .btn-group .btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  font-weight: 500;
+}
+
+.view-mode-controls .btn i {
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* Tab Mode Container */
+.tab-mode-container {
+  height: calc(100% - 50px);
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-mode-container .nav-tabs {
+  flex-shrink: 0;
+  background-color: #fff;
+  padding: 0 16px;
+  margin-bottom: 0;
+}
+
+.tab-mode-container .nav-tabs .nav-link {
+  border: none;
+  border-radius: 0;
+  color: #6c757d;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-bottom: 2px solid transparent;
+  background: none;
+  transition: all 0.2s ease;
+}
+
+.tab-mode-container .nav-tabs .nav-link:hover {
+  color: #495057;
+  border-bottom-color: #dee2e6;
+  background-color: transparent;
+}
+
+.tab-mode-container .nav-tabs .nav-link.active {
+  color: #0d6efd;
+  border-bottom-color: #0d6efd;
+  background-color: transparent;
+}
+
+.tab-mode-container .nav-tabs .nav-link i {
+  margin-right: 6px;
+}
+
+.tab-mode-container .nav-tabs .badge {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+.tab-mode-container .tab-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tab-mode-container .tab-pane {
+  height: 100%;
+  overflow: auto;
+}
+
+/* Split Mode Container */
+.split-mode-container {
+  height: calc(100% - 50px);
 }
 </style>
